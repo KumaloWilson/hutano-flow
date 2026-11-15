@@ -10,6 +10,8 @@ class UserResponse(BaseModel):
     facility_id: str
     roles: list[str]
     research_mode: bool
+    must_change_password: bool = False
+    session_idle_minutes: int = 30
 
 
 class CorrectionResponse(BaseModel):
@@ -31,6 +33,9 @@ class EpisodeResponse(BaseModel):
     started_at: datetime | None = None
     ended_at: datetime | None = None
     version: int
+    recall_count: int = 0
+    missed_calls: int = 0
+    deferred_until: datetime | None = None
     corrections: list[CorrectionResponse] = Field(default_factory=list)
 
 
@@ -53,6 +58,7 @@ class VisitResponse(BaseModel):
     planned_services: list[str]
     version: int
     synthetic: bool
+    entry_mode: str = "LIVE"
     patient: PatientSummary | None = None
     episodes: list[EpisodeResponse]
     opaque_status_token: str | None = None
@@ -88,6 +94,9 @@ class QueueEntryResponse(BaseModel):
     score_components: dict[str,float]
     requires_clinician_review: bool
     model_suggestion_applied_automatically: bool
+    deferred_until: datetime | None = None
+    missed_calls: int = 0
+    carried_over: bool = False
 
 
 class QueueResponse(BaseModel):

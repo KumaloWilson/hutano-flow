@@ -110,4 +110,5 @@ def test_rehearsal_pause_resume_and_completion_notes_are_preserved(client,db_ses
     workspace=client.get('/api/v1/patients/'+case['patient_id']+'/workspace').json()
     visit=next(v for v in workspace['visits'] if v['id']==case['visit_id'])
     assert visit['status']=='COMPLETED' and any(n['text']==note for n in visit['notes'])
-    assert db_session.scalar(select(AuditEvent.reason).where(AuditEvent.object_id==uuid.UUID(ep['id']),AuditEvent.action=='episode.started'))=='Fictional patient returned to room'
+    # The rehearsal seed also audits the episode's original start; the resume is the latest one.
+    assert db_session.scalar(select(AuditEvent.reason).where(AuditEvent.object_id==ep['id'],AuditEvent.action=='episode.started').order_by(AuditEvent.occurred_at.desc()).limit(1))=='Fictional patient returned to room'

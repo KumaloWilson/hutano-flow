@@ -57,6 +57,11 @@ class User(Base, TimestampMixin):
     password_hash: Mapped[str] = mapped_column(String(255))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     session_version: Mapped[int] = mapped_column(Integer, default=1)
+    # Persisted (not process-local) so lockout holds across API workers and restarts.
+    failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
+    password_changed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
     roles: Mapped[list["UserRole"]] = relationship(cascade="all, delete-orphan", lazy="selectin")
 
 
@@ -105,6 +110,9 @@ class Visit(Base, TimestampMixin):
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(40), default="REGISTERING", index=True)
     visit_type: Mapped[str] = mapped_column(String(40), default="walk_in")
+    # LIVE = captured as it happened; RETROSPECTIVE = transcribed from the paper downtime log.
+    entry_mode: Mapped[str] = mapped_column(String(20), default="LIVE")
+    paper_reference: Mapped[str | None] = mapped_column(String(80), nullable=True)
     planned_services: Mapped[list[str]] = mapped_column(JSON, default=list)
     version: Mapped[int] = mapped_column(Integer, default=1)
     patient: Mapped[Patient] = relationship(lazy="joined")
@@ -185,6 +193,12 @@ class QueueEntry(Base, TimestampMixin):
     original_order: Mapped[int] = mapped_column(Integer)
     policy_version: Mapped[str] = mapped_column(String(80), default="demo-hybrid-v1")
     version: Mapped[int] = mapped_column(Integer, default=1)
+    # Missed-call handling: a recall re-announces a CALLED entry; a deferral returns it to
+    # WAITING with its original place, ineligible for routine calling until deferred_until.
+    recall_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_recalled_at: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
+    missed_calls: Mapped[int] = mapped_column(Integer, default=0)
+    deferred_until: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
     episode: Mapped[ServiceEpisode] = relationship(back_populates="queue_entry", lazy="joined")
     __table_args__ = (
         Index("ix_queue_facility_status_joined", "facility_id", "status", "joined_at"),
@@ -268,6 +282,32 @@ class QueueStateEvent(Base):
     to_status: Mapped[str] = mapped_column(String(40))
     occurred_at: Mapped[datetime] = mapped_column(UTCDateTime(timezone=True), default=utcnow)
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class DayClosure(Base):
+    """Append-only record that an authorised person closed a local operating day."""
+    __tablename__ = "day_closures"
+    id = uuidpk()
+    facility_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("facilities.id"), index=True)
+    local_date = mapped_column(Date, nullable=False)
+    closed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    closed_at: Mapped[datetime] = mapped_column(UTCDateTime(timezone=True), default=utcnow)
+    reason: Mapped[str] = mapped_column(String(240))
+    summary_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    __table_args__ = (UniqueConstraint("facility_id", "local_date", name="uq_day_closure_date"),)
+
+
+class DisplayScreen(Base):
+    """A revocable waiting-room display credential. Only a SHA-256 digest is stored."""
+    __tablename__ = "display_screens"
+    id = uuidpk()
+    facility_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("facilities.id"), index=True)
+    label: Mapped[str] = mapped_column(String(80))
+    secret_hash: Mapped[bytes] = mapped_column(LargeBinary(32), unique=True)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(timezone=True), default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
+    last_seen_at: Mapped[datetime | None] = mapped_column(UTCDateTime(timezone=True), nullable=True)
 
 
 class AuditEvent(Base):

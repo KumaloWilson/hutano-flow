@@ -9,7 +9,7 @@ from app.commands import CommandRoute
 from app.database import get_db
 from app.models import Facility, Patient, QueuePolicy, ServicePoint, User, UserRole, Visit, utcnow
 from app.schemas import APIModel
-from app.security import CurrentUser, hash_password, require_roles, role_names
+from app.security import CurrentUser, hash_password, password_problems, require_roles, role_names
 from app.services.audit import record_audit, enqueue_event
 
 router = APIRouter(prefix="/api/v1", route_class=CommandRoute)
@@ -26,6 +26,11 @@ class UserCreate(APIModel):
 class UserChange(APIModel):
     roles: list[str] = Field(min_length=1)
     active: bool
+
+
+class PasswordReset(APIModel):
+    temporary_password: str = Field(min_length=12, max_length=128)
+    reason: str = Field(min_length=5, max_length=240)
 
 
 class PolicyCreate(APIModel):
@@ -86,8 +91,13 @@ def configure_point(point_id: uuid.UUID, payload: PointConfiguration, user: User
 
 @router.get("/admin/users")
 def users(user: User = Depends(require_roles("ADMIN")), db: Session = Depends(get_db, scope="function")):
-    return [{"id": str(u.id), "email": u.email, "display_name": u.display_name, "roles": sorted(role_names(u)), "active": u.active}
-        for u in db.scalars(select(User).where(User.facility_id == user.facility_id))]
+    now = utcnow()
+    def locked(u):
+        until = u.locked_until.replace(tzinfo=now.tzinfo) if u.locked_until and u.locked_until.tzinfo is None else u.locked_until
+        return bool(until and until > now)
+    return [{"id": str(u.id), "email": u.email, "display_name": u.display_name, "roles": sorted(role_names(u)), "active": u.active,
+             "locked": locked(u), "must_change_password": bool(u.must_change_password)}
+        for u in db.scalars(select(User).where(User.facility_id == user.facility_id).order_by(User.display_name))]
 
 
 @router.post("/admin/users", status_code=201)
@@ -95,8 +105,14 @@ def create_user(payload: UserCreate, user: User = Depends(require_roles("ADMIN")
                 key: str = Header(alias="Idempotency-Key")):
     if not set(payload.roles) <= ROLES:
         raise HTTPException(422, "Unknown role")
+    problems = password_problems(payload.password, payload.email, payload.display_name)
+    if problems:
+        raise HTTPException(422, "; ".join(problems))
+    if db.scalar(select(User.id).where(User.email == payload.email.lower())):
+        raise HTTPException(409, "An account with this email already exists")
+    # Administrator-chosen passwords are temporary; the person sets their own at first sign-in.
     created = User(facility_id=user.facility_id, email=payload.email.lower(), display_name=payload.display_name,
-                   password_hash=hash_password(payload.password))
+                   password_hash=hash_password(payload.password), must_change_password=True)
     db.add(created)
     db.flush()
     for role in set(payload.roles):
@@ -120,9 +136,32 @@ def update_user(user_id: uuid.UUID, payload: UserChange, user: User = Depends(re
     target.roles = [UserRole(facility_id=user.facility_id, role=role) for role in set(payload.roles)]
     target.active = payload.active
     target.session_version += 1
+    target.failed_login_count = 0
+    target.locked_until = None
     record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="user.access_changed", object_type="User", object_id=target.id,
         correlation_id=key, old=old, new={"roles": payload.roles, "active": payload.active})
     return {"id": str(target.id), "updated": True, "sessions_revoked": True}
+
+
+@router.post("/admin/users/{user_id}/password")
+def reset_password(user_id: uuid.UUID, payload: PasswordReset, user: User = Depends(require_roles("ADMIN")),
+                   db: Session = Depends(get_db, scope="function"), key: str = Header(alias="Idempotency-Key")):
+    if user_id == user.id:
+        raise HTTPException(422, "Change your own password from your account menu")
+    target = db.scalar(select(User).where(User.id == user_id, User.facility_id == user.facility_id))
+    if not target:
+        raise HTTPException(404, "User not found")
+    problems = password_problems(payload.temporary_password, target.email, target.display_name)
+    if problems:
+        raise HTTPException(422, "; ".join(problems))
+    target.password_hash = hash_password(payload.temporary_password)
+    target.must_change_password = True
+    target.failed_login_count = 0
+    target.locked_until = None
+    target.session_version += 1
+    record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="user.password_reset", object_type="User",
+                 object_id=target.id, correlation_id=key, new={"temporary": True, "sessions_revoked": True}, reason=payload.reason)
+    return {"id": str(target.id), "temporary_password_set": True, "sessions_revoked": True, "unlocked": True}
 
 
 @router.get("/queue/policies")

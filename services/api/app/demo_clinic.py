@@ -95,7 +95,6 @@ def historical_paths(seed, day_index):
 def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
     if not 0 <= seed <= 1_000_000_000: raise ValueError("Seed must be between 0 and 1,000,000,000")
     anchor = (now or utcnow()).astimezone(timezone.utc).replace(microsecond=0)
-    local = anchor.astimezone(ZoneInfo("Africa/Harare"))
     # Serialise even the first preparation; this CLI never resets another facility.
     if db.bind.dialect.name == "postgresql":
         from sqlalchemy import text
@@ -105,6 +104,8 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
         facility = Facility(id=FACILITY_ID, name="Hutano Community Clinic", timezone="Africa/Harare", demo_mode=True)
         db.add(facility); db.flush()
     if not facility.demo_mode: raise ValueError("The fictional clinic must remain in demo mode")
+    # Local schedule times follow the facility's configured timezone, not a hard-coded one.
+    local = anchor.astimezone(ZoneInfo(facility.timezone))
     db.scalar(select(Facility.id).where(Facility.id==facility.id).with_for_update())
     previous = db.scalar(select(DemoSession).where(DemoSession.facility_id == facility.id).order_by(DemoSession.created_at.desc()))
     if previous and not fresh:

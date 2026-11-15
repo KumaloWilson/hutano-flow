@@ -29,7 +29,8 @@ class CommandRoute(APIRoute):
         async def handler(request: Request):
             path = request.url.path
             if request.method not in {"POST", "PATCH", "PUT", "DELETE"} or path in {
-                "/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/patient-status/lookup"
+                "/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/refresh", "/api/v1/auth/password",
+                "/api/v1/patient-status/lookup", "/api/v1/display/board"
             }:
                 return await original(request)
             token = request.cookies.get("hutano_session")
@@ -74,6 +75,8 @@ class CommandRoute(APIRoute):
                     result = json.loads(response.body)
                     # Receipt secrets are reproducible via keyed HMAC, never stored as plaintext.
                     result.pop("opaque_status_token", None)
+                    # Display credentials are shown once and never kept in the replay ledger.
+                    result.pop("display_key", None)
                     db.add(IdempotencyRecord(facility_id=facility_id, actor_id=actor.id, endpoint=endpoint,
                         key=key, request_hash=digest, response_json=result, status_code=response.status_code))
                     db.commit()

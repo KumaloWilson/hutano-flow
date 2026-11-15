@@ -31,6 +31,9 @@ class RankedEntry:
     score_components: dict[str, float]
     requires_clinician_review: bool = False
     model_suggestion_applied_automatically: bool = False
+    deferred_until: datetime | None = None
+    missed_calls: int = 0
+    carried_over: bool = False
 
     def dict(self) -> dict:
         return asdict(self)
@@ -68,6 +71,11 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
         )
     ).all()
     now = datetime.now(timezone.utc)
+    from zoneinfo import ZoneInfo
+    from app.models import Facility
+    facility = db.get(Facility, facility_id)
+    zone = ZoneInfo(facility.timezone if facility else "UTC")
+    today = now.astimezone(zone).date()
     scored: list[tuple] = []
     for entry in entries:
         visit = entry.episode.visit
@@ -85,10 +93,17 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
         age_score = min(age, 240) / 240
         manual_bucket = 0 if entry.manual_pin else 1
         pin_rank = entry.pin_rank if entry.manual_pin and entry.pin_rank is not None else 9999
+        deferred = entry.deferred_until
+        if deferred is not None and deferred.tzinfo is None:
+            deferred = deferred.replace(tzinfo=timezone.utc)
+        # A patient who missed a call keeps their place but is only routinely callable
+        # once the grace period ends; until then they rank after everyone callable.
+        deferred_bucket = 1 if deferred is not None and deferred > now else 0
         scored.append(
             (
                 manual_bucket,
                 pin_rank,
+                deferred_bucket,
                 0 if mode == "FCFS" or point.type in {"registration", "triage"} else URGENCY_ORDER.get(urgency, 99),
                 -age_score * config.get("waiting_weight", 0.25) if mode == "HYBRID" else 0,
                 entry.joined_at,
@@ -96,21 +111,27 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
                 entry,
                 urgency,
                 age,
+                deferred if deferred_bucket else None,
+                joined.astimezone(zone).date() < today,
             )
         )
     # First rank the unpinned entries. Insert clinician pins at their requested positions.
-    ordinary = sorted([item for item in scored if not item[6].manual_pin], key=lambda item: item[2:6])
-    pins = sorted([item for item in scored if item[6].manual_pin], key=lambda item: (item[1], item[5]))
+    ordinary = sorted([item for item in scored if not item[7].manual_pin], key=lambda item: item[2:7])
+    pins = sorted([item for item in scored if item[7].manual_pin], key=lambda item: (item[1], item[6]))
     for item in pins:
         ordinary.insert(min(item[1] - 1, len(ordinary)), item)
     scored = ordinary
     result: list[dict] = []
     for index, item in enumerate(scored, start=1):
-        entry, urgency, age = item[6], item[7], item[8]
+        entry, urgency, age, deferred_until, carried_over = item[7], item[8], item[9], item[10], item[11]
         confirmed = latest_urgency(db, entry.episode.visit_id)
         explanations = [f"Clinician-confirmed priority {urgency}" if confirmed else "Awaiting clinician assessment; arrival-order queue", f"Waiting {age} minutes"]
         if entry.manual_pin:
             explanations.insert(0, "Clinician override is active")
+        if deferred_until:
+            explanations.insert(0, f"Missed call; place kept, callable from {deferred_until.astimezone(zone):%H:%M}")
+        if carried_over:
+            explanations.insert(0, "Joined on an earlier day; review at day close")
         if point.capacity == 0 or point.outage_state == "UNAVAILABLE":
             explanations.append("Service point unavailable; queue is paused")
         components = {
@@ -135,6 +156,9 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
                 policy_version=policy.version if policy else entry.policy_version,
                 explanations=explanations,
                 score_components=components,
+                deferred_until=deferred_until,
+                missed_calls=entry.missed_calls or 0,
+                carried_over=carried_over,
             ).dict()
         )
     return result
@@ -158,7 +182,8 @@ def atomic_call(db: Session, entry: QueueEntry, actor_id: uuid.UUID, expected_ve
             QueueEntry.status == "WAITING",
             QueueEntry.version == expected_version,
         )
-        .values(status="CALLED", manual_pin=False, pin_rank=None, version=QueueEntry.version + 1, updated_at=now)
+        .values(status="CALLED", manual_pin=False, pin_rank=None, deferred_until=None, recall_count=0,
+                version=QueueEntry.version + 1, updated_at=now)
     )
     if result.rowcount != 1:
         raise HTTPException(status_code=409, detail="Queue entry has changed; refresh before calling")

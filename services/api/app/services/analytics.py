@@ -63,7 +63,8 @@ def overview(db, facility_id, from_date=None, to_date=None):
         "reporting_filter":{"from_date":from_date,"to_date":to_date,"timezone":str(local_zone),"basis":"Visits arriving during the selected local dates; queue counts remain the current snapshot"},
         "daily_activity":[{"day":day,"arrivals":sum(v.arrival_at.astimezone(local_zone).date().isoformat()==day for v in visits),"completed":sum(v.arrival_at.astimezone(local_zone).date().isoformat()==day and v.status=="COMPLETED" for v in visits)} for day in sorted({v.arrival_at.astimezone(local_zone).date().isoformat() for v in visits})],
         "active_visits": sum(v.status in {"REGISTERING", "AWAITING_TRIAGE", "TRIAGED", "ACTIVE", "ESCALATION_REQUIRED"} for v in visits),
-        "completed_visits": sum(v.status == "COMPLETED" for v in visits), "waiting": summary(waits), "service": summary(services),
+        "completed_visits": sum(v.status == "COMPLETED" for v in visits),
+        "retrospective_visits": sum((v.entry_mode or "LIVE") == "RETROSPECTIVE" for v in visits),
         "arrival_to_provider_minutes": summary(provider), "total_visit_minutes": summary(totals),
         "observation_period": {"from": min((v.arrival_at for v in visits), default=None), "through": max((v.completed_at or v.arrival_at for v in visits), default=None)},
         "service_points": stages, "arrivals_by_hour": [{"hour": h, "arrivals": hours[h]} for h in range(24)],
@@ -73,5 +74,6 @@ def overview(db, facility_id, from_date=None, to_date=None):
         "definitions": {"waiting": "started_at - queued_at; excludes cancelled, no-show and transferred stages",
             "service": "ended_at - started_at - accumulated pause seconds for completed episodes",
             "arrival_to_provider": "first consultation started_at - arrival_at",
+            "retrospective_visits": "Visits transcribed from the paper downtime log; their times are minute-precision paper entries and are included in timing summaries",
             "throughput": "completed visits across displayed observation period", "queue_length": "eligible WAITING snapshot at report generation",
             "override_rate": "OVERRIDE / (ACCEPT + REJECT + OVERRIDE) clinician model reviews; manual no-model decisions excluded"}}

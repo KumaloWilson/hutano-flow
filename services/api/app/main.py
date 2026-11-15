@@ -6,7 +6,7 @@ import json
 import secrets
 import uuid
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -85,12 +85,17 @@ from app.schemas import (
     ModelReview,
     InferenceRequest,
     TimestampCorrection,
+    PasswordChange,
 )
 from app.security import (
     CurrentUser,
     client_key,
     create_session_token,
     csrf_token,
+    burn_password_check,
+    hash_password,
+    password_problems,
+    session_auth_time,
     rate_limiter,
     require_roles,
     role_names,
@@ -192,6 +197,12 @@ async def validation_error(request: Request, exc: RequestValidationError):
     )
 
 
+def like_pattern(text: str) -> str:
+    """Substring pattern with LIKE wildcards escaped, so `%` or `_` cannot list every record."""
+    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
 def require_idempotency(value: str | None) -> str:
     if not value or len(value) < 8 or len(value) > 100:
         raise HTTPException(status_code=400, detail="A valid Idempotency-Key header is required")
@@ -214,6 +225,8 @@ def user_view(user: User) -> dict:
         "facility_id": str(user.facility_id),
         "roles": sorted(role_names(user)),
         "research_mode": settings.research_mode,
+        "must_change_password": bool(user.must_change_password),
+        "session_idle_minutes": settings.session_idle_minutes,
     }
 
 
@@ -230,6 +243,9 @@ def episode_view(episode: ServiceEpisode) -> dict:
         "started_at": episode.started_at,
         "ended_at": episode.ended_at,
         "version": episode.version,
+        "recall_count": episode.queue_entry.recall_count if episode.queue_entry else 0,
+        "missed_calls": episode.queue_entry.missed_calls if episode.queue_entry else 0,
+        "deferred_until": episode.queue_entry.deferred_until if episode.queue_entry else None,
         "corrections": [{"id": str(c.id), "original": c.original_values, "corrected": c.corrected_values, "created_at": c.created_at} for c in episode.corrections],
     }
 
@@ -246,6 +262,7 @@ def visit_view(visit: Visit, include_patient: bool = True, user: User | None = N
         "planned_services": visit.planned_services,
         "version": visit.version,
         "synthetic": visit.patient.synthetic_flag,
+        "entry_mode": visit.entry_mode or "LIVE",
         "episodes": [episode_view(item) for item in visit.episodes],
     }
     if include_patient:
@@ -268,33 +285,100 @@ def health(db: Session = Depends(get_db, scope="function")):
     return {"status": "ok", "research_mode": settings.research_mode, "service": "hutano-flow-api"}
 
 
+def _aware(value: datetime | None) -> datetime | None:
+    return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
+
+
+def set_session_cookies(response: Response, session_token: str, csrf: str | None = None) -> None:
+    response.set_cookie("hutano_session", session_token, httponly=True, secure=settings.cookie_secure,
+                        samesite="strict", max_age=settings.session_minutes * 60, path="/")
+    if csrf:
+        response.set_cookie("hutano_csrf", csrf, httponly=False, secure=settings.cookie_secure,
+                            samesite="strict", max_age=settings.session_minutes * 60, path="/")
+
+
+def locked_response(minutes: int) -> HTTPException:
+    return HTTPException(
+        status_code=429,
+        detail=f"Too many failed sign-in attempts. Try again in {minutes} minutes or ask an administrator to unlock the account.",
+        headers={"Retry-After": str(minutes * 60)},
+    )
+
+
 @app.post("/api/v1/auth/login")
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db, scope="function")):
-    rate_limiter.check(client_key(request, "login"), 10, 60)
-    user = db.scalar(select(User).where(User.email == payload.email.lower(), User.active.is_(True)))
-    if not user or not verify_password(payload.password, user.password_hash):
+    # Per real client address (see security.client_ip); a whole clinic no longer shares one bucket.
+    rate_limiter.check(client_key(request, "login"), 30, 60)
+    email = payload.email.lower()
+    now = utcnow()
+    threshold, minutes = settings.login_lockout_threshold, settings.login_lockout_minutes
+    user = db.scalar(select(User).where(User.email == email))
+    if user is None or not user.active:
+        # Same Argon2 cost and the same lockout behaviour as a real account, so neither
+        # timing nor the lockout message reveals which email addresses exist.
+        burn_password_check(payload.password)
+        email_key = "login-email:" + hashlib.sha256(email.encode()).hexdigest()[:24]
+        try:
+            rate_limiter.guard(email_key, threshold, minutes * 60)
+        except HTTPException:
+            raise locked_response(minutes)
+        rate_limiter.record(email_key)
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    session_token = create_session_token(user)
+    if user.locked_until and _aware(user.locked_until) > now:
+        burn_password_check(payload.password)
+        raise locked_response(minutes)
+    if not verify_password(payload.password, user.password_hash):
+        user.failed_login_count = (user.failed_login_count or 0) + 1
+        if user.failed_login_count >= threshold:
+            user.locked_until = now + timedelta(minutes=minutes)
+            user.failed_login_count = 0
+            record_audit(db, facility_id=user.facility_id, actor_id=None, action="auth.account_locked", object_type="User",
+                         object_id=user.id, correlation_id=request.state.request_id,
+                         new={"locked_minutes": minutes}, reason="Consecutive failed sign-in attempts")
+            db.commit()
+            raise locked_response(minutes)
+        db.commit()
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    user.failed_login_count = 0
+    user.locked_until = None
+    db.commit()
     csrf = csrf_token()
-    response.set_cookie(
-        "hutano_session",
-        session_token,
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite="strict",
-        max_age=settings.session_minutes * 60,
-        path="/",
-    )
-    response.set_cookie(
-        "hutano_csrf",
-        csrf,
-        httponly=False,
-        secure=settings.cookie_secure,
-        samesite="strict",
-        max_age=settings.session_minutes * 60,
-        path="/",
-    )
+    set_session_cookies(response, create_session_token(user), csrf)
     return {"user": user_view(user), "csrf_token": csrf}
+
+
+@app.post("/api/v1/auth/refresh")
+def refresh_session(request: Request, response: Response, user: CurrentUser):
+    """Extend the idle window after genuine user activity. Never past the absolute lifetime."""
+    payload = decode_session_token(request.cookies.get("hutano_session", ""))
+    auth_time = session_auth_time(payload)
+    token = create_session_token(user, auth_time=auth_time)
+    set_session_cookies(response, token)
+    expires = datetime.fromtimestamp(decode_session_token(token)["exp"], tz=timezone.utc)
+    return {"expires_at": expires, "absolute_expires_at": auth_time + timedelta(minutes=settings.session_minutes)}
+
+
+@app.post("/api/v1/auth/password")
+def change_password(payload: PasswordChange, request: Request, response: Response, user: CurrentUser,
+                    db: Session = Depends(get_db, scope="function")):
+    rate_limiter.check(f"password:{user.id}", 10, 300)
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if payload.new_password == payload.current_password:
+        raise HTTPException(status_code=422, detail="Choose a password you have not just used")
+    problems = password_problems(payload.new_password, user.email, user.display_name)
+    if problems:
+        raise HTTPException(status_code=422, detail="; ".join(problems))
+    user.password_hash = hash_password(payload.new_password)
+    user.must_change_password = False
+    user.password_changed_at = utcnow()
+    user.session_version += 1  # signs out every other device
+    record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="auth.password_changed", object_type="User",
+                 object_id=user.id, correlation_id=request.state.request_id, new={"sessions_revoked": True})
+    db.commit()
+    csrf = csrf_token()
+    set_session_cookies(response, create_session_token(user), csrf)
+    return {"user": user_view(user), "csrf_token": csrf, "other_sessions_revoked": True}
 
 
 @app.post("/api/v1/auth/logout")
@@ -315,7 +399,7 @@ def me(user: CurrentUser):
 def list_patients(
     user: User = Depends(require_roles("ADMIN", "RECEPTIONIST", "TRIAGE_NURSE", "CLINICIAN")),
     db: Session = Depends(get_db, scope="function"),
-    q: str | None = None,
+    q: str | None = Query(default=None, max_length=120),
 ):
     statement = select(Patient).where(Patient.facility_id == user.facility_id)
     if q:
@@ -323,7 +407,7 @@ def list_patients(
             identifier = uuid.UUID(q)
             statement = statement.where(Patient.id == identifier)
         except ValueError:
-            statement = statement.where(Patient.pseudonym.ilike(f"%{q[:80]}%"))
+            statement = statement.where(Patient.pseudonym.ilike(like_pattern(q[:80]), escape="\\"))
     patients = db.scalars(statement.order_by(Patient.created_at.desc()).limit(100)).all()
     return [
         {
@@ -373,9 +457,10 @@ def list_visits(user: CurrentUser, db: Session = Depends(get_db, scope="function
     elif status_filter:
         statement = statement.where(Visit.status == status_filter)
     if q:
-        matches=[Visit.public_token.ilike(f"%{q}%")]
+        pattern=like_pattern(q)
+        matches=[Visit.public_token.ilike(pattern, escape="\\")]
         if role_names(user)&{"ADMIN","RECEPTIONIST","CLINICIAN","TRIAGE_NURSE"}:
-            matches.append(Visit.patient.has(Patient.pseudonym.ilike(f"%{q}%")))
+            matches.append(Visit.patient.has(Patient.pseudonym.ilike(pattern, escape="\\")))
         try: matches.append(Visit.id==uuid.UUID(q))
         except ValueError: pass
         statement=statement.where(or_(*matches))
@@ -784,6 +869,8 @@ def change_episode_state(
     service_action(user, episode)
     if episode.version != payload.version:
         raise HTTPException(status_code=409, detail="Episode changed; refresh before updating state")
+    if payload.action in {"RECALL", "DEFER"}:
+        return missed_call(db, user, episode, payload, key)
     transitions = {
         "PAUSE": ({"CALLED", "IN_SERVICE"}, "PAUSED"),
         "NO_SHOW": ({"WAITING", "CALLED"}, "NO_SHOW"),
@@ -833,6 +920,60 @@ def change_episode_state(
     enqueue_event(db, facility_id=user.facility_id, topic="visit.state_changed", aggregate_id=episode.visit_id, version=episode.visit.version, payload={"episode_id": str(episode.id), "status": target})
     commit(db)
     return result
+
+
+MAX_MISSED_CALLS = 3
+DEFAULT_DEFER_MINUTES = 10
+
+
+def missed_call(db: Session, user: User, episode: ServiceEpisode, payload: EpisodeStateChange, key: str) -> dict:
+    """RECALL re-announces a called patient; DEFER returns them to WAITING with their place.
+
+    Neither erases history: the first call remains in queue_state_events, and a deferred
+    patient's queued_at is preserved so their measured wait still runs from first arrival.
+    """
+    entry = episode.queue_entry
+    if episode.status != "CALLED" or entry is None:
+        raise HTTPException(409, "Only a called patient can be recalled or deferred")
+    now = utcnow()
+    if payload.action == "RECALL":
+        entry.recall_count = (entry.recall_count or 0) + 1
+        entry.last_recalled_at = now
+        entry.version += 1
+        episode.version += 1
+        result = {"episode_id": str(episode.id), "status": "CALLED", "recall_count": entry.recall_count, "version": episode.version}
+        record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="episode.recalled", object_type="ServiceEpisode",
+                     object_id=episode.id, correlation_id=key, new={"recall_count": entry.recall_count}, reason=payload.reason)
+        enqueue_event(db, facility_id=user.facility_id, topic="episode.called", aggregate_id=episode.id, version=episode.version,
+                      payload={"episode_id": str(episode.id), "status": "CALLED"})
+        commit(db)
+        return result
+    if (entry.missed_calls or 0) + 1 > MAX_MISSED_CALLS:
+        raise HTTPException(409, f"Patient has missed {MAX_MISSED_CALLS} calls; record a no-show or ask a clinician to keep their place")
+    from app.resources import release_assignment
+    release_assignment(db, episode)
+    minutes = payload.defer_minutes or DEFAULT_DEFER_MINUTES
+    entry.missed_calls = (entry.missed_calls or 0) + 1
+    entry.deferred_until = now + timedelta(minutes=minutes)
+    entry.recall_count = 0
+    entry.status = "WAITING"
+    entry.manual_pin = False
+    entry.pin_rank = None
+    entry.version += 1
+    episode.status = "WAITING"
+    episode.called_at = None
+    episode.version += 1
+    db.add(QueueStateEvent(facility_id=user.facility_id, episode_id=episode.id, actor_id=user.id, from_status="CALLED",
+                           to_status="WAITING", metadata_json={"missed_call": True, "defer_minutes": minutes}))
+    result = {"episode_id": str(episode.id), "from_status": "CALLED", "status": "WAITING", "missed_calls": entry.missed_calls,
+              "deferred_until": entry.deferred_until, "version": episode.version}
+    record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="episode.deferred", object_type="ServiceEpisode",
+                 object_id=episode.id, correlation_id=key, old={"status": "CALLED"},
+                 new={"status": "WAITING", "missed_calls": entry.missed_calls, "defer_minutes": minutes}, reason=payload.reason)
+    enqueue_event(db, facility_id=user.facility_id, topic="visit.state_changed", aggregate_id=episode.visit_id,
+                  version=episode.visit.version, payload={"episode_id": str(episode.id), "status": "WAITING"})
+    commit(db)
+    return jsonable_encoder(result)
 
 
 @app.post("/api/v1/queue/override")
@@ -1000,8 +1141,19 @@ def restricted_status(db: Session, opaque_token: str) -> dict:
 
 @app.post("/api/v1/patient-status/lookup")
 def patient_status_lookup(payload: PatientStatusLookup, request: Request, db: Session = Depends(get_db, scope="function")):
-    rate_limiter.check(client_key(request, "patient-status"), 20, 60)
-    return restricted_status(db, payload.token)
+    # Tokens carry 192+ bits of secret, so guessing is infeasible; the strict limit is on
+    # *misses* per real client address. Valid holders are limited per token (the page polls
+    # every 10 s), and a generous per-address ceiling allows a waiting room behind one NAT.
+    miss_key = client_key(request, "patient-status-miss")
+    rate_limiter.guard(miss_key, 20, 60)
+    rate_limiter.check(client_key(request, "patient-status-ip"), 600, 60)
+    rate_limiter.check("patient-status-token:" + hashlib.sha256(payload.token.encode()).hexdigest()[:24], 20, 60)
+    try:
+        return restricted_status(db, payload.token)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            rate_limiter.record(miss_key)
+        raise
 
 
 @app.get("/api/v1/patient-status/{opaque_token}", deprecated=True)
@@ -1410,6 +1562,10 @@ def feedback_summary(user: User = Depends(require_roles("ADMIN", "RESEARCHER", "
 
 from app.admin import router as admin_router
 app.include_router(admin_router)
+from app.operations import router as operations_router
+from app.interop import router as interop_router
+app.include_router(operations_router)
+app.include_router(interop_router)
 from app.baseline import router as baseline_router
 app.include_router(baseline_router)
 from app.patients import router as patient_workspace_router

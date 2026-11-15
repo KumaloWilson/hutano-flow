@@ -238,3 +238,31 @@ def test_postgres_research_evidence_immutability_and_concurrent_trials(pg):
             with pytest.raises(DBAPIError):
                 with engine.begin() as connection:
                     connection.execute(text(query), {'id': ident})
+
+
+def test_postgres_day_close_and_back_entry_respect_database_triggers(pg):
+    """Day close cancels open episodes and appends an immutable closure; back-entry inserts
+    completed episodes, which the completed-episode trigger allows (INSERT, not UPDATE)."""
+    from datetime import timedelta
+    from app.models import DayClosure, utcnow
+    client,factory,engine=pg
+    csrf=login(client,'reception@test.local')
+    visit=create_registered_visit(client,csrf)
+    patient=client.post('/api/v1/patients',json={'pseudonym':'Synthetic PG paper','synthetic_flag':True},headers=command_headers(csrf,str(uuid.uuid4()))).json()
+    start=utcnow()-timedelta(hours=5)
+    iso=lambda minutes:(start+timedelta(minutes=minutes)).isoformat()
+    retro=client.post('/api/v1/operations/retrospective-visits',json={'patient_id':patient['id'],'arrival_at':iso(0),'paper_reference':'PG sheet #1',
+        'reason':'Synthetic outage back-entry','outcome':'COMPLETED','stages':[{'service_type':'registration','queued_at':iso(0),'started_at':iso(1),'ended_at':iso(3)},
+        {'service_type':'consultation','queued_at':iso(3),'started_at':iso(30),'ended_at':iso(40)}]},headers=command_headers(csrf,str(uuid.uuid4())))
+    assert retro.status_code==201,retro.text
+    csrf=login(client,'clinician@test.local')
+    preview=client.get('/api/v1/operations/day-close').json()
+    closed=client.post('/api/v1/operations/day-close',json={'local_date':preview['local_date'],'reason':'Synthetic end of day',
+        'expected_open_count':preview['open_count']},headers=command_headers(csrf,str(uuid.uuid4())))
+    assert closed.status_code==201,closed.text
+    assert client.get(f"/api/v1/visits/{visit['id']}").json()['status']=='LEFT_WITHOUT_SERVICE'
+    with factory() as db:
+        closure_id=db.scalar(select(DayClosure.id))
+    with pytest.raises(DBAPIError):
+        with engine.begin() as conn:
+            conn.execute(text("UPDATE day_closures SET reason='tampered' WHERE id=:id"),{'id':closure_id})

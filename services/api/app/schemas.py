@@ -14,6 +14,11 @@ class LoginRequest(APIModel):
     password: str = Field(min_length=8, max_length=128)
 
 
+class PasswordChange(APIModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
+
+
 class PatientCreate(APIModel):
     pseudonym: str | None = Field(default=None, max_length=120)
     year_of_birth: int | None = Field(default=None, ge=1900, le=2200)
@@ -86,9 +91,11 @@ class EpisodeTransfer(APIModel):
 
 
 class EpisodeStateChange(APIModel):
-    action: Literal["PAUSE", "NO_SHOW", "CANCEL", "REOPEN_WAITING"]
+    action: Literal["PAUSE", "NO_SHOW", "CANCEL", "REOPEN_WAITING", "RECALL", "DEFER"]
     version: int = Field(ge=1)
     reason: str = Field(min_length=3, max_length=240)
+    # DEFER only: minutes before a patient who missed their call is callable again.
+    defer_minutes: int | None = Field(default=None, ge=1, le=60)
 
 
 class QueueOverride(APIModel):

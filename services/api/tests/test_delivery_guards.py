@@ -16,7 +16,8 @@ from conftest import login, command_headers
 
 
 def test_login_and_token_rate_limits_are_enforced(client):
-    for _ in range(10):
+    # Unknown accounts lock exactly like real ones (ADR-027), so the lockout reveals nothing.
+    for _ in range(5):
         assert client.post('/api/v1/auth/login',json={'email':'unknown@test.local','password':'Incorrect123!'}).status_code == 401
     assert client.post('/api/v1/auth/login',json={'email':'unknown@test.local','password':'Incorrect123!'}).status_code == 429
     for _ in range(20):
