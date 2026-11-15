@@ -1,0 +1,82 @@
+services:
+  db:
+    image: postgres:17.2-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hutano_flow}
+      POSTGRES_USER: ${POSTGRES_USER:-hutano}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-local-password}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-change-this-app-password}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - hutano_postgres:/var/lib/postgresql/data
+      - ./scripts/init_database.sh:/docker-entrypoint-initdb.d/10-hutano.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hutano} -d ${POSTGRES_DB:-hutano_flow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: ./services/api
+    command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-postgresql+psycopg://hutano:change-this-local-password@db:5432/hutano_flow}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      RESEARCH_MODE: "true"
+      MODEL_ARTIFACT_DIR: /app/artifacts
+    volumes:
+      - model_artifacts:/app/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: ./services/api
+    environment: &runtime
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://hutano_app:change-this-app-password@db:5432/hutano_flow}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      RESEARCH_MODE: ${RESEARCH_MODE:-true}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      MODEL_ARTIFACT_DIR: /app/artifacts
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - model_artifacts:/app/artifacts
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  worker:
+    build: ./services/api
+    command: ["python", "-m", "app.worker"]
+    environment: *runtime
+    volumes:
+      - model_artifacts:/app/artifacts
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  hutano_postgres:
+  model_artifacts:
+

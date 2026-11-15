@@ -1,0 +1,63 @@
+{
+  "model": {
+    "version": "ops-34619e5b358a-c761c158",
+    "created_at": "2026-10-26T07:46:05.859486Z",
+    "metrics": {
+      "source": "SYNTHETIC_OPERATIONAL",
+      "warning": "Synthetic operational prediction; not a clinical recommendation or promised service time",
+      "version": "ops-34619e5b358a-c761c158",
+      "dataset_hash": "34619e5b358ab7ca001e76d7c3ecdcca8fe6b302740fe0683ee9f296c6ed33d3",
+      "selected_estimator": "stage_median",
+      "selection_basis": "Calibration-partition MAE; untouched temporal test partition used only for reporting",
+      "train_rows": 709,
+      "calibration_rows": 229,
+      "test_rows": 240,
+      "visit_groups": 300,
+      "split": "Chronological whole-visit 60/20/20 with outcome-availability purge; no visit crosses partitions",
+      "test_start": "2026-10-17T09:22:05.228768+00:00",
+      "features": [
+        "stage",
+        "visit_type",
+        "hour",
+        "weekday"
+      ],
+      "mae_minutes": 2.9825215813194443,
+      "median_baseline_mae_minutes": 2.9825215813194443,
+      "candidate_calibration_mae_minutes": 2.985957025874085,
+      "baseline_calibration_mae_minutes": 2.9490887314774383,
+      "nominal_interval_coverage": 0.8,
+      "test_interval_coverage": 0.7875,
+      "mean_interval_width_minutes": 9.4809886,
+      "calibration_margin_minutes": 4.7404943,
+      "limitations": [
+        "Intervals are marginal, not individual guarantees",
+        "Distribution shift can invalidate coverage",
+        "No clinical urgency or treatment inference"
+      ],
+      "stage_samples": {
+        "registration": 180,
+        "triage": 178,
+        "consultation": 176,
+        "pharmacy": 175
+      }
+    }
+  },
+  "forecast": {
+    "available": true,
+    "warning": "Synthetic operational prediction; not a clinical recommendation or promised service time",
+    "reason": null,
+    "basis": "Next 60 minutes interpolated from rolling observed-day hourly means; calendar periods without records are unknown, not zero",
+    "observation_days": 22,
+    "hour": 10,
+    "expected_arrivals_next_hour": 2.57,
+    "historical_hour_range": [
+      1.8000000000000003,
+      3.0
+    ],
+    "range_kind": "Descriptive historical spread, not a calibrated forecast interval",
+    "walk_forward_mae_arrivals_per_hour": 0.067,
+    "constant_baseline_mae": 0.955,
+    "stale_history": false,
+    "last_observed_day": "2026-10-25"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "verified_at": "2026-10-26T08:01:21.118009+00:00",
+  "status": "PASS",
+  "scenario_id": "509daa53-ad74-499a-8835-fcad30129e25",
+  "run_ids": [
+    "ca8b6502-99dc-4125-9a41-cf7f5dde0ccc",
+    "593b018c-2e95-4898-a7d2-af132d4e125a"
+  ],
+  "config_hash": "11fcdd3a93d0bc3eb9a0e68e0ea0a7c2ec5e150b61b2addd495b21c322940e7f",
+  "identical_repeated_worker_results": true,
+  "patients": 50,
+  "rooms": 3,
+  "replications": 5,
+  "paired_input_hashes": [
+    "7bfedbdab4e12bc68cefe276d9f6790ec86ff80af884edc90aaf0205a21ec281",
+    "201c900e492295b116d2725cf07df2bcf58f185d54a1db4844704fcb06e0cf9e",
+    "e62c8ed87c45a2c6d699321309359f74a77a3aa649a2965d838e1d21acae008c",
+    "15ea7013a8c34aaa8e63f2c387a1c7d35c4dd8396eb7f1833a8e290e5c4f1dd0",
+    "697105db3c543868413d3580325cd1fd473ee533405ca10521fc914ea7d75e2f"
+  ],
+  "base_demand": {
+    "demand_multiplier": 1.0,
+    "policies": {
+      "FIXED_ROOM": {
+        "mean_wait_minutes": 94.20102,
+        "mean_replication_p90_minutes": 180.76884,
+        "completed_mean": 48.4,
+        "unserved_mean": 1.6,
+        "low_urgency_long_waits": 119,
+        "mean_wait_by_urgency": {
+          "P1": 60.224275,
+          "P2": 53.73446,
+          "P3": 84.19376,
+          "P4": 88.35628,
+          "P5": 125.3486
+        }
+      },
+      "NEXT_AVAILABLE": {
+        "mean_wait_minutes": 76.66108,
+        "mean_replication_p90_minutes": 126.87644,
+        "completed_mean": 48.4,
+        "unserved_mean": 1.6,
+        "low_urgency_long_waits": 113,
+        "mean_wait_by_urgency": {
+          "P1": 52.09440000000001,
+          "P2": 50.48358,
+          "P3": 72.93419999999999,
+          "P4": 75.65748,
+          "P5": 94.00413999999999
+        }
+      },
+      "CAPACITY_AWARE": {
+        "mean_wait_minutes": 76.52311999999999,
+        "mean_replication_p90_minutes": 127.40311999999999,
+        "completed_mean": 48.4,
+        "unserved_mean": 1.6,
+        "low_urgency_long_waits": 110,
+        "mean_wait_by_urgency": {
+          "P1": 50.334975,
+          "P2": 50.89376,
+          "P3": 72.4906,
+          "P4": 74.69092,
+          "P5": 94.54728
+        }
+      }
+    },
+    "paired_capacity_minus_fixed_minutes": -17.6779,
+    "paired_95_ci": [
+      -26.358796819063134,
+      -8.997003180936868
+    ],
+    "input_hashes": [
+      "7bfedbdab4e12bc68cefe276d9f6790ec86ff80af884edc90aaf0205a21ec281",
+      "201c900e492295b116d2725cf07df2bcf58f185d54a1db4844704fcb06e0cf9e",
+      "e62c8ed87c45a2c6d699321309359f74a77a3aa649a2965d838e1d21acae008c",
+      "15ea7013a8c34aaa8e63f2c387a1c7d35c4dd8396eb7f1833a8e290e5c4f1dd0",
+      "697105db3c543868413d3580325cd1fd473ee533405ca10521fc914ea7d75e2f"
+    ]
+  },
+  "operational_model": "ops-34619e5b358a-c761c158",
+  "clinical_priority_mutations": 0
+}

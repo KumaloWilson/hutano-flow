@@ -1,0 +1,56 @@
+{
+  "verified_at": "2026-10-28T11:38:49.033011+00:00",
+  "status": "PASS",
+  "protocol_id": "7cda3875-a0bc-4167-b8bd-2889eb4a6422",
+  "protocol_hash": "704ad0869a811b23904da771bea4c6c212c0efb840e0b07410eafd2d2734e014",
+  "run_ids": [
+    "021244e2-4ce5-439f-862d-a3b7403c40bc",
+    "1e3b03b0-b187-4f09-9197-281181a26df0"
+  ],
+  "repeated_results_identical": true,
+  "model_version": "synthetic-logreg-5835d6ee48fb-2026-33e89aa1",
+  "model_status": "EXPERIMENTAL",
+  "model_lifecycle_commands": 0,
+  "participant_responses_created": 0,
+  "patient_or_schedule_commands": 0,
+  "wait_prediction": {
+    "rows": 683,
+    "mae_minutes": 15.49521564222017,
+    "baseline_mae_minutes": 17.842546875784596,
+    "interval_coverage": 0.8111273792093704,
+    "mean_interval_width_minutes": 24.00672511362319
+  },
+  "learned_minus_historical": {
+    "mean_difference_minutes": -4.096648123245597,
+    "paired_95_ci": [
+      -8.672634554290788,
+      0.4793383077995941
+    ],
+    "pairs": 10,
+    "half_width_minutes": 4.575986431045191
+  },
+  "raw_log_loss": 1.326239137351631,
+  "calibrated_log_loss": 1.3228226380169048,
+  "selected_threshold_test": {
+    "threshold": 0.75,
+    "n": 200,
+    "eligible_n": 192,
+    "accepted_n": 11,
+    "abstained_n": 189,
+    "error_n": 0,
+    "coverage": 0.055,
+    "risk": 0.0,
+    "risk_ci95": [
+      0.0,
+      0.2588329669680317
+    ],
+    "coverage_ci95": [
+      0.03098534170345884,
+      0.0957869987723084
+    ]
+  },
+  "limitations": [
+    "Synthetic software verification, not clinical effectiveness or human recruitment",
+    "Existing data retained; this command adds protocol/run/model research evidence"
+  ]
+}

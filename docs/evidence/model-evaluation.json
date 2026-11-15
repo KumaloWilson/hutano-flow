@@ -1,0 +1,377 @@
+{
+  "research_only": true,
+  "version": "synthetic-logreg-5835d6ee48fb-2026-a502d770",
+  "status": "EXPERIMENTAL",
+  "active": false,
+  "metrics": {
+    "macro_f1": 0.40464218632300647,
+    "per_class": {
+      "P1": {
+        "precision": 0.6229508196721312,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.6440677966101694,
+        "support": 57.0
+      },
+      "P2": {
+        "precision": 0.2619047619047619,
+        "recall": 0.2558139534883721,
+        "f1-score": 0.25882352941176473,
+        "support": 43.0
+      },
+      "P3": {
+        "precision": 0.36666666666666664,
+        "recall": 0.34375,
+        "f1-score": 0.3548387096774194,
+        "support": 32.0
+      },
+      "P4": {
+        "precision": 0.2903225806451613,
+        "recall": 0.2571428571428571,
+        "f1-score": 0.2727272727272727,
+        "support": 35.0
+      },
+      "P5": {
+        "precision": 0.4722222222222222,
+        "recall": 0.5151515151515151,
+        "f1-score": 0.4927536231884058,
+        "support": 33.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        38,
+        15,
+        2,
+        2,
+        0
+      ],
+      [
+        14,
+        11,
+        7,
+        8,
+        3
+      ],
+      [
+        4,
+        5,
+        11,
+        5,
+        7
+      ],
+      [
+        3,
+        7,
+        7,
+        9,
+        9
+      ],
+      [
+        2,
+        4,
+        3,
+        7,
+        17
+      ]
+    ],
+    "labels": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+    ],
+    "under_triage_against_synthetic_label_count": 58,
+    "over_triage_against_synthetic_label_count": 56,
+    "label_source": "SYNTHETIC",
+    "warning": "EXPERIMENTAL \u2014 NOT VALIDATED FOR PATIENT CARE; synthetic label agreement only",
+    "seed": 2026,
+    "pipeline_version": "synthetic-logreg-v2",
+    "runtime_versions": {
+      "scikit_learn": "1.9.1",
+      "numpy": "2.5.4",
+      "pandas": "2.2.3",
+      "joblib": "1.6.0"
+    },
+    "test_rows": 200,
+    "train_rows": 800,
+    "split_strategy": "temporal 80/20 holdout; 3-fold stratified CV inside training only",
+    "holdout_start": "2026-01-09 08:00:00+00:00",
+    "class_distribution": {
+      "P1": 243,
+      "P2": 217,
+      "P4": 185,
+      "P5": 183,
+      "P3": 172
+    },
+    "missingness": {
+      "age_band": 0,
+      "visit_type": 0,
+      "arrival_mode": 0,
+      "hour": 0,
+      "recorded_measurement": 50,
+      "urgency": 0,
+      "service_minutes": 0,
+      "observed_at": 0
+    },
+    "comparators": {
+      "majority": {
+        "macro_f1": 0.08871595330739299,
+        "per_class": {
+          "P1": {
+            "precision": 0.285,
+            "recall": 1.0,
+            "f1-score": 0.44357976653696496,
+            "support": 57.0
+          },
+          "P2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 43.0
+          },
+          "P3": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 32.0
+          },
+          "P4": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 35.0
+          },
+          "P5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 33.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            57,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            43,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            32,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            35,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            33,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "labels": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "under_triage_against_synthetic_label_count": 0,
+        "over_triage_against_synthetic_label_count": 143
+      },
+      "random_forest": {
+        "macro_f1": 0.35605317634289724,
+        "per_class": {
+          "P1": {
+            "precision": 0.5373134328358209,
+            "recall": 0.631578947368421,
+            "f1-score": 0.5806451612903226,
+            "support": 57.0
+          },
+          "P2": {
+            "precision": 0.2127659574468085,
+            "recall": 0.23255813953488372,
+            "f1-score": 0.2222222222222222,
+            "support": 43.0
+          },
+          "P3": {
+            "precision": 0.4444444444444444,
+            "recall": 0.125,
+            "f1-score": 0.1951219512195122,
+            "support": 32.0
+          },
+          "P4": {
+            "precision": 0.2857142857142857,
+            "recall": 0.34285714285714286,
+            "f1-score": 0.3116883116883117,
+            "support": 35.0
+          },
+          "P5": {
+            "precision": 0.45714285714285713,
+            "recall": 0.48484848484848486,
+            "f1-score": 0.47058823529411764,
+            "support": 33.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            36,
+            16,
+            1,
+            4,
+            0
+          ],
+          [
+            19,
+            10,
+            2,
+            8,
+            4
+          ],
+          [
+            7,
+            6,
+            4,
+            7,
+            8
+          ],
+          [
+            4,
+            11,
+            1,
+            12,
+            7
+          ],
+          [
+            1,
+            4,
+            1,
+            11,
+            16
+          ]
+        ],
+        "labels": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "under_triage_against_synthetic_label_count": 57,
+        "over_triage_against_synthetic_label_count": 65
+      }
+    },
+    "selection_reason": "Logistic regression selected for exact additive logit explanations; all comparator outcomes retained.",
+    "cross_validation_macro_f1": 0.3933101019980312,
+    "best_parameters": {
+      "classifier__C": 10.0
+    },
+    "duration": {
+      "median_baseline_mae_minutes": 3.0059900000000006,
+      "random_forest_mae_minutes": 2.599658676393657
+    },
+    "calibration": {
+      "log_loss": 1.3060922953853464,
+      "bins": [
+        {
+          "lower": 0.2,
+          "upper": 0.30000000000000004,
+          "n": 46,
+          "mean_confidence": 0.2853761035165074,
+          "fraction_correct": 0.2826086956521739
+        },
+        {
+          "lower": 0.30000000000000004,
+          "upper": 0.4,
+          "n": 80,
+          "mean_confidence": 0.3299910690384927,
+          "fraction_correct": 0.35
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "n": 23,
+          "mean_confidence": 0.44518563066135075,
+          "fraction_correct": 0.4782608695652174
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "n": 14,
+          "mean_confidence": 0.5495005821797962,
+          "fraction_correct": 0.7142857142857143
+        },
+        {
+          "lower": 0.6000000000000001,
+          "upper": 0.7000000000000001,
+          "n": 15,
+          "mean_confidence": 0.6535786253349493,
+          "fraction_correct": 0.3333333333333333
+        },
+        {
+          "lower": 0.7000000000000001,
+          "upper": 0.8,
+          "n": 10,
+          "mean_confidence": 0.7380333037364818,
+          "fraction_correct": 0.7
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "n": 10,
+          "mean_confidence": 0.8558059173537498,
+          "fraction_correct": 1.0
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "n": 2,
+          "mean_confidence": 0.9605732199258046,
+          "fraction_correct": 1.0
+        }
+      ],
+      "expected_calibration_error": 0.057502721934758305,
+      "method": "Held-out reliability bins for CV-tuned probabilistic logistic regression; no claim of clinical calibration"
+    },
+    "abstention_threshold": 0.55,
+    "low_confidence_requires_review_count": 156,
+    "slices": {
+      "child": {
+        "n": 34,
+        "macro_f1": 0.2391304347826087
+      },
+      "adult": {
+        "n": 129,
+        "macro_f1": 0.4557559837212201
+      },
+      "older_adult": {
+        "n": 37,
+        "macro_f1": 0.3488220015278839
+      }
+    },
+    "slice_policy": "Synthetic age-band diagnostic; n<30 suppressed. Sex is not collected. No fairness inference.",
+    "limitations": [
+      "No subject identifiers: repeated-subject leakage cannot be ruled out for external data.",
+      "Synthetic labels are not clinician ground truth",
+      "No clinical effectiveness claim"
+    ],
+    "source_dataset_hash": "6bf0cb9497f79e990831df43397d156d83a167dfc3fe492f2fff5912920b7a78"
+  }
+}

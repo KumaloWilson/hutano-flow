@@ -1,0 +1,488 @@
+{
+  "research_label": "SYNTHETIC SIMULATION \u2014 NOT CLINICAL EVIDENCE",
+  "seed": 2026,
+  "replications": 10,
+  "patient_count_per_replication": 300,
+  "input_sequence_hashes": [
+    "940081c2bcda5750d2f170ca59f7d8c6af7eec60501267acf245446dc19851d4",
+    "07f919a7146ada757262e1d2b45cdba11f3dae341d3466312e2a0e8902aab5de",
+    "55c4e767e31e7ee6a2c05d07ca67f99424b665059926080b84cdcb3b4093d5b2",
+    "6dc72744446f433261d0772d289a0bab73f5fa02d01a2f6f2ce8de9c48cb08bc",
+    "6a3c256e793d5b675dc8cf8547d2902887a15064955ffbd73200ce7248c279d7",
+    "b06265928568ebb0af588bdd21b2c052d0f25e17d7981e464bd068f4bf7cd630",
+    "bbd93f885ee2be2e3f70ea4d52f99a254703f9ae72d3ea278a8732ee30e271e2",
+    "bc2d24f1c913ae0482bd28d6059f63338a4bc5d77f898d8482517d76735b9630",
+    "af97b3d80ccdc225444f7f4268cb34186a96c22644f7dde6c65f5abb3a8bd564",
+    "306d4210cbe694b202f997934e4fe528ce03e75d81a8ab8ea59569b22c4c07a8"
+  ],
+  "policy_version": "safe-groups-v2",
+  "parameters": {
+    "servers": 0,
+    "arrival_rate_per_hour": 24.0,
+    "mean_service_minutes": 12.0,
+    "urgency_mix": null,
+    "pharmacy_probability": 0.75,
+    "arrival_pattern": "poisson",
+    "hourly_rates": null,
+    "stage_means": {},
+    "stage_capacities": {},
+    "outage": null,
+    "warning_minutes": 60,
+    "service_tail": 0.5
+  },
+  "policies": {
+    "FCFS": {
+      "waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "consultation_waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "arrival_to_provider_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "total_visit_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "by_urgency": {
+        "P1": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P2": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P3": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P4": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P5": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        }
+      },
+      "completed_mean": 0,
+      "unserved_mean": 300,
+      "utilisation_mean": 0.0,
+      "low_urgency_long_waits": 0,
+      "stages": {
+        "registration": {
+          "wait_minutes": {
+            "mean": 0.9462,
+            "median": 0.0,
+            "p90": 3.3196,
+            "maximum": 9.9953
+          },
+          "service_minutes": {
+            "mean": 2.9623,
+            "median": 2.6038,
+            "p90": 4.9604,
+            "maximum": 12.9185
+          },
+          "utilisation": 0.29704040168383106,
+          "queue_length_mean": 0.190047810516734,
+          "queue_length_maximum": 6
+        },
+        "triage": {
+          "wait_minutes": {
+            "mean": 364.7899,
+            "median": 360.4183,
+            "p90": 652.3198,
+            "maximum": 789.1036
+          },
+          "service_minutes": {
+            "mean": 4.9704,
+            "median": 4.3951,
+            "p90": 8.23,
+            "maximum": 25.5022
+          },
+          "utilisation": 0.9964900108806466,
+          "queue_length_mean": 73.07717934810906,
+          "queue_length_maximum": 163
+        },
+        "consultation": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 149.02130884278094,
+          "queue_length_maximum": 300
+        },
+        "pharmacy": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 0.0,
+          "queue_length_maximum": 0
+        }
+      },
+      "replication_mean_waits": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "URGENCY_FIRST": {
+      "waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "consultation_waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "arrival_to_provider_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "total_visit_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "by_urgency": {
+        "P1": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P2": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P3": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P4": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P5": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        }
+      },
+      "completed_mean": 0,
+      "unserved_mean": 300,
+      "utilisation_mean": 0.0,
+      "low_urgency_long_waits": 0,
+      "stages": {
+        "registration": {
+          "wait_minutes": {
+            "mean": 0.9462,
+            "median": 0.0,
+            "p90": 3.3196,
+            "maximum": 9.9953
+          },
+          "service_minutes": {
+            "mean": 2.9623,
+            "median": 2.6038,
+            "p90": 4.9604,
+            "maximum": 12.9185
+          },
+          "utilisation": 0.29704040168383106,
+          "queue_length_mean": 0.190047810516734,
+          "queue_length_maximum": 6
+        },
+        "triage": {
+          "wait_minutes": {
+            "mean": 364.7899,
+            "median": 360.4183,
+            "p90": 652.3198,
+            "maximum": 789.1036
+          },
+          "service_minutes": {
+            "mean": 4.9704,
+            "median": 4.3951,
+            "p90": 8.23,
+            "maximum": 25.5022
+          },
+          "utilisation": 0.9964900108806466,
+          "queue_length_mean": 73.07717934810906,
+          "queue_length_maximum": 163
+        },
+        "consultation": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 149.02130884278094,
+          "queue_length_maximum": 300
+        },
+        "pharmacy": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 0.0,
+          "queue_length_maximum": 0
+        }
+      },
+      "replication_mean_waits": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "HYBRID": {
+      "waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "consultation_waiting_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "arrival_to_provider_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "total_visit_minutes": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "by_urgency": {
+        "P1": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P2": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P3": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P4": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        },
+        "P5": {
+          "mean": null,
+          "median": null,
+          "p90": null,
+          "maximum": null
+        }
+      },
+      "completed_mean": 0,
+      "unserved_mean": 300,
+      "utilisation_mean": 0.0,
+      "low_urgency_long_waits": 0,
+      "stages": {
+        "registration": {
+          "wait_minutes": {
+            "mean": 0.9462,
+            "median": 0.0,
+            "p90": 3.3196,
+            "maximum": 9.9953
+          },
+          "service_minutes": {
+            "mean": 2.9623,
+            "median": 2.6038,
+            "p90": 4.9604,
+            "maximum": 12.9185
+          },
+          "utilisation": 0.29704040168383106,
+          "queue_length_mean": 0.190047810516734,
+          "queue_length_maximum": 6
+        },
+        "triage": {
+          "wait_minutes": {
+            "mean": 364.7899,
+            "median": 360.4183,
+            "p90": 652.3198,
+            "maximum": 789.1036
+          },
+          "service_minutes": {
+            "mean": 4.9704,
+            "median": 4.3951,
+            "p90": 8.23,
+            "maximum": 25.5022
+          },
+          "utilisation": 0.9964900108806466,
+          "queue_length_mean": 73.07717934810906,
+          "queue_length_maximum": 163
+        },
+        "consultation": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 149.02130884278094,
+          "queue_length_maximum": 300
+        },
+        "pharmacy": {
+          "wait_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "service_minutes": {
+            "mean": null,
+            "median": null,
+            "p90": null,
+            "maximum": null
+          },
+          "utilisation": 0.0,
+          "queue_length_mean": 0.0,
+          "queue_length_maximum": 0
+        }
+      },
+      "replication_mean_waits": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  },
+  "comparison": {
+    "absolute_mean_difference_minutes": null,
+    "percentage_difference": null,
+    "paired_95_ci_minutes": null,
+    "hybrid_improved_mean_wait": false,
+    "paired_replications": [],
+    "method": "Shared arrival, route, urgency and service sequence across all policies; paired Student-t interval across independent replications."
+  },
+  "definitions": {
+    "primary": "Sum of waiting minutes across the completed outpatient journey",
+    "arrival_to_provider": "Consultation start minus arrival (includes registration and triage service)",
+    "utilisation": "Busy time / nominal server capacity over the drained replication horizon",
+    "outage": "Non-preemptive: already-started service completes; affected workers pause new starts during outage"
+  },
+  "limitations": [
+    "Synthetic distributions are engineering assumptions",
+    "Urgency labels do not implement a triage protocol",
+    "Hybrid and urgency-first can coincide when age cannot cross urgency groups",
+    "No policy can create staffing capacity",
+    "Unserved visits are reported separately and excluded from completed-journey means"
+  ]
+}

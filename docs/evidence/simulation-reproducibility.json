@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "replications": 10,
+  "patients_per_replication": 300,
+  "repeated_results_identical": true,
+  "result_sha256": "57eebb569014cc464eb3a4f5f7f739d2bc53b50e52a770a23f9305f555937214",
+  "same_category_hybrid_difference_minutes": 0,
+  "zero_capacity_unserved_per_replication": 300
+}

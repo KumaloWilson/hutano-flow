@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "open_streams": 20,
+  "verified_at": "2026-10-28T11:46:21.150040+00:00",
+  "health_response_seconds": [
+    0.0385,
+    0.0096,
+    0.0127
+  ],
+  "held_open_seconds": 6.3,
+  "authenticated_requests_remained_available": true,
+  "database_pool_remained_available": true
+}

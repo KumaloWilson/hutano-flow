@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-10-30T07:54:31.436217+00:00",
+  "stats": {
+    "startTime": "2026-10-30T07:52:56.797Z",
+    "duration": 83410.95,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "isolated_full_stack": true,
+  "main_project_unchanged": true,
+  "temporary_project_and_volumes_removed": true
+}

@@ -1,0 +1,15 @@
+# Local, fictional-data demonstrations only. Set DEMO_HOST to this machine's LAN IP.
+# docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+services:
+  api:
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3000,http://${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:3000
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    environment:
+      NEXT_PUBLIC_API_URL: ""
+    ports: !override
+      - "127.0.0.1:3000:3000"
+      - "${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:3000:3000"

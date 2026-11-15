@@ -1,0 +1,25 @@
+# Disposable browser verification; use with a unique hutano_browser_* project.
+services:
+  db:
+    ports: !reset []
+  migrate:
+    image: hutano_flow-migrate:latest
+  api:
+    image: hutano_flow-api:latest
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3100
+    ports: !override
+      - "127.0.0.1:8100:8000"
+  worker:
+    image: hutano_flow-worker:latest
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3100
+  web:
+    image: hutano_flow-browser-web:latest
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8100
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8100
+    ports: !override
+      - "127.0.0.1:3100:3000"

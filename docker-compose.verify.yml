@@ -1,0 +1,14 @@
+# Disposable verification only; never replaces the main project's volumes or ports.
+services:
+  db:
+    ports: !reset []
+  migrate:
+    image: hutano_flow-migrate:latest
+  api:
+    image: hutano_flow-api:latest
+    ports: !reset []
+  worker:
+    image: hutano_flow-worker:latest
+  web:
+    image: hutano_flow-web:latest
+    ports: !reset []

@@ -1,0 +1,261 @@
+{
+  "monitor": {
+    "age_slices": {
+      "adult": {
+        "n": 0,
+        "suppressed": true
+      },
+      "child": {
+        "n": 0,
+        "suppressed": true
+      },
+      "older_adult": {
+        "n": 0,
+        "suppressed": true
+      }
+    },
+    "automatic_activation": false,
+    "automatic_retraining": false,
+    "categorical_drift": {},
+    "limitations": [
+      "Distribution change is not proof of performance deterioration",
+      "Pre-reveal clinician assessments are comparison labels, not clinical ground truth",
+      "Shadow case mix is synthetic and selected, not a representative clinic sample",
+      "No alarm threshold or statistical significance is claimed",
+      "Age-band performance suppressed below 30; no demographic fairness certification"
+    ],
+    "minimum_drift_samples": 10,
+    "missingness": {
+      "age_band": null,
+      "arrival_mode": null,
+      "hour": null,
+      "recorded_measurement": null,
+      "visit_type": null
+    },
+    "numeric_drift": {},
+    "priority_effect": "NONE",
+    "reference_available": false,
+    "shadow_completed": 0,
+    "windows": []
+  },
+  "privacy": "No participant identifiers, consent references, comments or individual case labels exported",
+  "protocol": {
+    "case_count": 24,
+    "config_hash": "704ad0869a811b23904da771bea4c6c212c0efb840e0b07410eafd2d2734e014",
+    "configuration": {
+      "analysis": "Descriptive participant/case-dependent study; no unplanned significance claim; operations use held-out paired replications",
+      "case_count": 24,
+      "case_hashes": [
+        "2f68f3039ec6c9c69ec38b8ff491ca7c914fc8a42bdad5f3eaff9e38c8839db1",
+        "21d5b37aef3b9ced4d7fafa1de6ec92d3f5583416bb1272a6acb5ea2c6547b6a",
+        "28617ce04e709bef01f648538ba696fbb9639de39482a4c8f8c896c6383c9dd4",
+        "a03b83d8023068d30a432630fe48fc134551304dc50a1d8977d93a52a8db6380",
+        "ff0e76bb0c46d5a3627cf96efd26c0b9c994f5241ab9aaffcda1fb9f347a9348",
+        "7dcd4dbe147f665504cf2696c7e4c0f3cc824a9a8f9ccb23b7bc42c326d0e5eb",
+        "491c7a09bcfb16cdd0b7a573b5ebb3ea70a2207d578696abcce89ebc5118def6",
+        "15f33eeed086f2626e0cadcf8093e6b730d7e2cebba2e164d46f4051c81ad6d2",
+        "18c7fa22f1f9f05567fe1a713678fbf9df04705a52e9411ddcc9a447519a9d10",
+        "ac191518e2c6aff9411ab8e2578cb5cab7c2bfb7fd6ade591666c47443b7b278",
+        "136b94fb9e0b09b8ae72b6ccb2c2dd17d180bf32ced56467112a8bb6ea0ea325",
+        "fedfa6a9548e13bf261a75674208fb80cf04421a614e5e1e8d2aebd0595a990d",
+        "02c0300b8861b0fca1d74dfd6d56398744be0600e23c2fdaaa56dd4b686cd900",
+        "3974c0c46ebeeb4ee11212ca741187a4e9f506b9c5dc964b2e708b7a0b7f9a7e",
+        "75669c833fd615ccec6cb9867ca19c9a180841bb60e487a0d4b0e30996650472",
+        "4bbfc631c513746e470b2df34de43786ebbc979006b752d019d444fa18fd4edd",
+        "640733b7aa04523e2ac0bc9f38865f1ccfa417205b4115a93f236ffb10bb449a",
+        "24f586dcd298094eefcab96d33162fe2836867348c7130f5f4b05dd097266a0d",
+        "0b500295a1e7e0bfe0c82d5866b6bee16b8c19762b09d618268b9520d27cb638",
+        "dc43a1df523a9f2b33a7643f3ccefa36bb9f4c1c6f58eb60a0a4e4562fcd59b0",
+        "f93f4bfe6e12df1c56b507fd7a8916394da3a359485c33bcd6987af40a58ec70",
+        "f97c9d3b9e4d93702bc000af1570836640b152fa4acdf75bb14d30b3398f3f05",
+        "acf010c334eb9c964c465a06ad57dc59f477df6f6ef985706375e1c08afd749c",
+        "ace67b26caa6e823e07131b38a6109c53f69eae57434539d512ec72dadf4f33b"
+      ],
+      "case_selection": "Seeded distinct predictor snapshots from final chronological 20%; no subject identifiers exist in this synthetic schema",
+      "dataset_hash": "6bf0cb9497f79e990831df43397d156d83a167dfc3fe492f2fff5912920b7a78",
+      "dataset_quality": {
+        "class_distribution": {
+          "P1": 243,
+          "P2": 217,
+          "P3": 172,
+          "P4": 185,
+          "P5": 183
+        },
+        "columns": [
+          "age_band",
+          "visit_type",
+          "arrival_mode",
+          "hour",
+          "recorded_measurement",
+          "urgency",
+          "service_minutes",
+          "observed_at"
+        ],
+        "label_source": "SYNTHETIC",
+        "missing": {
+          "age_band": 0,
+          "arrival_mode": 0,
+          "hour": 0,
+          "observed_at": 0,
+          "recorded_measurement": 50,
+          "service_minutes": 0,
+          "urgency": 0,
+          "visit_type": 0
+        },
+        "warnings": [
+          "No subject identifiers: repeated-subject leakage cannot be ruled out for external data."
+        ]
+      },
+      "feature_schema": {
+        "age_band": {
+          "available_at": "synthetic intake",
+          "unit": "category",
+          "values": [
+            "child",
+            "adult",
+            "older_adult"
+          ]
+        },
+        "arrival_mode": {
+          "available_at": "synthetic arrival",
+          "unit": "category",
+          "values": [
+            "walk_in",
+            "referred"
+          ]
+        },
+        "excluded_predictors": [
+          "urgency",
+          "service_minutes",
+          "post-assessment decisions",
+          "identifiers"
+        ],
+        "hour": {
+          "available_at": "synthetic arrival",
+          "unit": "hour 0\u201323"
+        },
+        "missingness": "Null remains missing; no normal vital signs are assumed",
+        "recorded_measurement": {
+          "available_at": "synthetic assessment",
+          "meaning": "Generator input, NOT a vital sign or clinical cutoff",
+          "unit": "dimensionless"
+        },
+        "visit_type": {
+          "available_at": "synthetic intake",
+          "unit": "category",
+          "values": [
+            "new",
+            "follow_up",
+            "referral"
+          ]
+        }
+      },
+      "label_source": "SYNTHETIC_GENERATOR; independent reviews retained separately",
+      "model_metrics_hash": null,
+      "model_version": null,
+      "operations_config": {
+        "arrivals_per_day": 50,
+        "missing_rate": 0.0,
+        "replications": 10,
+        "seed": 2026,
+        "shift_strength": 1.0,
+        "test_days": 12,
+        "training_days": 40
+      },
+      "primary_project_outcome": "Original Objective 4: sum of completed outpatient journey waiting minutes",
+      "protocol_version": "workbench-protocol-v1",
+      "seed": 2026,
+      "supporting_outcomes": [
+        "synthetic label agreement",
+        "abstention coverage",
+        "explanation comprehension",
+        "consultation wait prediction",
+        "fixed-budget resource planning"
+      ],
+      "trial_assignment": "Participant-offset rotating MANUAL/ADVISORY/EXPLANATION on successive unseen cases; SHADOW withholds output until independent assessment",
+      "warning": "Synthetic research only \u2014 no clinical validation, autonomous decisions or live schedule changes"
+    },
+    "created_at": "2026-10-28 11:38:34.688813+00:00",
+    "dataset_id": "f8ad18fd-9ea0-4d0e-ad32-40f019aade56",
+    "design": "MANUAL_ONLY",
+    "id": "7cda3875-a0bc-4167-b8bd-2889eb4a6422",
+    "model_id": null,
+    "name": "Verified research-depth operations \u00b7 synthetic",
+    "operations_config": {
+      "arrivals_per_day": 50,
+      "missing_rate": 0.0,
+      "replications": 10,
+      "seed": 2026,
+      "shift_strength": 1.0,
+      "test_days": 12,
+      "training_days": 40
+    },
+    "question": "On independent synthetic days, do evaluated waiting intervals and learned forecast planning improve on simpler operational comparators under equal paid staff hours?"
+  },
+  "summary": {
+    "adjudicated_cases": 0,
+    "arms": [],
+    "blind_reviews": 0,
+    "cases": 24,
+    "completed_trials": 0,
+    "labels": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+    ],
+    "limitations": [
+      "Synthetic-label agreement is not clinical accuracy",
+      "Pooled first-two-reviewer agreement; reviewer pairs may vary",
+      "Weighted kappa treats adjacent neutral labels as ordinal steps, not clinical harm distances",
+      "Descriptive study; participant/case dependence precludes naive independent-row significance tests",
+      "Trust is an unvalidated descriptive rating; elapsed time includes interruptions",
+      "Manual/shadow decisions cannot be counted as rejection of advice that was never shown before the decision",
+      "Reviewers cannot trial cases they labelled or adjudicated; repeated feature snapshots are excluded",
+      "No recruited participants or approved fieldwork are inferred from software fixtures"
+    ],
+    "linear_weighted_kappa": null,
+    "pair_agreement": null,
+    "pair_confusion_matrix": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "paired_cases": 0,
+    "participants": 0
+  },
+  "warning": "Synthetic research only \u2014 no clinical validation, autonomous decisions or live schedule changes"
+}

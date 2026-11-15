@@ -1,0 +1,18 @@
+research_label,Synthetic/demo operational measurements
+# report_title,"""Hutano Flow measured synthetic outpatient flow"""
+# source_type,"""SYNTHETIC_OPERATIONAL"""
+# dataset_hash,"""5a98ac7eebd420a391feaf1b327eb42b10839dd8cce1dd90e24dfd77c6fbcef2"""
+# dataset_hash_basis,"""Sorted effective stage and visit timing/status tuples, without identifiers; audited corrections affect this hash"""
+# units,"""minutes unless otherwise labelled"""
+# model_version,null
+# observation_period,"{""from"": ""2026-10-01T06:01:55.184370+00:00"", ""through"": ""2026-10-25T10:11:03.363079+00:00""}"
+# policy_version,"""demo-hybrid-v1"""
+# timestamp_basis,"""Latest audited episode correction where present; original timestamps retained in the journey timeline. Visit completion remains its original event."""
+# definitions,"{""arrival_to_provider"": ""first consultation started_at - arrival_at"", ""override_rate"": ""OVERRIDE / (ACCEPT + REJECT + OVERRIDE) clinician model reviews; manual no-model decisions excluded"", ""queue_length"": ""eligible WAITING snapshot at report generation"", ""service"": ""ended_at - started_at - accumulated pause seconds for completed episodes"", ""throughput"": ""completed visits across displayed observation period"", ""waiting"": ""started_at - queued_at; excludes cancelled, no-show and transferred stages""}"
+service_point,completed,mean_wait_minutes,p90_wait_minutes,mean_service_minutes
+Registration,303,16.1002,26.6496,8.0866
+Triage,302,16.4574,27.7374,8.0637
+Consultation,302,15.4967,26.8824,7.8985
+Pharmacy,302,16.182,27.6022,7.9883
+Laboratory,0,,,
+Discharge,0,,,

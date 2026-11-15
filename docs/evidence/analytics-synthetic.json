@@ -1,0 +1,281 @@
+{
+  "research_label": "Synthetic/demo operational measurements",
+  "visits_total": 303,
+  "report_title": "Hutano Flow measured synthetic outpatient flow",
+  "source_type": "SYNTHETIC_OPERATIONAL",
+  "dataset_hash": "5a98ac7eebd420a391feaf1b327eb42b10839dd8cce1dd90e24dfd77c6fbcef2",
+  "dataset_hash_basis": "Sorted effective stage and visit timing/status tuples, without identifiers; audited corrections affect this hash",
+  "units": "minutes unless otherwise labelled",
+  "model_version": null,
+  "active_visits": 1,
+  "completed_visits": 302,
+  "waiting": {
+    "mean": 16.0591,
+    "median": 16.207,
+    "p90": 27.29,
+    "maximum": 29.9871
+  },
+  "service": {
+    "mean": 8.0093,
+    "median": 7.9568,
+    "p90": 12.8566,
+    "maximum": 13.9731
+  },
+  "arrival_to_provider_minutes": {
+    "mean": 64.2847,
+    "median": 65.0461,
+    "p90": 81.2994,
+    "maximum": 106.1454
+  },
+  "total_visit_minutes": {
+    "mean": 96.3535,
+    "median": 97.7509,
+    "p90": 119.6273,
+    "maximum": 155.114
+  },
+  "observation_period": {
+    "from": "2026-10-01T06:01:55.184370+00:00",
+    "through": "2026-10-25T10:11:03.363079+00:00"
+  },
+  "service_points": [
+    {
+      "name": "Registration",
+      "waiting": {
+        "mean": 16.1002,
+        "median": 15.8157,
+        "p90": 26.6496,
+        "maximum": 29.9501
+      },
+      "service": {
+        "mean": 8.0866,
+        "median": 8.0533,
+        "p90": 13.085,
+        "maximum": 13.9478
+      },
+      "completed": 303,
+      "eligible_waiting_now": 0,
+      "long_wait_count": 0,
+      "capacity_now": 2,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    },
+    {
+      "name": "Triage",
+      "waiting": {
+        "mean": 16.4574,
+        "median": 17.0191,
+        "p90": 27.7374,
+        "maximum": 29.9871
+      },
+      "service": {
+        "mean": 8.0637,
+        "median": 7.9788,
+        "p90": 12.791,
+        "maximum": 13.9569
+      },
+      "completed": 302,
+      "eligible_waiting_now": 1,
+      "long_wait_count": 0,
+      "capacity_now": 1,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    },
+    {
+      "name": "Consultation",
+      "waiting": {
+        "mean": 15.4967,
+        "median": 15.1859,
+        "p90": 26.8824,
+        "maximum": 29.7687
+      },
+      "service": {
+        "mean": 7.8985,
+        "median": 7.815,
+        "p90": 12.6088,
+        "maximum": 13.9731
+      },
+      "completed": 302,
+      "eligible_waiting_now": 0,
+      "long_wait_count": 0,
+      "capacity_now": 2,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    },
+    {
+      "name": "Pharmacy",
+      "waiting": {
+        "mean": 16.182,
+        "median": 15.8838,
+        "p90": 27.6022,
+        "maximum": 29.9708
+      },
+      "service": {
+        "mean": 7.9883,
+        "median": 7.9385,
+        "p90": 13.0543,
+        "maximum": 13.9531
+      },
+      "completed": 302,
+      "eligible_waiting_now": 0,
+      "long_wait_count": 0,
+      "capacity_now": 1,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    },
+    {
+      "name": "Laboratory",
+      "waiting": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "service": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "completed": 0,
+      "eligible_waiting_now": 0,
+      "long_wait_count": 0,
+      "capacity_now": 1,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    },
+    {
+      "name": "Discharge",
+      "waiting": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "service": {
+        "mean": null,
+        "median": null,
+        "p90": null,
+        "maximum": null
+      },
+      "completed": 0,
+      "eligible_waiting_now": 0,
+      "long_wait_count": 0,
+      "capacity_now": 1,
+      "utilisation": null,
+      "utilisation_note": "Historical staffing intervals not recorded; utilisation unavailable (simulation reports it separately)."
+    }
+  ],
+  "arrivals_by_hour": [
+    {
+      "hour": 0,
+      "arrivals": 0
+    },
+    {
+      "hour": 1,
+      "arrivals": 0
+    },
+    {
+      "hour": 2,
+      "arrivals": 0
+    },
+    {
+      "hour": 3,
+      "arrivals": 0
+    },
+    {
+      "hour": 4,
+      "arrivals": 0
+    },
+    {
+      "hour": 5,
+      "arrivals": 0
+    },
+    {
+      "hour": 6,
+      "arrivals": 0
+    },
+    {
+      "hour": 7,
+      "arrivals": 0
+    },
+    {
+      "hour": 8,
+      "arrivals": 63
+    },
+    {
+      "hour": 9,
+      "arrivals": 63
+    },
+    {
+      "hour": 10,
+      "arrivals": 63
+    },
+    {
+      "hour": 11,
+      "arrivals": 63
+    },
+    {
+      "hour": 12,
+      "arrivals": 51
+    },
+    {
+      "hour": 13,
+      "arrivals": 0
+    },
+    {
+      "hour": 14,
+      "arrivals": 0
+    },
+    {
+      "hour": 15,
+      "arrivals": 0
+    },
+    {
+      "hour": 16,
+      "arrivals": 0
+    },
+    {
+      "hour": 17,
+      "arrivals": 0
+    },
+    {
+      "hour": 18,
+      "arrivals": 0
+    },
+    {
+      "hour": 19,
+      "arrivals": 0
+    },
+    {
+      "hour": 20,
+      "arrivals": 0
+    },
+    {
+      "hour": 21,
+      "arrivals": 0
+    },
+    {
+      "hour": 22,
+      "arrivals": 0
+    },
+    {
+      "hour": 23,
+      "arrivals": 0
+    }
+  ],
+  "model_review": {
+    "reviewed": 0,
+    "overrides": 0,
+    "override_rate": null
+  },
+  "policy_version": "demo-hybrid-v1",
+  "timestamp_basis": "Latest audited episode correction where present; original timestamps retained in the journey timeline. Visit completion remains its original event.",
+  "definitions": {
+    "waiting": "started_at - queued_at; excludes cancelled, no-show and transferred stages",
+    "service": "ended_at - started_at - accumulated pause seconds for completed episodes",
+    "arrival_to_provider": "first consultation started_at - arrival_at",
+    "throughput": "completed visits across displayed observation period",
+    "queue_length": "eligible WAITING snapshot at report generation",
+    "override_rate": "OVERRIDE / (ACCEPT + REJECT + OVERRIDE) clinician model reviews; manual no-model decisions excluded"
+  }
+}

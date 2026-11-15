@@ -1,0 +1,4787 @@
+{
+  "id": "ef3917c1-95cc-480f-b27f-a44a0d25f14f",
+  "dataset_id": "f8ad18fd-9ea0-4d0e-ad32-40f019aade56",
+  "version": "synthetic-logreg-5835d6ee48fb-2026-33e89aa1",
+  "status": "EXPERIMENTAL",
+  "metrics": {
+    "macro_f1": 0.3716970169093315,
+    "per_class": {
+      "P1": {
+        "precision": 0.609375,
+        "recall": 0.6842105263157895,
+        "f1-score": 0.6446280991735537,
+        "support": 57.0
+      },
+      "P2": {
+        "precision": 0.27906976744186046,
+        "recall": 0.27906976744186046,
+        "f1-score": 0.27906976744186046,
+        "support": 43.0
+      },
+      "P3": {
+        "precision": 0.3333333333333333,
+        "recall": 0.3125,
+        "f1-score": 0.3225806451612903,
+        "support": 32.0
+      },
+      "P4": {
+        "precision": 0.16,
+        "recall": 0.11428571428571428,
+        "f1-score": 0.13333333333333333,
+        "support": 35.0
+      },
+      "P5": {
+        "precision": 0.4473684210526316,
+        "recall": 0.5151515151515151,
+        "f1-score": 0.4788732394366197,
+        "support": 33.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        39,
+        15,
+        1,
+        2,
+        0
+      ],
+      [
+        14,
+        12,
+        5,
+        8,
+        4
+      ],
+      [
+        5,
+        6,
+        10,
+        4,
+        7
+      ],
+      [
+        4,
+        7,
+        10,
+        4,
+        10
+      ],
+      [
+        2,
+        3,
+        4,
+        7,
+        17
+      ]
+    ],
+    "labels": [
+      "P1",
+      "P2",
+      "P3",
+      "P4",
+      "P5"
+    ],
+    "under_triage_against_synthetic_label_count": 56,
+    "over_triage_against_synthetic_label_count": 62,
+    "label_source": "SYNTHETIC",
+    "warning": "EXPERIMENTAL \u2014 NOT VALIDATED FOR PATIENT CARE; synthetic label agreement only",
+    "seed": 2026,
+    "pipeline_version": "synthetic-logreg-v4-monitored-reliability",
+    "runtime_versions": {
+      "scikit_learn": "1.9.1",
+      "numpy": "2.5.4",
+      "pandas": "2.2.3",
+      "joblib": "1.6.0"
+    },
+    "feature_schema": {
+      "version": "synthetic-features-v2",
+      "features": [
+        "age_band",
+        "visit_type",
+        "arrival_mode",
+        "hour",
+        "recorded_measurement"
+      ],
+      "metadata": {
+        "age_band": {
+          "unit": null,
+          "definition": "Synthetic age category",
+          "available_at": "synthetic observation timestamp"
+        },
+        "visit_type": {
+          "unit": null,
+          "definition": "Synthetic visit category",
+          "available_at": "synthetic observation timestamp"
+        },
+        "arrival_mode": {
+          "unit": null,
+          "definition": "Synthetic arrival category",
+          "available_at": "synthetic observation timestamp"
+        },
+        "hour": {
+          "unit": "hour of day, 0\u201323",
+          "definition": "Synthetic observation context",
+          "available_at": "synthetic observation timestamp"
+        },
+        "recorded_measurement": {
+          "unit": "dimensionless synthetic value",
+          "definition": "Generated proxy; NOT pulse, temperature or another clinical measurement",
+          "available_at": "synthetic observation timestamp"
+        }
+      },
+      "categories": {
+        "age_band": [
+          "child",
+          "adult",
+          "older_adult"
+        ],
+        "visit_type": [
+          "new",
+          "follow_up",
+          "referral"
+        ],
+        "arrival_mode": [
+          "walk_in",
+          "referred"
+        ]
+      },
+      "numeric_bounds": {
+        "hour": [
+          6.0,
+          17.0
+        ],
+        "recorded_measurement": [
+          -3.3374634786458524,
+          2.72286088356796
+        ]
+      },
+      "reference_profile": {
+        "population": "Estimator-fit synthetic rows only",
+        "n": 500,
+        "missingness": {
+          "age_band": 0.0,
+          "visit_type": 0.0,
+          "arrival_mode": 0.0,
+          "hour": 0.0,
+          "recorded_measurement": 0.05
+        },
+        "categorical_frequencies": {
+          "age_band": {
+            "adult": 0.628,
+            "child": 0.186,
+            "older_adult": 0.186
+          },
+          "visit_type": {
+            "referral": 0.358,
+            "follow_up": 0.322,
+            "new": 0.32
+          },
+          "arrival_mode": {
+            "walk_in": 0.866,
+            "referred": 0.134
+          }
+        },
+        "numeric_quantiles": {
+          "hour": {
+            "0": 6.0,
+            "0.1": 7.0,
+            "0.25": 8.0,
+            "0.5": 12.0,
+            "0.75": 14.0,
+            "0.9": 16.0,
+            "1": 17.0
+          },
+          "recorded_measurement": {
+            "0": -3.3374634786458524,
+            "0.1": -1.3798680132096426,
+            "0.25": -0.8088612126921655,
+            "0.5": 0.000676840076959,
+            "0.75": 0.7009934718294215,
+            "0.9": 1.2617362999563684,
+            "1": 2.72286088356796
+          }
+        },
+        "numeric_mean_std": {
+          "hour": {
+            "mean": 11.436,
+            "std": 3.490258443152885
+          },
+          "recorded_measurement": {
+            "mean": -0.06188681100541689,
+            "std": 1.0483652764026727
+          }
+        }
+      },
+      "missingness_rule": "Training median/imputation learned only on fit rows; advisory inference abstains for missing inputs",
+      "excluded_outcomes": [
+        "urgency",
+        "service_minutes"
+      ],
+      "provenance": "Independent generated synthetic observations; no clinical measurements or patient identities"
+    },
+    "test_rows": 200,
+    "train_rows": 800,
+    "estimator_fit_rows": 500,
+    "train_rows_definition": "Legacy key: all development rows before final holdout; only estimator_fit_rows fit estimator/preprocessor",
+    "split_strategy": "temporal 50/10/10/10/20 fit/model-selection/calibration/threshold-selection/final-test; tied timestamps kept together",
+    "holdout_start": "2026-01-09 08:00:00+00:00",
+    "class_distribution": {
+      "P1": 243,
+      "P2": 217,
+      "P4": 185,
+      "P5": 183,
+      "P3": 172
+    },
+    "missingness": {
+      "age_band": 0,
+      "visit_type": 0,
+      "arrival_mode": 0,
+      "hour": 0,
+      "recorded_measurement": 50,
+      "urgency": 0,
+      "service_minutes": 0,
+      "observed_at": 0
+    },
+    "comparators": {
+      "majority": {
+        "macro_f1": 0.08871595330739299,
+        "per_class": {
+          "P1": {
+            "precision": 0.285,
+            "recall": 1.0,
+            "f1-score": 0.44357976653696496,
+            "support": 57.0
+          },
+          "P2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 43.0
+          },
+          "P3": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 32.0
+          },
+          "P4": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 35.0
+          },
+          "P5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 33.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            57,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            43,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            32,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            35,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            33,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "labels": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "under_triage_against_synthetic_label_count": 0,
+        "over_triage_against_synthetic_label_count": 143
+      },
+      "random_forest": {
+        "macro_f1": 0.34118212956455707,
+        "per_class": {
+          "P1": {
+            "precision": 0.5230769230769231,
+            "recall": 0.5964912280701754,
+            "f1-score": 0.5573770491803278,
+            "support": 57.0
+          },
+          "P2": {
+            "precision": 0.2777777777777778,
+            "recall": 0.3488372093023256,
+            "f1-score": 0.30927835051546393,
+            "support": 43.0
+          },
+          "P3": {
+            "precision": 0.3,
+            "recall": 0.1875,
+            "f1-score": 0.23076923076923078,
+            "support": 32.0
+          },
+          "P4": {
+            "precision": 0.23076923076923078,
+            "recall": 0.17142857142857143,
+            "f1-score": 0.19672131147540983,
+            "support": 35.0
+          },
+          "P5": {
+            "precision": 0.4,
+            "recall": 0.42424242424242425,
+            "f1-score": 0.4117647058823529,
+            "support": 33.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            34,
+            18,
+            2,
+            3,
+            0
+          ],
+          [
+            17,
+            15,
+            2,
+            5,
+            4
+          ],
+          [
+            6,
+            8,
+            6,
+            4,
+            8
+          ],
+          [
+            5,
+            9,
+            6,
+            6,
+            9
+          ],
+          [
+            3,
+            4,
+            4,
+            8,
+            14
+          ]
+        ],
+        "labels": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "under_triage_against_synthetic_label_count": 55,
+        "over_triage_against_synthetic_label_count": 70
+      }
+    },
+    "selection_reason": "Logistic regression chosen for exact additive/contrastive explanations; C selected by model-selection macro F1, ties prefer stronger regularisation; every comparator retained",
+    "cross_validation_macro_f1": 0.35867876171643215,
+    "cross_validation_definition": "Supporting 3-fold stratified CV inside fit rows only; not final performance or hyperparameter selection",
+    "model_selection_macro_f1": 0.36452145175595313,
+    "best_parameters": {
+      "classifier__C": 10.0
+    },
+    "model_selection_candidates": [
+      {
+        "C": 0.1,
+        "macro_f1": 0.33877732024073487
+      },
+      {
+        "C": 1.0,
+        "macro_f1": 0.36393025678739965
+      },
+      {
+        "C": 10.0,
+        "macro_f1": 0.36452145175595313
+      }
+    ],
+    "duration": {
+      "median_baseline_mae_minutes": 3.0093500000000004,
+      "random_forest_mae_minutes": 2.651912012419189
+    },
+    "calibration": {
+      "n": 200,
+      "log_loss": 1.3228226380169048,
+      "multiclass_brier_score": 0.6774845692493898,
+      "brier_definition": "Mean sum of squared class probability errors; range 0 to 2",
+      "bins": [
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "n": 61,
+          "mean_confidence": 0.28003138855734966,
+          "fraction_correct": 0.2459016393442623,
+          "fraction_correct_ci95": [
+            0.1550665770122629,
+            0.3668442410998928
+          ]
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "n": 75,
+          "mean_confidence": 0.33572251463822644,
+          "fraction_correct": 0.37333333333333335,
+          "fraction_correct_ci95": [
+            0.2725596912402112,
+            0.48645034885543315
+          ]
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "n": 16,
+          "mean_confidence": 0.4336101915360474,
+          "fraction_correct": 0.5625,
+          "fraction_correct_ci95": [
+            0.331785563988119,
+            0.7690134759450765
+          ]
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "n": 19,
+          "mean_confidence": 0.5512910719564416,
+          "fraction_correct": 0.42105263157894735,
+          "fraction_correct_ci95": [
+            0.23141891282454238,
+            0.6372409646574496
+          ]
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "n": 14,
+          "mean_confidence": 0.6277925292509947,
+          "fraction_correct": 0.5,
+          "fraction_correct_ci95": [
+            0.26799202452413634,
+            0.7320079754758637
+          ]
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "n": 10,
+          "mean_confidence": 0.7654144236351146,
+          "fraction_correct": 1.0,
+          "fraction_correct_ci95": [
+            0.7224672001371107,
+            0.9999999999999999
+          ]
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "n": 3,
+          "mean_confidence": 0.8253330256108944,
+          "fraction_correct": 1.0,
+          "fraction_correct_ci95": [
+            0.4385029682449546,
+            1.0
+          ]
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "n": 2,
+          "mean_confidence": 0.916148217956102,
+          "fraction_correct": 1.0,
+          "fraction_correct_ci95": [
+            0.34238022750665303,
+            1.0
+          ]
+        }
+      ],
+      "expected_calibration_error": 0.07133074533572435,
+      "interpretation": "Scoring rules reflect discrimination and calibration; reliability bins are descriptive, not a clinical guarantee",
+      "method": "Independent temperature-fit calibration, evaluated on untouched chronological final test; no clinical calibration claim"
+    },
+    "abstention_threshold": 0.75,
+    "low_confidence_requires_review_count": 188,
+    "guarded_abstention_count": 189,
+    "reliability_research": {
+      "schema_version": "advisory-reliability-v1",
+      "partitions": {
+        "fit": {
+          "rows": 500,
+          "start": "2026-01-01 00:00:00+00:00",
+          "end": "2026-01-06 04:45:00+00:00",
+          "content_hash": "1148fd7f4c4f6e7cabeac83ea60bcba913fcda153ccfd00dacee9a5662442bd7",
+          "class_counts": {
+            "P1": 122,
+            "P2": 109,
+            "P5": 94,
+            "P4": 89,
+            "P3": 86
+          }
+        },
+        "model_selection": {
+          "rows": 100,
+          "start": "2026-01-06 05:00:00+00:00",
+          "end": "2026-01-07 05:45:00+00:00",
+          "content_hash": "75eb1c01495d660a1af0b780dd99a62ef168dc05b39e3e052eb5f9595613210e",
+          "class_counts": {
+            "P4": 26,
+            "P2": 24,
+            "P1": 19,
+            "P5": 17,
+            "P3": 14
+          }
+        },
+        "calibration": {
+          "rows": 100,
+          "start": "2026-01-07 06:00:00+00:00",
+          "end": "2026-01-08 06:45:00+00:00",
+          "content_hash": "e34af22ae66225409861905d7d0b75de10a4ec3184a813d84ff9dccdc860b74c",
+          "class_counts": {
+            "P2": 25,
+            "P1": 25,
+            "P3": 19,
+            "P5": 17,
+            "P4": 14
+          }
+        },
+        "threshold_selection": {
+          "rows": 100,
+          "start": "2026-01-08 07:00:00+00:00",
+          "end": "2026-01-09 07:45:00+00:00",
+          "content_hash": "3286a3fc5591236db0c0e86227346debacdbf4e082710c6cb094f3ff237dae76",
+          "class_counts": {
+            "P5": 22,
+            "P3": 21,
+            "P4": 21,
+            "P1": 20,
+            "P2": 16
+          }
+        },
+        "final_test": {
+          "rows": 200,
+          "start": "2026-01-09 08:00:00+00:00",
+          "end": "2026-01-11 09:45:00+00:00",
+          "content_hash": "a26185784efd3794529f30d9277d4a7166fe216ad487f6ddc0acc1dc482ac7f1",
+          "class_counts": {
+            "P1": 57,
+            "P2": 43,
+            "P4": 35,
+            "P5": 33,
+            "P3": 32
+          }
+        }
+      },
+      "calibration_fit": {
+        "temperature": 1.2311444133449163,
+        "calibration_rows": 100,
+        "calibration_log_loss": 1.3297755559247577,
+        "uncalibrated_calibration_log_loss": 1.3384908713039474,
+        "method": "Positive scalar temperature fitted on calibration-only logits by log loss",
+        "search_bounds": [
+          0.25,
+          4.0
+        ],
+        "search_candidates": 161,
+        "at_search_boundary": false,
+        "selection_does_not_consume_test_labels": true
+      },
+      "raw": {
+        "n": 200,
+        "log_loss": 1.326239137351631,
+        "multiclass_brier_score": 0.6786481047154027,
+        "brier_definition": "Mean sum of squared class probability errors; range 0 to 2",
+        "bins": [
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "n": 32,
+            "mean_confidence": 0.28348151210413863,
+            "fraction_correct": 0.1875,
+            "fraction_correct_ci95": [
+              0.08889544689565954,
+              0.3530915520137596
+            ]
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "n": 89,
+            "mean_confidence": 0.336337629401933,
+            "fraction_correct": 0.34831460674157305,
+            "fraction_correct_ci95": [
+              0.25747482821846146,
+              0.4517068203363568
+            ]
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "n": 29,
+            "mean_confidence": 0.44451697263506257,
+            "fraction_correct": 0.4827586206896552,
+            "fraction_correct_ci95": [
+              0.3138609015268349,
+              0.6556897811800528
+            ]
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "n": 8,
+            "mean_confidence": 0.5648995748020613,
+            "fraction_correct": 0.375,
+            "fraction_correct_ci95": [
+              0.13684428582359742,
+              0.6942576053973727
+            ]
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "n": 23,
+            "mean_confidence": 0.6547810293003724,
+            "fraction_correct": 0.4782608695652174,
+            "fraction_correct_ci95": [
+              0.29237157416646653,
+              0.6703726266357259
+            ]
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "n": 6,
+            "mean_confidence": 0.7554751458878618,
+            "fraction_correct": 0.6666666666666666,
+            "fraction_correct_ci95": [
+              0.299993315138392,
+              0.9032285888942195
+            ]
+          },
+          {
+            "lower": 0.8,
+            "upper": 0.9,
+            "n": 11,
+            "mean_confidence": 0.8520070879562855,
+            "fraction_correct": 1.0,
+            "fraction_correct_ci95": [
+              0.7411670330319684,
+              1.0
+            ]
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "n": 2,
+            "mean_confidence": 0.9552844855980401,
+            "fraction_correct": 1.0,
+            "fraction_correct_ci95": [
+              0.34238022750665303,
+              1.0
+            ]
+          }
+        ],
+        "expected_calibration_error": 0.06537865686540295,
+        "interpretation": "Scoring rules reflect discrimination and calibration; reliability bins are descriptive, not a clinical guarantee"
+      },
+      "calibrated": {
+        "n": 200,
+        "log_loss": 1.3228226380169048,
+        "multiclass_brier_score": 0.6774845692493898,
+        "brier_definition": "Mean sum of squared class probability errors; range 0 to 2",
+        "bins": [
+          {
+            "lower": 0.2,
+            "upper": 0.3,
+            "n": 61,
+            "mean_confidence": 0.28003138855734966,
+            "fraction_correct": 0.2459016393442623,
+            "fraction_correct_ci95": [
+              0.1550665770122629,
+              0.3668442410998928
+            ]
+          },
+          {
+            "lower": 0.3,
+            "upper": 0.4,
+            "n": 75,
+            "mean_confidence": 0.33572251463822644,
+            "fraction_correct": 0.37333333333333335,
+            "fraction_correct_ci95": [
+              0.2725596912402112,
+              0.48645034885543315
+            ]
+          },
+          {
+            "lower": 0.4,
+            "upper": 0.5,
+            "n": 16,
+            "mean_confidence": 0.4336101915360474,
+            "fraction_correct": 0.5625,
+            "fraction_correct_ci95": [
+              0.331785563988119,
+              0.7690134759450765
+            ]
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.6,
+            "n": 19,
+            "mean_confidence": 0.5512910719564416,
+            "fraction_correct": 0.42105263157894735,
+            "fraction_correct_ci95": [
+              0.23141891282454238,
+              0.6372409646574496
+            ]
+          },
+          {
+            "lower": 0.6,
+            "upper": 0.7,
+            "n": 14,
+            "mean_confidence": 0.6277925292509947,
+            "fraction_correct": 0.5,
+            "fraction_correct_ci95": [
+              0.26799202452413634,
+              0.7320079754758637
+            ]
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.8,
+            "n": 10,
+            "mean_confidence": 0.7654144236351146,
+            "fraction_correct": 1.0,
+            "fraction_correct_ci95": [
+              0.7224672001371107,
+              0.9999999999999999
+            ]
+          },
+          {
+            "lower": 0.8,
+            "upper": 0.9,
+            "n": 3,
+            "mean_confidence": 0.8253330256108944,
+            "fraction_correct": 1.0,
+            "fraction_correct_ci95": [
+              0.4385029682449546,
+              1.0
+            ]
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "n": 2,
+            "mean_confidence": 0.916148217956102,
+            "fraction_correct": 1.0,
+            "fraction_correct_ci95": [
+              0.34238022750665303,
+              1.0
+            ]
+          }
+        ],
+        "expected_calibration_error": 0.07133074533572435,
+        "interpretation": "Scoring rules reflect discrimination and calibration; reliability bins are descriptive, not a clinical guarantee"
+      },
+      "final_test_calibration_improved_log_loss": true,
+      "threshold_selection": {
+        "threshold": 0.75,
+        "selection_rows": 100,
+        "selected": {
+          "threshold": 0.75,
+          "n": 100,
+          "eligible_n": 95,
+          "accepted_n": 7,
+          "abstained_n": 93,
+          "error_n": 0,
+          "coverage": 0.07,
+          "risk": 0.0,
+          "risk_ci95": [
+            5.551115123125783e-17,
+            0.35433043506668743
+          ],
+          "coverage_ci95": [
+            0.03431926106727268,
+            0.137495147390735
+          ],
+          "research_cost": 0.32549999999999996
+        },
+        "candidates": [
+          {
+            "threshold": 0.0,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 95,
+            "abstained_n": 5,
+            "error_n": 56,
+            "coverage": 0.95,
+            "risk": 0.5894736842105263,
+            "risk_ci95": [
+              0.4889541909881697,
+              0.6830384141679245
+            ],
+            "coverage_ci95": [
+              0.8882495307680808,
+              0.9784563208456319
+            ],
+            "research_cost": 0.5775
+          },
+          {
+            "threshold": 0.25,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 95,
+            "abstained_n": 5,
+            "error_n": 56,
+            "coverage": 0.95,
+            "risk": 0.5894736842105263,
+            "risk_ci95": [
+              0.4889541909881697,
+              0.6830384141679245
+            ],
+            "coverage_ci95": [
+              0.8882495307680808,
+              0.9784563208456319
+            ],
+            "research_cost": 0.5775
+          },
+          {
+            "threshold": 0.35,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 48,
+            "abstained_n": 52,
+            "error_n": 22,
+            "coverage": 0.48,
+            "risk": 0.4583333333333333,
+            "risk_ci95": [
+              0.32575242292867446,
+              0.5970892545435019
+            ],
+            "coverage_ci95": [
+              0.384645517580519,
+              0.5768342223477603
+            ],
+            "research_cost": 0.402
+          },
+          {
+            "threshold": 0.45,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 25,
+            "abstained_n": 75,
+            "error_n": 10,
+            "coverage": 0.25,
+            "risk": 0.4,
+            "risk_ci95": [
+              0.23403302377747973,
+              0.5926054264103301
+            ],
+            "coverage_ci95": [
+              0.17545211362287672,
+              0.34304463548061603
+            ],
+            "research_cost": 0.3625
+          },
+          {
+            "threshold": 0.55,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 18,
+            "abstained_n": 82,
+            "error_n": 6,
+            "coverage": 0.18,
+            "risk": 0.3333333333333333,
+            "risk_ci95": [
+              0.1627877475083369,
+              0.5625053270405489
+            ],
+            "coverage_ci95": [
+              0.1170022549894635,
+              0.2666735838630073
+            ],
+            "research_cost": 0.34700000000000003
+          },
+          {
+            "threshold": 0.65,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 10,
+            "abstained_n": 90,
+            "error_n": 2,
+            "coverage": 0.1,
+            "risk": 0.2,
+            "risk_ci95": [
+              0.05668215145437519,
+              0.5098375284633583
+            ],
+            "coverage_ci95": [
+              0.0552291370606751,
+              0.17436566150491345
+            ],
+            "research_cost": 0.335
+          },
+          {
+            "threshold": 0.75,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 7,
+            "abstained_n": 93,
+            "error_n": 0,
+            "coverage": 0.07,
+            "risk": 0.0,
+            "risk_ci95": [
+              5.551115123125783e-17,
+              0.35433043506668743
+            ],
+            "coverage_ci95": [
+              0.03431926106727268,
+              0.137495147390735
+            ],
+            "research_cost": 0.32549999999999996
+          },
+          {
+            "threshold": 0.85,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 3,
+            "abstained_n": 97,
+            "error_n": 0,
+            "coverage": 0.03,
+            "risk": 0.0,
+            "risk_ci95": [
+              5.551115123125783e-17,
+              0.5614970317550454
+            ],
+            "coverage_ci95": [
+              0.010254524024038925,
+              0.0845193642905276
+            ],
+            "research_cost": 0.33949999999999997
+          },
+          {
+            "threshold": 0.95,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 0,
+            "abstained_n": 100,
+            "error_n": 0,
+            "coverage": 0.0,
+            "risk": null,
+            "risk_ci95": null,
+            "coverage_ci95": [
+              3.469446951953614e-18,
+              0.03699349820698568
+            ],
+            "research_cost": 0.35
+          },
+          {
+            "threshold": 1.0,
+            "n": 100,
+            "eligible_n": 95,
+            "accepted_n": 0,
+            "abstained_n": 100,
+            "error_n": 0,
+            "coverage": 0.0,
+            "risk": null,
+            "risk_ci95": null,
+            "coverage_ci95": [
+              3.469446951953614e-18,
+              0.03699349820698568
+            ],
+            "research_cost": 0.35
+          }
+        ],
+        "abstention_cost": 0.35,
+        "objective": "Minimise (accepted synthetic-label errors + 0.35 * abstentions) / all threshold-selection rows; ties prefer coverage then lower threshold",
+        "frozen_before_final_test": true,
+        "warning": "Dimensionless predeclared engineering utility; not an approved clinical acceptance criterion"
+      },
+      "selected_threshold_test": {
+        "threshold": 0.75,
+        "n": 200,
+        "eligible_n": 192,
+        "accepted_n": 11,
+        "abstained_n": 189,
+        "error_n": 0,
+        "coverage": 0.055,
+        "risk": 0.0,
+        "risk_ci95": [
+          0.0,
+          0.2588329669680317
+        ],
+        "coverage_ci95": [
+          0.03098534170345884,
+          0.0957869987723084
+        ]
+      },
+      "risk_coverage": {
+        "denominator": "All evaluation rows; missing/unseen/out-of-fit-range inputs abstain at every threshold",
+        "overall": [
+          {
+            "threshold": 0.0,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 192,
+            "abstained_n": 8,
+            "error_n": 115,
+            "coverage": 0.96,
+            "risk": 0.5989583333333334,
+            "risk_ci95": [
+              0.5283479854036718,
+              0.6656865169372833
+            ],
+            "coverage_ci95": [
+              0.923067931799067,
+              0.9795943679338476
+            ]
+          },
+          {
+            "threshold": 0.25,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 190,
+            "abstained_n": 10,
+            "error_n": 114,
+            "coverage": 0.95,
+            "risk": 0.6,
+            "risk_ci95": [
+              0.5290245196936979,
+              0.6670119744143582
+            ],
+            "coverage_ci95": [
+              0.9104218518612239,
+              0.972617354399236
+            ]
+          },
+          {
+            "threshold": 0.35,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 82,
+            "abstained_n": 118,
+            "error_n": 37,
+            "coverage": 0.41,
+            "risk": 0.45121951219512196,
+            "risk_ci95": [
+              0.34811270021487606,
+              0.5586922386817192
+            ],
+            "coverage_ci95": [
+              0.34415674908482885,
+              0.4792354096630791
+            ]
+          },
+          {
+            "threshold": 0.45,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 51,
+            "abstained_n": 149,
+            "error_n": 20,
+            "coverage": 0.255,
+            "risk": 0.39215686274509803,
+            "risk_ci95": [
+              0.27027340981759806,
+              0.5291484101605165
+            ],
+            "coverage_ci95": [
+              0.1996049517203135,
+              0.3196292582045472
+            ]
+          },
+          {
+            "threshold": 0.55,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 40,
+            "abstained_n": 160,
+            "error_n": 13,
+            "coverage": 0.2,
+            "risk": 0.325,
+            "risk_ci95": [
+              0.200845022317827,
+              0.47982253810122333
+            ],
+            "coverage_ci95": [
+              0.15045200926098115,
+              0.2608551865653788
+            ]
+          },
+          {
+            "threshold": 0.65,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 17,
+            "abstained_n": 183,
+            "error_n": 2,
+            "coverage": 0.085,
+            "risk": 0.11764705882352941,
+            "risk_ci95": [
+              0.03287977376379267,
+              0.3433635059488588
+            ],
+            "coverage_ci95": [
+              0.05374575017747561,
+              0.13189587071565567
+            ]
+          },
+          {
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 11,
+            "abstained_n": 189,
+            "error_n": 0,
+            "coverage": 0.055,
+            "risk": 0.0,
+            "risk_ci95": [
+              0.0,
+              0.2588329669680317
+            ],
+            "coverage_ci95": [
+              0.03098534170345884,
+              0.0957869987723084
+            ]
+          },
+          {
+            "threshold": 0.85,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 2,
+            "abstained_n": 198,
+            "error_n": 0,
+            "coverage": 0.01,
+            "risk": 0.0,
+            "risk_ci95": [
+              0.0,
+              0.6576197724933469
+            ],
+            "coverage_ci95": [
+              0.0027466581335444384,
+              0.0357217617161768
+            ]
+          },
+          {
+            "threshold": 0.95,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 0,
+            "abstained_n": 200,
+            "error_n": 0,
+            "coverage": 0.0,
+            "risk": null,
+            "risk_ci95": null,
+            "coverage_ci95": [
+              1.734723475976807e-18,
+              0.018845326377266575
+            ]
+          },
+          {
+            "threshold": 1.0,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 0,
+            "abstained_n": 200,
+            "error_n": 0,
+            "coverage": 0.0,
+            "risk": null,
+            "risk_ci95": null,
+            "coverage_ci95": [
+              1.734723475976807e-18,
+              0.018845326377266575
+            ]
+          }
+        ],
+        "per_reference_class": {
+          "P1": [
+            {
+              "threshold": 0.0,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 54,
+              "abstained_n": 3,
+              "error_n": 18,
+              "coverage": 0.9473684210526315,
+              "risk": 0.3333333333333333,
+              "risk_ci95": [
+                0.22241416537492573,
+                0.46639036398870637
+              ],
+              "coverage_ci95": [
+                0.8563044960283646,
+                0.9819397043663383
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 54,
+              "abstained_n": 3,
+              "error_n": 18,
+              "coverage": 0.9473684210526315,
+              "risk": 0.3333333333333333,
+              "risk_ci95": [
+                0.22241416537492573,
+                0.46639036398870637
+              ],
+              "coverage_ci95": [
+                0.8563044960283646,
+                0.9819397043663383
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 34,
+              "abstained_n": 23,
+              "error_n": 1,
+              "coverage": 0.5964912280701754,
+              "risk": 0.029411764705882353,
+              "risk_ci95": [
+                0.0052109062762689395,
+                0.1491557329268593
+              ],
+              "coverage_ci95": [
+                0.4669729242085391,
+                0.7138248445040439
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 22,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.38596491228070173,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.14865487460862087
+              ],
+              "coverage_ci95": [
+                0.2706272388614066,
+                0.5157026708419042
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 20,
+              "abstained_n": 37,
+              "error_n": 0,
+              "coverage": 0.3508771929824561,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.16112515805281938
+              ],
+              "coverage_ci95": [
+                0.2400042200916009,
+                0.480581046443498
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 11,
+              "abstained_n": 46,
+              "error_n": 0,
+              "coverage": 0.19298245614035087,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.2588329669680317
+              ],
+              "coverage_ci95": [
+                0.11132746980050533,
+                0.3134069024776395
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 9,
+              "abstained_n": 48,
+              "error_n": 0,
+              "coverage": 0.15789473684210525,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.2991450484195441
+              ],
+              "coverage_ci95": [
+                0.0853579597035527,
+                0.2736317694063802
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 1,
+              "abstained_n": 56,
+              "error_n": 0,
+              "coverage": 0.017543859649122806,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.7934506856227626
+              ],
+              "coverage_ci95": [
+                0.003103664651408093,
+                0.09290749178567684
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 0,
+              "abstained_n": 57,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.06313883485297894
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 0,
+              "abstained_n": 57,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.06313883485297894
+              ]
+            }
+          ],
+          "P2": [
+            {
+              "threshold": 0.0,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 42,
+              "abstained_n": 1,
+              "error_n": 30,
+              "coverage": 0.9767441860465116,
+              "risk": 0.7142857142857143,
+              "risk_ci95": [
+                0.5643279073180463,
+                0.8283297537395091
+              ],
+              "coverage_ci95": [
+                0.8794100655939282,
+                0.9958829127256662
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 40,
+              "abstained_n": 3,
+              "error_n": 29,
+              "coverage": 0.9302325581395349,
+              "risk": 0.725,
+              "risk_ci95": [
+                0.5716504419378943,
+                0.8389198375233267
+              ],
+              "coverage_ci95": [
+                0.8139101309875801,
+                0.9759884104227855
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 13,
+              "abstained_n": 30,
+              "error_n": 13,
+              "coverage": 0.3023255813953488,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.7719046276458016,
+                0.9999999999999999
+              ],
+              "coverage_ci95": [
+                0.1860200013584818,
+                0.45105364177729607
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 8,
+              "abstained_n": 35,
+              "error_n": 8,
+              "coverage": 0.18604651162790697,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.09741751428996226,
+                0.32617003657274385
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 5,
+              "abstained_n": 38,
+              "error_n": 5,
+              "coverage": 0.11627906976744186,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.5655175352168251,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.05070427739804166,
+                0.24479161810082128
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 1,
+              "abstained_n": 42,
+              "error_n": 1,
+              "coverage": 0.023255813953488372,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.20654931437723745,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.004117087274333769,
+                0.12058993440607177
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            }
+          ],
+          "P3": [
+            {
+              "threshold": 0.0,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 32,
+              "abstained_n": 0,
+              "error_n": 22,
+              "coverage": 1.0,
+              "risk": 0.6875,
+              "risk_ci95": [
+                0.5143332169904459,
+                0.8204745836639026
+              ],
+              "coverage_ci95": [
+                0.8928208017449293,
+                1.0
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 32,
+              "abstained_n": 0,
+              "error_n": 22,
+              "coverage": 1.0,
+              "risk": 0.6875,
+              "risk_ci95": [
+                0.5143332169904459,
+                0.8204745836639026
+              ],
+              "coverage_ci95": [
+                0.8928208017449293,
+                1.0
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 9,
+              "abstained_n": 23,
+              "error_n": 9,
+              "coverage": 0.28125,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.7008549515804559,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.15564580497742764,
+                0.45374509425916565
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 2,
+              "abstained_n": 30,
+              "error_n": 2,
+              "coverage": 0.0625,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.34238022750665303,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.017310567031640967,
+                0.2014712314415458
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 2,
+              "abstained_n": 30,
+              "error_n": 2,
+              "coverage": 0.0625,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.34238022750665303,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.017310567031640967,
+                0.2014712314415458
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            }
+          ],
+          "P4": [
+            {
+              "threshold": 0.0,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 33,
+              "abstained_n": 2,
+              "error_n": 29,
+              "coverage": 0.9428571428571428,
+              "risk": 0.8787878787878788,
+              "risk_ci95": [
+                0.7267449482892476,
+                0.9518383869058644
+              ],
+              "coverage_ci95": [
+                0.8139294257983507,
+                0.9841868381428913
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 33,
+              "abstained_n": 2,
+              "error_n": 29,
+              "coverage": 0.9428571428571428,
+              "risk": 0.8787878787878788,
+              "risk_ci95": [
+                0.7267449482892476,
+                0.9518383869058644
+              ],
+              "coverage_ci95": [
+                0.8139294257983507,
+                0.9841868381428913
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 11,
+              "abstained_n": 24,
+              "error_n": 11,
+              "coverage": 0.3142857142857143,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.7411670330319684,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.18550844674265818,
+                0.4797976361206918
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 8,
+              "abstained_n": 27,
+              "error_n": 8,
+              "coverage": 0.22857142857142856,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.12065879834191687,
+                0.3901731689199025
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 5,
+              "abstained_n": 30,
+              "error_n": 5,
+              "coverage": 0.14285714285714285,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.5655175352168251,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.06260231079433715,
+                0.29375554086595146
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 1,
+              "abstained_n": 34,
+              "error_n": 1,
+              "coverage": 0.02857142857142857,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.20654931437723745,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.005061491855444203,
+                0.14533087233613673
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            }
+          ],
+          "P5": [
+            {
+              "threshold": 0.0,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 31,
+              "abstained_n": 2,
+              "error_n": 16,
+              "coverage": 0.9393939393939394,
+              "risk": 0.5161290322580645,
+              "risk_ci95": [
+                0.348403954480288,
+                0.6802974843758269
+              ],
+              "coverage_ci95": [
+                0.8039375519135219,
+                0.9832191169128082
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 31,
+              "abstained_n": 2,
+              "error_n": 16,
+              "coverage": 0.9393939393939394,
+              "risk": 0.5161290322580645,
+              "risk_ci95": [
+                0.348403954480288,
+                0.6802974843758269
+              ],
+              "coverage_ci95": [
+                0.8039375519135219,
+                0.9832191169128082
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 15,
+              "abstained_n": 18,
+              "error_n": 3,
+              "coverage": 0.45454545454545453,
+              "risk": 0.2,
+              "risk_ci95": [
+                0.07047549346981563,
+                0.45185448715169363
+              ],
+              "coverage_ci95": [
+                0.29842938513876116,
+                0.6201406146378254
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 11,
+              "abstained_n": 22,
+              "error_n": 2,
+              "coverage": 0.3333333333333333,
+              "risk": 0.18181818181818182,
+              "risk_ci95": [
+                0.05136768974608513,
+                0.4769805619608442
+              ],
+              "coverage_ci95": [
+                0.19750227679220683,
+                0.5039210557219438
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 8,
+              "abstained_n": 25,
+              "error_n": 1,
+              "coverage": 0.24242424242424243,
+              "risk": 0.125,
+              "risk_ci95": [
+                0.02241749145005667,
+                0.4708881822128535
+              ],
+              "coverage_ci95": [
+                0.1283171337717501,
+                0.4102461982955736
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 4,
+              "abstained_n": 29,
+              "error_n": 0,
+              "coverage": 0.12121212121212122,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.4898908364545973
+              ],
+              "coverage_ci95": [
+                0.04816161309413558,
+                0.2732550517107523
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 2,
+              "abstained_n": 31,
+              "error_n": 0,
+              "coverage": 0.06060606060606061,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.6576197724933469
+              ],
+              "coverage_ci95": [
+                0.016780883087191875,
+                0.1960624480864781
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 1,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.030303030303030304,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.7934506856227626
+              ],
+              "coverage_ci95": [
+                0.00536941053687183,
+                0.1531872538211892
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 0,
+              "abstained_n": 33,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.10426999754245206
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 0,
+              "abstained_n": 33,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.10426999754245206
+              ]
+            }
+          ]
+        },
+        "small_sample_warning": "Per-class counts and Wilson intervals retained; sparse synthetic groups do not establish fairness"
+      },
+      "raw_risk_coverage": {
+        "denominator": "All evaluation rows; missing/unseen/out-of-fit-range inputs abstain at every threshold",
+        "overall": [
+          {
+            "threshold": 0.0,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 192,
+            "abstained_n": 8,
+            "error_n": 115,
+            "coverage": 0.96,
+            "risk": 0.5989583333333334,
+            "risk_ci95": [
+              0.5283479854036718,
+              0.6656865169372833
+            ],
+            "coverage_ci95": [
+              0.923067931799067,
+              0.9795943679338476
+            ]
+          },
+          {
+            "threshold": 0.25,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 192,
+            "abstained_n": 8,
+            "error_n": 115,
+            "coverage": 0.96,
+            "risk": 0.5989583333333334,
+            "risk_ci95": [
+              0.5283479854036718,
+              0.6656865169372833
+            ],
+            "coverage_ci95": [
+              0.923067931799067,
+              0.9795943679338476
+            ]
+          },
+          {
+            "threshold": 0.35,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 101,
+            "abstained_n": 99,
+            "error_n": 52,
+            "coverage": 0.505,
+            "risk": 0.5148514851485149,
+            "risk_ci95": [
+              0.41863926595785556,
+              0.6099753683074952
+            ],
+            "coverage_ci95": [
+              0.43627000033527485,
+              0.5735415464009526
+            ]
+          },
+          {
+            "threshold": 0.45,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 59,
+            "abstained_n": 141,
+            "error_n": 22,
+            "coverage": 0.295,
+            "risk": 0.3728813559322034,
+            "risk_ci95": [
+              0.2608399879232115,
+              0.5004640893293619
+            ],
+            "coverage_ci95": [
+              0.23613943856849148,
+              0.36158714524618774
+            ]
+          },
+          {
+            "threshold": 0.55,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 47,
+            "abstained_n": 153,
+            "error_n": 18,
+            "coverage": 0.235,
+            "risk": 0.3829787234042553,
+            "risk_ci95": [
+              0.25790681096421997,
+              0.5257343304358642
+            ],
+            "coverage_ci95": [
+              0.18157433415232588,
+              0.29841368882762537
+            ]
+          },
+          {
+            "threshold": 0.65,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 31,
+            "abstained_n": 169,
+            "error_n": 9,
+            "coverage": 0.155,
+            "risk": 0.2903225806451613,
+            "risk_ci95": [
+              0.1609580015630062,
+              0.46592329330749926
+            ],
+            "coverage_ci95": [
+              0.11139636927689314,
+              0.21160690592342077
+            ]
+          },
+          {
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 15,
+            "abstained_n": 185,
+            "error_n": 1,
+            "coverage": 0.075,
+            "risk": 0.06666666666666667,
+            "risk_ci95": [
+              0.011866895493268553,
+              0.2981652987378003
+            ],
+            "coverage_ci95": [
+              0.04597491718438201,
+              0.12004361023629456
+            ]
+          },
+          {
+            "threshold": 0.85,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 6,
+            "abstained_n": 194,
+            "error_n": 0,
+            "coverage": 0.03,
+            "risk": 0.0,
+            "risk_ci95": [
+              2.7755575615628914e-17,
+              0.3903342879021653
+            ],
+            "coverage_ci95": [
+              0.013820314340111346,
+              0.06389429245451925
+            ]
+          },
+          {
+            "threshold": 0.95,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 1,
+            "abstained_n": 199,
+            "error_n": 0,
+            "coverage": 0.005,
+            "risk": 0.0,
+            "risk_ci95": [
+              0.0,
+              0.7934506856227626
+            ],
+            "coverage_ci95": [
+              0.0008831687156009814,
+              0.02777370439789293
+            ]
+          },
+          {
+            "threshold": 1.0,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 0,
+            "abstained_n": 200,
+            "error_n": 0,
+            "coverage": 0.0,
+            "risk": null,
+            "risk_ci95": null,
+            "coverage_ci95": [
+              1.734723475976807e-18,
+              0.018845326377266575
+            ]
+          }
+        ],
+        "per_reference_class": {
+          "P1": [
+            {
+              "threshold": 0.0,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 54,
+              "abstained_n": 3,
+              "error_n": 18,
+              "coverage": 0.9473684210526315,
+              "risk": 0.3333333333333333,
+              "risk_ci95": [
+                0.22241416537492573,
+                0.46639036398870637
+              ],
+              "coverage_ci95": [
+                0.8563044960283646,
+                0.9819397043663383
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 54,
+              "abstained_n": 3,
+              "error_n": 18,
+              "coverage": 0.9473684210526315,
+              "risk": 0.3333333333333333,
+              "risk_ci95": [
+                0.22241416537492573,
+                0.46639036398870637
+              ],
+              "coverage_ci95": [
+                0.8563044960283646,
+                0.9819397043663383
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 41,
+              "abstained_n": 16,
+              "error_n": 6,
+              "coverage": 0.7192982456140351,
+              "risk": 0.14634146341463414,
+              "risk_ci95": [
+                0.0688424814129593,
+                0.28443458042480957
+              ],
+              "coverage_ci95": [
+                0.5916980132395605,
+                0.8192060065617645
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 25,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.43859649122807015,
+              "risk": 0.0,
+              "risk_ci95": [
+                1.3877787807814457e-17,
+                0.13319225093904846
+              ],
+              "coverage_ci95": [
+                0.317726968997944,
+                0.5672199054576847
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 21,
+              "abstained_n": 36,
+              "error_n": 0,
+              "coverage": 0.3684210526315789,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.154639018924847
+              ],
+              "coverage_ci95": [
+                0.255235570344157,
+                0.4982220177750478
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 17,
+              "abstained_n": 40,
+              "error_n": 0,
+              "coverage": 0.2982456140350877,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.1843181350088518
+              ],
+              "coverage_ci95": [
+                0.19532550074818086,
+                0.42664280103459995
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 11,
+              "abstained_n": 46,
+              "error_n": 0,
+              "coverage": 0.19298245614035087,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.2588329669680317
+              ],
+              "coverage_ci95": [
+                0.11132746980050533,
+                0.3134069024776395
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 4,
+              "abstained_n": 53,
+              "error_n": 0,
+              "coverage": 0.07017543859649122,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.4898908364545973
+              ],
+              "coverage_ci95": [
+                0.027626420229066015,
+                0.1670017009603369
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 1,
+              "abstained_n": 56,
+              "error_n": 0,
+              "coverage": 0.017543859649122806,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.7934506856227626
+              ],
+              "coverage_ci95": [
+                0.003103664651408093,
+                0.09290749178567684
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 57,
+              "eligible_n": 54,
+              "accepted_n": 0,
+              "abstained_n": 57,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.06313883485297894
+              ]
+            }
+          ],
+          "P2": [
+            {
+              "threshold": 0.0,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 42,
+              "abstained_n": 1,
+              "error_n": 30,
+              "coverage": 0.9767441860465116,
+              "risk": 0.7142857142857143,
+              "risk_ci95": [
+                0.5643279073180463,
+                0.8283297537395091
+              ],
+              "coverage_ci95": [
+                0.8794100655939282,
+                0.9958829127256662
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 42,
+              "abstained_n": 1,
+              "error_n": 30,
+              "coverage": 0.9767441860465116,
+              "risk": 0.7142857142857143,
+              "risk_ci95": [
+                0.5643279073180463,
+                0.8283297537395091
+              ],
+              "coverage_ci95": [
+                0.8794100655939282,
+                0.9958829127256662
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 16,
+              "abstained_n": 27,
+              "error_n": 15,
+              "coverage": 0.37209302325581395,
+              "risk": 0.9375,
+              "risk_ci95": [
+                0.7167126242970107,
+                0.9888806552353576
+              ],
+              "coverage_ci95": [
+                0.24376339009650572,
+                0.5214019084031153
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 8,
+              "abstained_n": 35,
+              "error_n": 8,
+              "coverage": 0.18604651162790697,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.09741751428996226,
+                0.32617003657274385
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 7,
+              "abstained_n": 36,
+              "error_n": 7,
+              "coverage": 0.16279069767441862,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6456695649333126,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.08116627347062008,
+                0.29972405893747167
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 4,
+              "abstained_n": 39,
+              "error_n": 4,
+              "coverage": 0.09302325581395349,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.5101091635454027,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.03677164063171276,
+                0.21602703641253587
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 43,
+              "eligible_n": 42,
+              "accepted_n": 0,
+              "abstained_n": 43,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.08200980322579117
+              ]
+            }
+          ],
+          "P3": [
+            {
+              "threshold": 0.0,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 32,
+              "abstained_n": 0,
+              "error_n": 22,
+              "coverage": 1.0,
+              "risk": 0.6875,
+              "risk_ci95": [
+                0.5143332169904459,
+                0.8204745836639026
+              ],
+              "coverage_ci95": [
+                0.8928208017449293,
+                1.0
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 32,
+              "abstained_n": 0,
+              "error_n": 22,
+              "coverage": 1.0,
+              "risk": 0.6875,
+              "risk_ci95": [
+                0.5143332169904459,
+                0.8204745836639026
+              ],
+              "coverage_ci95": [
+                0.8928208017449293,
+                1.0
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 11,
+              "abstained_n": 21,
+              "error_n": 11,
+              "coverage": 0.34375,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.7411670330319684,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.20410437924433172,
+                0.5168891202103778
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 4,
+              "abstained_n": 28,
+              "error_n": 4,
+              "coverage": 0.125,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.5101091635454027,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.04970134387480073,
+                0.2806830548165022
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 2,
+              "abstained_n": 30,
+              "error_n": 2,
+              "coverage": 0.0625,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.34238022750665303,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.017310567031640967,
+                0.2014712314415458
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 1,
+              "abstained_n": 31,
+              "error_n": 1,
+              "coverage": 0.03125,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.20654931437723745,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.005537860164003122,
+                0.15744263820012558
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 32,
+              "eligible_n": 32,
+              "accepted_n": 0,
+              "abstained_n": 32,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.1071791982550706
+              ]
+            }
+          ],
+          "P4": [
+            {
+              "threshold": 0.0,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 33,
+              "abstained_n": 2,
+              "error_n": 29,
+              "coverage": 0.9428571428571428,
+              "risk": 0.8787878787878788,
+              "risk_ci95": [
+                0.7267449482892476,
+                0.9518383869058644
+              ],
+              "coverage_ci95": [
+                0.8139294257983507,
+                0.9841868381428913
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 33,
+              "abstained_n": 2,
+              "error_n": 29,
+              "coverage": 0.9428571428571428,
+              "risk": 0.8787878787878788,
+              "risk_ci95": [
+                0.7267449482892476,
+                0.9518383869058644
+              ],
+              "coverage_ci95": [
+                0.8139294257983507,
+                0.9841868381428913
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 14,
+              "abstained_n": 21,
+              "error_n": 13,
+              "coverage": 0.4,
+              "risk": 0.9285714285714286,
+              "risk_ci95": [
+                0.6853129557584889,
+                0.9872777847521093
+              ],
+              "coverage_ci95": [
+                0.2555072885938059,
+                0.5642729098710749
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 8,
+              "abstained_n": 27,
+              "error_n": 8,
+              "coverage": 0.22857142857142856,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.12065879834191687,
+                0.3901731689199025
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 8,
+              "abstained_n": 27,
+              "error_n": 8,
+              "coverage": 0.22857142857142856,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.12065879834191687,
+                0.3901731689199025
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 3,
+              "abstained_n": 32,
+              "error_n": 3,
+              "coverage": 0.08571428571428572,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.4385029682449546,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.02958236826696982,
+                0.22379273965896496
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 1,
+              "abstained_n": 34,
+              "error_n": 1,
+              "coverage": 0.02857142857142857,
+              "risk": 1.0,
+              "risk_ci95": [
+                0.20654931437723745,
+                1.0
+              ],
+              "coverage_ci95": [
+                0.005061491855444203,
+                0.14533087233613673
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 35,
+              "eligible_n": 33,
+              "accepted_n": 0,
+              "abstained_n": 35,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                6.938893903907228e-18,
+                0.09890099232440402
+              ]
+            }
+          ],
+          "P5": [
+            {
+              "threshold": 0.0,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 31,
+              "abstained_n": 2,
+              "error_n": 16,
+              "coverage": 0.9393939393939394,
+              "risk": 0.5161290322580645,
+              "risk_ci95": [
+                0.348403954480288,
+                0.6802974843758269
+              ],
+              "coverage_ci95": [
+                0.8039375519135219,
+                0.9832191169128082
+              ]
+            },
+            {
+              "threshold": 0.25,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 31,
+              "abstained_n": 2,
+              "error_n": 16,
+              "coverage": 0.9393939393939394,
+              "risk": 0.5161290322580645,
+              "risk_ci95": [
+                0.348403954480288,
+                0.6802974843758269
+              ],
+              "coverage_ci95": [
+                0.8039375519135219,
+                0.9832191169128082
+              ]
+            },
+            {
+              "threshold": 0.35,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 19,
+              "abstained_n": 14,
+              "error_n": 7,
+              "coverage": 0.5757575757575758,
+              "risk": 0.3684210526315789,
+              "risk_ci95": [
+                0.19149512745135072,
+                0.5896046683519693
+              ],
+              "coverage_ci95": [
+                0.4080726333731245,
+                0.7276440336658979
+              ]
+            },
+            {
+              "threshold": 0.45,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 14,
+              "abstained_n": 19,
+              "error_n": 2,
+              "coverage": 0.42424242424242425,
+              "risk": 0.14285714285714285,
+              "risk_ci95": [
+                0.040093921271464966,
+                0.39941379496970353
+              ],
+              "coverage_ci95": [
+                0.2723559663341021,
+                0.5919273666268755
+              ]
+            },
+            {
+              "threshold": 0.55,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 9,
+              "abstained_n": 24,
+              "error_n": 1,
+              "coverage": 0.2727272727272727,
+              "risk": 0.1111111111111111,
+              "risk_ci95": [
+                0.019890887638544907,
+                0.434999705576656
+              ],
+              "coverage_ci95": [
+                0.1506744088542064,
+                0.44217559002872625
+              ]
+            },
+            {
+              "threshold": 0.65,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 6,
+              "abstained_n": 27,
+              "error_n": 1,
+              "coverage": 0.18181818181818182,
+              "risk": 0.16666666666666666,
+              "risk_ci95": [
+                0.030053369748306635,
+                0.5635028221864702
+              ],
+              "coverage_ci95": [
+                0.08610768208940667,
+                0.3438823163466992
+              ]
+            },
+            {
+              "threshold": 0.75,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 3,
+              "abstained_n": 30,
+              "error_n": 0,
+              "coverage": 0.09090909090909091,
+              "risk": 0.0,
+              "risk_ci95": [
+                5.551115123125783e-17,
+                0.5614970317550454
+              ],
+              "coverage_ci95": [
+                0.03140394152458165,
+                0.2357260564646973
+              ]
+            },
+            {
+              "threshold": 0.85,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 2,
+              "abstained_n": 31,
+              "error_n": 0,
+              "coverage": 0.06060606060606061,
+              "risk": 0.0,
+              "risk_ci95": [
+                0.0,
+                0.6576197724933469
+              ],
+              "coverage_ci95": [
+                0.016780883087191875,
+                0.1960624480864781
+              ]
+            },
+            {
+              "threshold": 0.95,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 0,
+              "abstained_n": 33,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.10426999754245206
+              ]
+            },
+            {
+              "threshold": 1.0,
+              "n": 33,
+              "eligible_n": 31,
+              "accepted_n": 0,
+              "abstained_n": 33,
+              "error_n": 0,
+              "coverage": 0.0,
+              "risk": null,
+              "risk_ci95": null,
+              "coverage_ci95": [
+                0.0,
+                0.10426999754245206
+              ]
+            }
+          ]
+        },
+        "small_sample_warning": "Per-class counts and Wilson intervals retained; sparse synthetic groups do not establish fairness"
+      },
+      "heldout_uncertainty": {
+        "method": "Seeded percentile row bootstrap, conditional on fixed fitted model/calibrator/threshold",
+        "resamples": 200,
+        "seed": 2026,
+        "intervals95": {
+          "macro_f1": [
+            0.3055864706367651,
+            0.42498644910901756
+          ],
+          "accuracy": [
+            0.33987500000000004,
+            0.475125
+          ],
+          "coverage": [
+            0.025,
+            0.095
+          ],
+          "selective_risk": null,
+          "calibrated_log_loss": [
+            1.256432747353505,
+            1.4099086513944827
+          ],
+          "calibrated_brier_score": [
+            0.6417408682758036,
+            0.7133406074256773
+          ],
+          "calibrated_minus_raw_log_loss": [
+            -0.023637787186866,
+            0.010965385164109519
+          ],
+          "calibrated_minus_raw_brier_score": [
+            -0.007236909379466552,
+            0.004764078975043049
+          ]
+        },
+        "selective_risk_wilson_interval95": [
+          0.0,
+          0.2588329669680317
+        ],
+        "boundary_policy": "Suppress boundary-degenerate percentile selective-risk intervals; Wilson interval remains primary, including zero observed errors",
+        "valid_resamples": {
+          "macro_f1": 200,
+          "accuracy": 200,
+          "coverage": 200,
+          "selective_risk": 200,
+          "calibrated_log_loss": 200,
+          "calibrated_brier_score": 200,
+          "calibrated_minus_raw_log_loss": 200,
+          "calibrated_minus_raw_brier_score": 200
+        },
+        "limitations": "Assumes independent synthetic rows; does not cover model-selection uncertainty, repeated subjects or temporal dependence"
+      },
+      "learning_curves": [
+        {
+          "fit_rows": 125,
+          "evaluation_rows": 100,
+          "evaluation_partition": "model_selection, not final test",
+          "available": true,
+          "macro_f1": 0.33487884702588666,
+          "accuracy": 0.37,
+          "accuracy_ci95": [
+            0.28182360534324524,
+            0.4677947041905709
+          ],
+          "uncertainty_note": "Wilson row interval conditional on fitted prefix; no model-selection uncertainty"
+        },
+        {
+          "fit_rows": 250,
+          "evaluation_rows": 100,
+          "evaluation_partition": "model_selection, not final test",
+          "available": true,
+          "macro_f1": 0.31427298404742016,
+          "accuracy": 0.36,
+          "accuracy_ci95": [
+            0.2727122040140433,
+            0.4576459754839126
+          ],
+          "uncertainty_note": "Wilson row interval conditional on fitted prefix; no model-selection uncertainty"
+        },
+        {
+          "fit_rows": 375,
+          "evaluation_rows": 100,
+          "evaluation_partition": "model_selection, not final test",
+          "available": true,
+          "macro_f1": 0.40268398268398264,
+          "accuracy": 0.42,
+          "accuracy_ci95": [
+            0.3279838267435473,
+            0.5179351329695703
+          ],
+          "uncertainty_note": "Wilson row interval conditional on fitted prefix; no model-selection uncertainty"
+        },
+        {
+          "fit_rows": 500,
+          "evaluation_rows": 100,
+          "evaluation_partition": "model_selection, not final test",
+          "available": true,
+          "macro_f1": 0.36452145175595313,
+          "accuracy": 0.39,
+          "accuracy_ci95": [
+            0.3001687400639441,
+            0.4879698295415926
+          ],
+          "uncertainty_note": "Wilson row interval conditional on fitted prefix; no model-selection uncertainty"
+        }
+      ],
+      "ordinal_comparator": {
+        "macro_f1": 0.38494885636413,
+        "per_class": {
+          "P1": {
+            "precision": 0.5964912280701754,
+            "recall": 0.5964912280701754,
+            "f1-score": 0.5964912280701754,
+            "support": 57.0
+          },
+          "P2": {
+            "precision": 0.30612244897959184,
+            "recall": 0.3488372093023256,
+            "f1-score": 0.32608695652173914,
+            "support": 43.0
+          },
+          "P3": {
+            "precision": 0.32432432432432434,
+            "recall": 0.375,
+            "f1-score": 0.34782608695652173,
+            "support": 32.0
+          },
+          "P4": {
+            "precision": 0.20833333333333334,
+            "recall": 0.14285714285714285,
+            "f1-score": 0.1694915254237288,
+            "support": 35.0
+          },
+          "P5": {
+            "precision": 0.48484848484848486,
+            "recall": 0.48484848484848486,
+            "f1-score": 0.48484848484848486,
+            "support": 33.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            34,
+            19,
+            2,
+            2,
+            0
+          ],
+          [
+            13,
+            15,
+            8,
+            6,
+            1
+          ],
+          [
+            4,
+            7,
+            12,
+            3,
+            6
+          ],
+          [
+            4,
+            5,
+            11,
+            5,
+            10
+          ],
+          [
+            2,
+            3,
+            4,
+            8,
+            16
+          ]
+        ],
+        "labels": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "under_triage_against_synthetic_label_count": 57,
+        "over_triage_against_synthetic_label_count": 61,
+        "method": "Four fixed-C cumulative binary logistic regressions; running-min monotone-tail correction",
+        "probability_metrics": {
+          "n": 200,
+          "log_loss": 1.3118082104718893,
+          "multiclass_brier_score": 0.6776753793354411,
+          "brier_definition": "Mean sum of squared class probability errors; range 0 to 2",
+          "bins": [
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "n": 25,
+              "mean_confidence": 0.27925059138722935,
+              "fraction_correct": 0.32,
+              "fraction_correct_ci95": [
+                0.17205190306907978,
+                0.5158973072689775
+              ]
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "n": 105,
+              "mean_confidence": 0.3455052056971978,
+              "fraction_correct": 0.29523809523809524,
+              "fraction_correct_ci95": [
+                0.21646522851654953,
+                0.38846472679727645
+              ]
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "n": 20,
+              "mean_confidence": 0.4370273425116481,
+              "fraction_correct": 0.6,
+              "fraction_correct_ci95": [
+                0.3865815007622531,
+                0.781193467627183
+              ]
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "n": 10,
+              "mean_confidence": 0.5588725211314172,
+              "fraction_correct": 0.4,
+              "fraction_correct_ci95": [
+                0.16818032970623614,
+                0.6873262302663417
+              ]
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "n": 18,
+              "mean_confidence": 0.6486894483863122,
+              "fraction_correct": 0.5,
+              "fraction_correct_ci95": [
+                0.29031021505169974,
+                0.7096897849483003
+              ]
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "n": 8,
+              "mean_confidence": 0.7426720238833464,
+              "fraction_correct": 0.5,
+              "fraction_correct_ci95": [
+                0.21521606221387757,
+                0.7847839377861224
+              ]
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "n": 8,
+              "mean_confidence": 0.8660572746366857,
+              "fraction_correct": 1.0,
+              "fraction_correct_ci95": [
+                0.6755924351161198,
+                1.0
+              ]
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "n": 6,
+              "mean_confidence": 0.9325380038134997,
+              "fraction_correct": 1.0,
+              "fraction_correct_ci95": [
+                0.6096657120978346,
+                1.0
+              ]
+            }
+          ],
+          "expected_calibration_error": 0.08619530108326075,
+          "interpretation": "Scoring rules reflect discrimination and calibration; reliability bins are descriptive, not a clinical guarantee"
+        },
+        "role": "Research comparator only; not selected for advisory use",
+        "limitation": "Uses ordering only, not equal clinical distances; independent boundary fits are not a proportional-odds model"
+      },
+      "stress_tests": {
+        "seed": 2417,
+        "scenarios": [
+          {
+            "scenario": "unchanged",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 11,
+            "abstained_n": 189,
+            "error_n": 0,
+            "coverage": 0.055,
+            "risk": 0.0,
+            "risk_ci95": [
+              0.0,
+              0.2588329669680317
+            ],
+            "coverage_ci95": [
+              0.03098534170345884,
+              0.0957869987723084
+            ],
+            "input_guard_flag_rate": 0.04,
+            "full_classifier_error_rate": 0.59,
+            "macro_f1": 0.3716970169093315,
+            "log_loss": 1.3228226380169048
+          },
+          {
+            "scenario": "measurement_missing_30_percent",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 135,
+            "accepted_n": 7,
+            "abstained_n": 193,
+            "error_n": 0,
+            "coverage": 0.035,
+            "risk": 0.0,
+            "risk_ci95": [
+              5.551115123125783e-17,
+              0.35433043506668743
+            ],
+            "coverage_ci95": [
+              0.017055542008567192,
+              0.07047061152229073
+            ],
+            "input_guard_flag_rate": 0.325,
+            "full_classifier_error_rate": 0.645,
+            "macro_f1": 0.30901664009107827,
+            "log_loss": 1.4859544338872999
+          },
+          {
+            "scenario": "unseen_category_30_percent",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 135,
+            "accepted_n": 7,
+            "abstained_n": 193,
+            "error_n": 0,
+            "coverage": 0.035,
+            "risk": 0.0,
+            "risk_ci95": [
+              5.551115123125783e-17,
+              0.35433043506668743
+            ],
+            "coverage_ci95": [
+              0.017055542008567192,
+              0.07047061152229073
+            ],
+            "input_guard_flag_rate": 0.325,
+            "full_classifier_error_rate": 0.595,
+            "macro_f1": 0.3675941263003236,
+            "log_loss": 1.3195246980435895
+          },
+          {
+            "scenario": "outside_fit_range_30_percent",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 135,
+            "accepted_n": 7,
+            "abstained_n": 193,
+            "error_n": 0,
+            "coverage": 0.035,
+            "risk": 0.0,
+            "risk_ci95": [
+              5.551115123125783e-17,
+              0.35433043506668743
+            ],
+            "coverage_ci95": [
+              0.017055542008567192,
+              0.07047061152229073
+            ],
+            "input_guard_flag_rate": 0.325,
+            "full_classifier_error_rate": 0.65,
+            "macro_f1": 0.2888718786087207,
+            "log_loss": 2.464295195654748
+          },
+          {
+            "scenario": "measurement_shift_0_75_fit_std",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 185,
+            "accepted_n": 24,
+            "abstained_n": 176,
+            "error_n": 10,
+            "coverage": 0.12,
+            "risk": 0.4166666666666667,
+            "risk_ci95": [
+              0.24467602609811764,
+              0.6116533413477124
+            ],
+            "coverage_ci95": [
+              0.08197992706375512,
+              0.17234252098296743
+            ],
+            "input_guard_flag_rate": 0.075,
+            "full_classifier_error_rate": 0.61,
+            "macro_f1": 0.27546551285760634,
+            "log_loss": 1.4818039926726383
+          },
+          {
+            "scenario": "extreme_category_prior_reweight",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 190,
+            "accepted_n": 15,
+            "abstained_n": 185,
+            "error_n": 0,
+            "coverage": 0.075,
+            "risk": 0.0,
+            "risk_ci95": [
+              0.0,
+              0.20388330103584862
+            ],
+            "coverage_ci95": [
+              0.04597491718438201,
+              0.12004361023629456
+            ],
+            "input_guard_flag_rate": 0.05,
+            "full_classifier_error_rate": 0.46,
+            "macro_f1": 0.3723073624002417,
+            "log_loss": 1.249694865799301
+          },
+          {
+            "scenario": "label_shift_30_percent",
+            "threshold": 0.75,
+            "n": 200,
+            "eligible_n": 192,
+            "accepted_n": 11,
+            "abstained_n": 189,
+            "error_n": 4,
+            "coverage": 0.055,
+            "risk": 0.36363636363636365,
+            "risk_ci95": [
+              0.15166471095367573,
+              0.6461988254921511
+            ],
+            "coverage_ci95": [
+              0.03098534170345884,
+              0.0957869987723084
+            ],
+            "input_guard_flag_rate": 0.04,
+            "full_classifier_error_rate": 0.69,
+            "macro_f1": 0.2902898550724638,
+            "log_loss": 1.5615237091751462
+          }
+        ],
+        "interpretation": "Controlled synthetic sensitivity study, not prediction of future performance; changed labels are explicit simulated concept shift",
+        "monitoring_limitation": "Input-range flags cannot detect all performance changes, especially label shift; no autonomous retraining or activation"
+      },
+      "monitoring_challenge": {
+        "thresholds": {
+          "input_guard_fraction": 0.26,
+          "full_classifier_error_fraction": 0.81
+        },
+        "threshold_basis": "Model-selection partition fraction + 0.20; predeclared engineering rule, not significance or clinical safety",
+        "window_size": 20,
+        "shift_begins_window": 3,
+        "window_count": 8,
+        "label_delay_windows": 1,
+        "seed": 2026,
+        "scenarios": [
+          {
+            "scenario": "UNCHANGED",
+            "replications": 5,
+            "unchanged_input_alarm_windows": 0,
+            "unchanged_input_windows": 40,
+            "input_false_alarm_fraction": 0.0,
+            "unchanged_delayed_error_alarm_windows": 0,
+            "unchanged_released_error_windows": 35,
+            "delayed_error_false_alarm_fraction": 0.0,
+            "input_detections": null,
+            "delayed_error_detections": null,
+            "mean_input_delay_windows": null,
+            "mean_delayed_error_delay_windows": null,
+            "replicate_details": [
+              {
+                "replication": 0,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.4,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 1,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.45,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 2,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.15,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.45,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 3,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.45,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 4,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.2,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "scenario": "MISSING_INPUT_SHIFT",
+            "replications": 5,
+            "unchanged_input_alarm_windows": 0,
+            "unchanged_input_windows": 15,
+            "input_false_alarm_fraction": 0.0,
+            "unchanged_delayed_error_alarm_windows": 0,
+            "unchanged_released_error_windows": 10,
+            "delayed_error_false_alarm_fraction": 0.0,
+            "input_detections": 5,
+            "delayed_error_detections": 2,
+            "mean_input_delay_windows": 0.0,
+            "mean_delayed_error_delay_windows": 1.5,
+            "replicate_details": [
+              {
+                "replication": 0,
+                "input_detection_delay_windows": 0,
+                "delayed_error_detection_delay_windows": 1,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.4,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.85,
+                    "delayed_error_alarm": true,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 1,
+                "input_detection_delay_windows": 0,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 2,
+                "input_detection_delay_windows": 0,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 3,
+                "input_detection_delay_windows": 0,
+                "delayed_error_detection_delay_windows": 2,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.85,
+                    "delayed_error_alarm": true,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 4,
+                "input_detection_delay_windows": 0,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.7,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.6,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.65,
+                    "input_alarm": true,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "scenario": "LABEL_SHIFT",
+            "replications": 5,
+            "unchanged_input_alarm_windows": 0,
+            "unchanged_input_windows": 15,
+            "input_false_alarm_fraction": 0.0,
+            "unchanged_delayed_error_alarm_windows": 0,
+            "unchanged_released_error_windows": 10,
+            "delayed_error_false_alarm_fraction": 0.0,
+            "input_detections": 0,
+            "delayed_error_detections": 1,
+            "mean_input_delay_windows": null,
+            "mean_delayed_error_delay_windows": 1.0,
+            "replicate_details": [
+              {
+                "replication": 0,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": 1,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.4,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.85,
+                    "delayed_error_alarm": true,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 1,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.5,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 2,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.15,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 3,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.6,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.1,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.7,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 8
+                  }
+                ]
+              },
+              {
+                "replication": 4,
+                "input_detection_delay_windows": null,
+                "delayed_error_detection_delay_windows": null,
+                "windows": [
+                  {
+                    "window": 0,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 1
+                  },
+                  {
+                    "window": 1,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 2
+                  },
+                  {
+                    "window": 2,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.65,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 3
+                  },
+                  {
+                    "window": 3,
+                    "guard_fraction": 0.2,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.75,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 4
+                  },
+                  {
+                    "window": 4,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 5
+                  },
+                  {
+                    "window": 5,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.55,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 6
+                  },
+                  {
+                    "window": 6,
+                    "guard_fraction": 0.0,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.8,
+                    "delayed_error_alarm": false,
+                    "error_available_at_window": 7
+                  },
+                  {
+                    "window": 7,
+                    "guard_fraction": 0.05,
+                    "input_alarm": false,
+                    "full_classifier_error_fraction": 0.95,
+                    "delayed_error_alarm": true,
+                    "error_available_at_window": 8
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "automatic_actions": false,
+        "limitations": [
+          "Resampled synthetic final-test inputs; repeated rows and small windows, not independent clinical evidence",
+          "An input shift need not increase error; label shift may leave input alarms silent",
+          "Full-classifier error includes guarded/imputed rows and differs from actual suggestion error",
+          "Null delay means no detected shift within observation, not immediate detection",
+          "Monitoring rules are evaluated offline only; no automatic model or priority change"
+        ]
+      },
+      "explanation_stability": {
+        "available": true,
+        "n": 40,
+        "perturbations": [
+          {
+            "field": "hour",
+            "positive_delta": 1.0,
+            "clipped_to_fit_range": true,
+            "rows_changed": 34,
+            "predicted_label_agreement": 1.0,
+            "abstention_decision_agreement": 1.0,
+            "mean_absolute_confidence_change": 0.004815268857906558,
+            "mean_contrastive_contribution_l1_change": 0.025813226671334184
+          },
+          {
+            "field": "recorded_measurement",
+            "positive_delta": 0.05241826382013364,
+            "clipped_to_fit_range": true,
+            "rows_changed": 40,
+            "predicted_label_agreement": 0.95,
+            "abstention_decision_agreement": 1.0,
+            "mean_absolute_confidence_change": 0.00994903432642447,
+            "mean_contrastive_contribution_l1_change": 0.05710944756759888
+          }
+        ],
+        "method": "First 40 eligible chronological holdout rows; original predicted-vs-runner-up pair held fixed for attribution comparison",
+        "limitation": "Local input sensitivity, not causal or clinical robustness; labels are not redefined after perturbation"
+      }
+    },
+    "slices": {
+      "child": {
+        "n": 34,
+        "macro_f1": 0.20400000000000001
+      },
+      "adult": {
+        "n": 129,
+        "macro_f1": 0.39935358758888173
+      },
+      "older_adult": {
+        "n": 37,
+        "macro_f1": 0.3220779220779221
+      }
+    },
+    "slice_policy": "Synthetic age-band diagnostic; n<30 suppressed. Sex is not collected. No fairness inference.",
+    "limitations": [
+      "No subject identifiers: repeated-subject leakage cannot be ruled out for external data.",
+      "Synthetic labels are not clinician ground truth",
+      "No clinical effectiveness claim",
+      "Temperature calibration may worsen final-test performance; both raw and calibrated outcomes retained",
+      "Threshold utility is a research assumption, not a clinical harm function",
+      "Unconditional classifier metrics include training-imputed missing inputs; guarded coverage and risk reflect actual advisory eligibility",
+      "Observed-at timestamps stand for synthetic prediction time; repeated-subject and retrospective clinical availability are not established"
+    ],
+    "source_dataset_hash": "6bf0cb9497f79e990831df43397d156d83a167dfc3fe492f2fff5912920b7a78"
+  }
+}

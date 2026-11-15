@@ -1,0 +1,16 @@
+# research_label,"""SYNTHETIC RESOURCE-ASSIGNMENT EXPERIMENT \u2014 NOT CLINICAL EVIDENCE"""
+# engine_version,"""staffed-room-experiment-v1"""
+# config_hash,"""11fcdd3a93d0bc3eb9a0e68e0ea0a7c2ec5e150b61b2addd495b21c322940e7f"""
+# config,"{""seed"": 2026, ""patients"": 50, ""replications"": 5, ""rooms"": 3, ""arrivals_per_hour"": 24.0, ""mean_service_minutes"": 12.0, ""service_tail"": 0.5, ""horizon_minutes"": 480.0, ""laboratory_probability"": 0.3, ""no_show_probability"": 0.12, ""return_delay_minutes"": 15.0, ""room_speed_factors"": [1.5, 0.7, 1.0], ""room_shifts"": [[0.0, 480.0], [0.0, 480.0], [30.0, 480.0]], ""blocks"": [{""room"": 0, ""start"": 45.0, ""duration"": 20.0, ""kind"": ""STAFF_BREAK""}, {""room"": 1, ""start"": 60.0, ""duration"": 35.0, ""kind"": ""ROOM_OUTAGE""}], ""demand_multipliers"": [0.75, 1.0, 1.25]}"
+# definitions,"{""primary"": ""Sum of queue waits across each completed outpatient journey; no-show absence and service excluded"", ""p90"": ""Mean of replication-specific P90s, not pooled P90"", ""horizon"": ""Finite observation day; unfinished and not-yet-arrived patients reported separately"", ""room_speeds"": ""Synthetic resource heterogeneity, not patient-priority weights"", ""outages"": ""Non-preemptive; started work completes and may overrun scheduled availability""}"
+# limitations,"[""Synthetic assumptions, not fieldwork"", ""Completed-only means can have selection bias; inspect unserved counts"", ""All urgency labels are synthetic inputs; no autonomous clinical decision"", ""Staffed-room experiment extends rather than replaces the existing FCFS/urgency/hybrid baseline"", ""Population service means guide room choice; individual predicted duration never changes patient order""]"
+demand_multiplier,policy,mean_wait_minutes,mean_replication_p90_minutes,completed_mean,unserved_mean,low_urgency_long_waits
+0.75,FIXED_ROOM,76.17622,152.04136000000003,48.4,1.6,94
+0.75,NEXT_AVAILABLE,59.254859999999994,96.14743999999999,48.4,1.6,84
+0.75,CAPACITY_AWARE,57.618539999999996,94.47752,48.4,1.6,81
+1.0,FIXED_ROOM,94.20102,180.76884,48.4,1.6,119
+1.0,NEXT_AVAILABLE,76.66108,126.87644,48.4,1.6,113
+1.0,CAPACITY_AWARE,76.52311999999999,127.40311999999999,48.4,1.6,110
+1.25,FIXED_ROOM,105.86038,196.56779999999998,48.4,1.6,124
+1.25,NEXT_AVAILABLE,89.17062,146.97752000000003,48.4,1.6,125
+1.25,CAPACITY_AWARE,88.03896,147.33298,48.4,1.6,120
