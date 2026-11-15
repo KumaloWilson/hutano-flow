@@ -40,10 +40,17 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
       MODEL_ARTIFACT_DIR: /app/artifacts
+      # Web proxy (and the optional LAN TLS proxy) on the Compose network may forward client IPs.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1/32,::1/128,172.16.0.0/12}
+      SESSION_IDLE_MINUTES: ${SESSION_IDLE_MINUTES:-30}
+      SESSION_MINUTES: ${SESSION_MINUTES:-480}
+      BACKUP_STATUS_PATH: /app/ops-status/backup.json
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
       - model_artifacts:/app/artifacts
+      # Written by scripts/backup_demo.sh; kept apart from artifacts so a restore cannot rewind it.
+      - ops_status:/app/ops-status
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -79,4 +86,5 @@ services:
 volumes:
   hutano_postgres:
   model_artifacts:
+  ops_status:
 

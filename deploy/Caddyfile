@@ -1,0 +1,28 @@
+# LAN TLS front door for Hutano Flow (research prototype, fictional data only).
+{
+	# Certificates come from Caddy's local CA; nothing is requested from the internet.
+	local_certs
+	skip_install_trust
+}
+
+https://{$DEMO_HOST} {
+	tls internal
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	# Caddy replaces any client-sent X-Forwarded-For with the real peer address;
+	# the web proxy appends its own hop and the API walks the chain from the right.
+	reverse_proxy web:3000 {
+		# Server-sent events must not be buffered.
+		flush_interval -1
+	}
+}
+
+http://{$DEMO_HOST} {
+	redir https://{host}{uri} permanent
+}

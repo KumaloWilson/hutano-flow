@@ -374,9 +374,14 @@ def _read_backup_status() -> dict:
         data = json.loads(path.read_text())
         completed = datetime.fromisoformat(data["completed_at"])
         age_hours = (utcnow() - _aware(completed)).total_seconds() / 3600
-        return {"state": "ok" if age_hours <= 26 else "attention", "completed_at": completed, "age_hours": round(age_hours, 1),
-                "encrypted": bool(data.get("encrypted")), "snapshot": data.get("snapshot"),
-                "detail": None if age_hours <= 26 else "The last backup is more than a day old."}
+        encrypted = bool(data.get("encrypted"))
+        detail = None
+        if age_hours > 26:
+            detail = "The last backup is more than a day old."
+        elif not encrypted:
+            detail = "The last backup was not encrypted (set BACKUP_PASSPHRASE_FILE)."
+        return {"state": "ok" if detail is None else "attention", "completed_at": completed, "age_hours": round(age_hours, 1),
+                "encrypted": encrypted, "snapshot": data.get("snapshot"), "detail": detail}
     except FileNotFoundError:
         return {"state": "attention", "detail": "No backup has been recorded yet."}
     except (ValueError, KeyError, OSError):

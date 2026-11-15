@@ -1,15 +1,39 @@
-# Local, fictional-data demonstrations only. Set DEMO_HOST to this machine's LAN IP.
-# docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+# Local, fictional-data demonstrations on a clinic LAN, served over HTTPS.
+#   DEMO_HOST=192.168.1.20 docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+# Caddy issues a certificate from its own local CA. Install that CA on each tablet/PC once:
+#   docker compose -f docker-compose.yml -f docker-compose.lan.yml cp \
+#     tls:/data/caddy/pki/authorities/local/root.crt ./hutano-local-ca.crt
+# HTTPS is required for secure cookies, the installable PWA and the service worker on LAN devices.
 services:
   api:
     environment:
-      ALLOWED_ORIGINS: http://localhost:3000,http://${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:3000
+      ALLOWED_ORIGINS: https://${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP},http://localhost:3000
+      COOKIE_SECURE: "true"
   web:
     build:
       args:
         NEXT_PUBLIC_API_URL: ""
     environment:
       NEXT_PUBLIC_API_URL: ""
+    # Only the TLS proxy is exposed on the LAN; plain HTTP stays on loopback.
     ports: !override
       - "127.0.0.1:3000:3000"
-      - "${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:3000:3000"
+  tls:
+    image: caddy:2.8.4-alpine
+    environment:
+      DEMO_HOST: ${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:443:443"
+      - "${DEMO_HOST:?Set DEMO_HOST to this machine's LAN IP}:80:80"
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

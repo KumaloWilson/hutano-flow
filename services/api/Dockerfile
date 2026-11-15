@@ -11,7 +11,7 @@ COPY migrations ./migrations
 COPY app ./app
 COPY tests ./tests
 COPY pytest.ini .
-RUN mkdir -p /app/artifacts && chown -R hutano:hutano /app
+RUN mkdir -p /app/artifacts /app/ops-status && chown -R hutano:hutano /app
 USER hutano
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
