@@ -178,3 +178,51 @@ The spec section 14 export is an admin-only, synthetic-only, one-way FHIR R4-sha
 The public status response now also returns the patient's *own* stage names with done/current/next state, and the room they are called to. It still excludes identity, urgency, times and reasons; the minimality test pins the new exact key set. Receipts carry a QR code to `/status#t=<token>`. The fragment is never sent to the server, and the page removes it from the address bar and history after reading it.
 
 The interface was redesigned around role-specific work and offline-capable self-hosted fonts. It keeps a neutral ink ramp for P1–P5, with no alarm palette that would imply clinical acuity. Patient-facing copy is in English, chiShona and isiNdebele. **These translations are drafts for usability testing and must be reviewed by native speakers before any field use.** Accessible names relied on by the browser suite are kept stable.
+
+## ADR-033 — Clinical feature schema v3: the advisory reads routinely collected data
+
+**Status:** accepted, 2026-11-16. Supersedes the v2 feature list in ADR-010 and ADR-023.
+Objective 2 of the proposal requires a model built on "routinely collected clinical and operational data". The v2 model used four context fields plus a dimensionless generator value that was explicitly not a vital sign, and clinicians had to type every input. The v3 schema uses registration context (age band, visit type, arrival mode, arrival hour) and the six vital signs recorded at triage (temperature, pulse, respiratory rate, oxygen saturation, systolic and diastolic pressure).
+
+The inference endpoint now reads these from the visit record. Vital signs typed into the triage form but not yet saved can be supplied with the request. Every input is returned with its source.
+
+**Missing data (proposal §1.8).** Missingness is quantified per field before fitting. Up to two *measurements* may be unrecorded; blood pressure counts as one measurement because systolic and diastolic come from one cuff reading. Missing measurements are modelled through learned missingness indicators and shown as "not recorded", never assumed normal. Three or more missing measurements abstain.
+
+**Validation ranges.** Data-entry plausibility ranges reject impossible values (for example SpO₂ 140%) at observation entry, at triage and at inference. They are not clinical normal ranges or triage cut-offs (ADR-002).
+
+**Synthetic generator.** A latent severity variable shifts age-dependent vital-sign distributions, with realistic per-device missingness. Its label noise was set so the demonstration model both suggests and abstains (held-out coverage around 40%). These are generator assumptions, recorded in each model's schema, not physiology or findings.
+
+**Compatibility.** v2 datasets are rejected with a clear message. Saved v2 artifacts still load because inference uses each artifact's own schema.
+
+## ADR-034 — The patient at the bottom of the queue
+
+Proposal Gap 4 asks what happens to the individual at the bottom of a priority queue. In the live queue, clinician-confirmed urgency still orders patients. Each waiting entry now reports `minutes_since_review` (since the later of joining and the last clinician assessment) and `overtaken_by` (later arrivals called first).
+
+When either exceeds the policy thresholds (`review_after_minutes`, default twice the long-wait warning; `review_overtaken`, default 5), the queue shows **Review suggested** and offers a one-step reassessment. The prompt never changes the order. A clinician confirms the category, which restarts the clock, or changes it. P1 is never prompted.
+
+Cross-category ageing and duration-aware ordering are evaluated **in the simulator only**, as research arms:
+- `AGEING_BOUNDED`: one category per N minutes waited, at most K categories.
+- `DURATION_AWARE`: shortest predicted consultation first within a category, from noisy predictions; anyone past a guard time goes first.
+
+Every policy now reports the per-category 95th-percentile and maximum wait, the overtaking count, and replication-level paired t and Wilcoxon tests against FCFS. Research arms use separate random streams, so existing comparisons and their input hashes are unchanged. Adopting either policy live would need clinical governance review.
+
+## ADR-035 — Baseline measurement and simulation calibration
+
+The time-and-motion import now reports every measure listed in proposal §1.7:
+- total visit, per-point waits and service times;
+- arrivals by local hour and the morning share;
+- queue length by hour, from 2-minute snapshot headcounts;
+- a Little's Law sense-check (§2.1.1), "not assessable" for negligible queues;
+- the bottleneck and the share of visit time spent waiting.
+
+It also fits simulator inputs: hourly arrival rates over a robust opening window, consultation lognormal tail, stage means, capacity as the median daily peak concurrency, and pharmacy share. A calibrated comparison runs FCFS against these inputs and reports, stage by stage, whether the simulated facility reproduces the measured baseline within max(25%, 5 min) before any policy result is interpreted (§1.8).
+
+To support the inferential tests the proposal names, the report keeps anonymous, unlinked, rounded and sorted per-stage wait samples, with no journey numbers. This deliberately extends ADR-010's aggregate-only storage. A downloadable synthetic example (FCFS-simulated walk-in days) supports demonstration; the fictional clinic seeds one.
+
+## ADR-036 — Evaluation against the proposal's objectives
+
+Usability uses the System Usability Scale with standard scoring and Cronbach's α. Acceptance uses four perceived-usefulness and four perceived-ease-of-use items adapted from Davis (1989). The adapted wording is labelled as needing piloting.
+
+The Evaluation view is organised by Objectives 1–4 and their research questions. For each it lists the proposal's requirements, whether each is met, the evidence held, and what remains outside the software (staff interviews, approvals). Waiting time against the existing process uses a two-sided Mann–Whitney U test with rank-biserial effect size, which suits skewed independent samples. Simulation reports replication-level paired tests.
+
+Every section is labelled as a synthetic demonstration of the method, not findings about a facility.

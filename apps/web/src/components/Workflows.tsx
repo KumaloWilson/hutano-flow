@@ -57,31 +57,44 @@ export function JourneyConsole({ visits, user, refresh, focusVisitId }: { visits
 }
 
 type Decision = {id: string; suggestion?: string; decision: string} | null;
-export function AdvisoryPanel({visitId, onDecision}: {visitId?: string; onDecision: (v: Decision) => void}) {
-  const [features, setFeatures] = useState<Record<string, string>>({});
+const FEATURE_NAMES: Record<string,string> = {age_band:"Age band",visit_type:"Visit type",arrival_mode:"Arrival",hour:"Arrival hour",temperature:"Temperature",pulse:"Pulse",respiratory_rate:"Respiratory rate",oxygen_saturation:"Oxygen saturation",systolic_pressure:"Systolic pressure",diastolic_pressure:"Diastolic pressure"};
+const FEATURE_UNITS: Record<string,string> = {temperature:"°C",pulse:"beats/min",respiratory_rate:"breaths/min",oxygen_saturation:"%",systolic_pressure:"mmHg",diastolic_pressure:"mmHg"};
+
+/** Research advisory (proposal Objective 2): inputs come from the visit record and the
+ *  vitals typed in the triage form; the clinician sees what was used and why. */
+export function AdvisoryPanel({visitId, observations, onDecision}: {visitId?: string; observations?: Record<string,string>; onDecision: (v: Decision) => void}) {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setResult(null); setFeatures({}); }, [visitId]);
+  useEffect(() => { setResult(null); setError(""); }, [visitId]);
   async function infer(event: FormEvent) {
     event.preventDefault(); if (!visitId) return;
     setBusy(true); setError(""); onDecision(null);
-    const values = Object.fromEntries(Object.entries(features).map(([k,v]) => [k, v === "" ? null : ["hour","recorded_measurement"].includes(k) ? Number(v) : v]));
-    try { setResult(await api(`/api/v1/visits/${visitId}/recommendation`,{method:"POST",body:JSON.stringify({features:values})})); }
+    const typed = Object.fromEntries(Object.entries(observations || {}).filter(([,v]) => v !== "").map(([k,v]) => [k, Number(v)]));
+    try { setResult(await api(`/api/v1/visits/${visitId}/recommendation`,{method:"POST",body:JSON.stringify({observations:typed})})); }
     catch(e) { setError(message(e)); } finally { setBusy(false); }
   }
-  function field(name: string, options?: string[]) { return <label key={name}>{name.replaceAll("_", " ")}{options ? <select value={features[name] || ""} onChange={e=>setFeatures({...features,[name]:e.target.value})}><option value="">Not recorded</option>{options.map(o=><option key={o}>{o}</option>)}</select> : <input type="number" step="any" value={features[name] || ""} onChange={e=>setFeatures({...features,[name]:e.target.value})}/>}</label>; }
-  return <article className="panel advisory"><p className="eyebrow">Research advisory</p><h2>Clinician assessment required</h2><p className="warning-text">EXPERIMENTAL — NOT VALIDATED FOR PATIENT CARE</p>
-    <p>No validated clinical model is available. A reviewed synthetic demonstration model may be enabled by the administrator.</p>
-    <form onSubmit={infer}>{field("age_band",["child","adult","older_adult"])}{field("visit_type",["new","follow_up","referral"])}{field("arrival_mode",["walk_in","referred"])}{field("hour")}{field("recorded_measurement")}
-      <small>Recorded measurement is a dimensionless synthetic training feature, not a clinical threshold.</small>
-      <button className="secondary wide" disabled={!visitId || busy}>{busy ? "Computing…" : "Request advisory explanation"}</button>
-    </form>{error && <p className="error" role="alert">{error}</p>}
-    {result && <div className="advisory-result">{result.available ? <><strong>{result.suggestion || "Abstained — clinician review required"}</strong><p>{result.model_version}</p><p>Confidence: {result.confidence == null ? "Unavailable" : `${Math.round(result.confidence*100)}%`}</p>
-      <ul>{result.factors?.map((f:any)=><li key={f.feature}>{f.feature}: {f.logit_contribution.toFixed(3)} logit contribution</li>)}{result.reasons?.map((r:string)=><li key={r}>{r}</li>)}</ul>
-      <p>{result.explanation_method}</p>
-      <div className="row-actions">{result.suggestion && <button className="secondary" onClick={()=>onDecision({id:result.id, suggestion:result.suggestion, decision:"ACCEPT"})}>Accept suggestion for confirmation</button>}<button className="secondary" onClick={()=>onDecision({id:result.id, decision:"REJECT"})}>Reject suggestion</button></div>
-      <small>Acceptance selects a proposed category. The clinician must still press Confirm assessment.</small></> : <p>{result.message}</p>}</div>}
+  const plain = result?.plain_language;
+  return <article className="panel advisory"><div className="split"><h2 style={{margin:0}}>Research advisory</h2><span className="badge attention">Experimental</span></div>
+    <p className="warning-text" style={{marginTop:8}}>EXPERIMENTAL — NOT VALIDATED FOR PATIENT CARE</p>
+    <p className="muted" style={{fontSize:".88rem"}}>Reads the registration details and the vital signs recorded for this visit, including any typed in the form but not yet saved. Missing vital signs are shown as not recorded, never assumed normal. You decide the category.</p>
+    <form onSubmit={infer}><button className="secondary wide" disabled={!visitId || busy}>{busy ? "Computing…" : "Request advisory explanation"}</button></form>
+    {error && <p className="error" role="alert">{error}</p>}
+    {result && <div className="advisory-result">{result.available ? <>
+      {result.suggestion ? <div className="split"><strong style={{fontSize:"1.05rem"}}>Suggests <span className="urgency" data-level={result.suggestion}>{result.suggestion}</span></strong><span className="mono muted" title="Calibrated on synthetic data; not a probability of clinical correctness">{result.confidence>=.995?">99":Math.round(result.confidence*100)}% model confidence</span></div>
+        : <strong>No suggestion — clinician assessment only</strong>}
+      {plain && <><p style={{margin:"10px 0 6px"}}>{plain.headline}</p>
+        {!!plain.opposing?.length && <p className="muted" style={{margin:"0 0 6px",fontSize:".86rem"}}>Pointing the other way: {plain.opposing.join("; ")}.</p>}
+        <p className="privacy-note" style={{margin:0}}>{plain.caveat}</p></>}
+      {!result.suggestion && !!result.reasons?.length && <ul style={{margin:"8px 0 0"}}>{result.reasons.map((r:string)=><li key={r}>{r}</li>)}</ul>}
+      {!!result.inputs?.length && <details><summary>Inputs used ({result.inputs.filter((i:any)=>i.value!=null).length} of {result.inputs.length} recorded)</summary>
+        <div className="table-wrap"><table><thead><tr><th>Input</th><th>Value</th><th>Source</th></tr></thead><tbody>{result.inputs.map((i:any)=><tr key={i.feature}><td>{FEATURE_NAMES[i.feature]||i.feature}</td><td className="mono">{i.value==null?"Not recorded":`${String(i.value).replaceAll("_"," ")} ${FEATURE_UNITS[i.feature]||""}`}</td><td>{i.source}</td></tr>)}</tbody></table></div></details>}
+      {result.suggestion && <details><summary>Technical explanation</summary><p className="muted" style={{fontSize:".82rem"}}>{result.explanation_method}</p>
+        <ul>{result.factors?.map((f:any)=><li key={f.feature} className="mono" style={{fontSize:".8rem"}}>{f.feature}: {f.logit_contribution.toFixed(3)}</li>)}</ul>
+        {result.contrastive && <p className="mono" style={{fontSize:".8rem"}}>{result.contrastive.predicted_class} vs {result.contrastive.alternative_class}: log-probability ratio {result.contrastive.calibrated_log_probability_ratio.toFixed(3)}</p>}
+        <p className="muted" style={{fontSize:".8rem"}}>Model {result.model_version}</p></details>}
+      <div className="row-actions" style={{marginTop:10}}>{result.suggestion && <button className="secondary" onClick={()=>onDecision({id:result.id, suggestion:result.suggestion, decision:"ACCEPT"})}>Accept suggestion for confirmation</button>}<button className="secondary" onClick={()=>onDecision({id:result.id, decision:"REJECT"})}>Reject suggestion</button></div>
+      <small>Accepting only pre-fills the category. You must still press Confirm assessment.</small></> : <p style={{margin:0}}>{result.message}</p>}</div>}
   </article>;
 }
 
@@ -134,12 +147,61 @@ export function AdminConsole({user}:{user:User}) {
     <article className="panel"><h2>Queue policy proposal</h2><form onSubmit={policy}><label>Policy<select name="mode"><option>HYBRID</option><option>FCFS</option><option>URGENCY_FIRST</option></select></label><label>Within-group ageing weight<input name="waiting_weight" type="number" min={0} max={10} step=".1" defaultValue={.25}/></label><label>Long-wait warning (minutes)<input name="warning" type="number" min={1} max={1440} defaultValue={60}/></label><label>Reason<textarea name="reason" minLength={5} required/></label><p>Urgency groups remain protected. Capacity pauses service and does not penalise longer consultations.</p><button className="primary">Submit for clinician review</button></form></article></section>;
 }
 
+function Likert({name,label,points}:{name:string;label:string;points:number}){
+  return <fieldset className="likert"><legend>{label}</legend><div className="likert-scale">{Array.from({length:points},(_,i)=>i+1).map(v=><label key={v} className="likert-point"><input type="radio" name={name} value={v}/><span>{v}</span></label>)}</div></fieldset>;
+}
+
 export function FeedbackPanel(){
   const [notice,setNotice]=useState("");
   const [report,setReport]=useState<any>(null);
+  const [instruments,setInstruments]=useState<any>(null);
+  useEffect(()=>{api("/api/v1/research/instruments").then(setInstruments).catch(()=>undefined);},[]);
   async function loadSummary(){try{setReport(await api("/api/v1/research/feedback/summary"));}catch(e){setNotice(message(e));}}
-  async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();const f=new FormData(event.currentTarget);try{await api("/api/v1/research/feedback",{method:"POST",body:JSON.stringify({role_group:f.get("role_group"),task_id:f.get("task_id"),consent_ref:f.get("consent_ref"),response:{completed:f.get("completed")==="yes",duration_seconds:Number(f.get("duration")),errors:Number(f.get("errors")),comments:f.get("comments"),trust_rating:Number(f.get("trust_rating"))}})});setNotice("Consented research feedback recorded.");await loadSummary();}catch(e){setNotice(message(e));}}
-  return <article className="panel spaced"><h2>Usability task observation</h2><p>Use a pseudonymous consent reference. Include unsuccessful tasks and critical comments.</p><form onSubmit={submit} className="form-grid"><label>Role group<input name="role_group" required minLength={2}/></label><label>Task<select name="task_id">{["register","find_patient","triage","call_next","override","complete_visit","check_token","read_analytics"].map(t=><option key={t}>{t}</option>)}</select></label><label>Consent reference<input name="consent_ref" required minLength={3}/></label><label>Completed<select name="completed"><option value="yes">Yes</option><option value="no">No</option></select></label><label>Duration (seconds)<input name="duration" type="number" min={0} required/></label><label>Error count<input name="errors" type="number" min={0} required/></label><label>Descriptive trust rating<select name="trust_rating"><option value="1">1 · Low</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 · High</option></select></label><label className="span-2">Comments<textarea name="comments" maxLength={2000}/></label><button className="primary">Record feedback</button></form>{notice&&<p role="status">{notice}</p>}<button className="secondary" onClick={loadSummary}>Load aggregate task & trust summary</button>{report&&<pre>{JSON.stringify(report,null,2)}</pre>}<small>This descriptive trust question is not a validated questionnaire or benchmark.</small></article>;
+  async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();const form=event.currentTarget,f=new FormData(form);
+    const numbers=(prefix:string,n:number)=>Array.from({length:n},(_,i)=>Number(f.get(`${prefix}${i}`)));
+    const response:any={completed:f.get("completed")==="yes",duration_seconds:Number(f.get("duration")),errors:Number(f.get("errors")),comments:f.get("comments"),trust_rating:Number(f.get("trust_rating"))};
+    const answered=(prefix:string,n:number)=>Array.from({length:n},(_,i)=>f.get(`${prefix}${i}`)).filter(Boolean).length;
+    const sus=answered("sus",10),tam=answered("pu",4)+answered("peou",4);
+    if(sus&&sus<10){setNotice(`Answer all ten SUS items (${sus} answered) or none.`);return;}
+    if(tam&&tam<8){setNotice(`Answer all eight acceptance items (${tam} answered) or none.`);return;}
+    if(sus)response.sus=numbers("sus",10);
+    if(tam)response.tam={perceived_usefulness:numbers("pu",4),perceived_ease_of_use:numbers("peou",4)};
+    try{await api("/api/v1/research/feedback",{method:"POST",body:JSON.stringify({role_group:f.get("role_group"),task_id:f.get("task_id"),consent_ref:f.get("consent_ref"),response})});setNotice("Consented research feedback recorded.");form.reset();await loadSummary();}catch(e){setNotice(message(e));}}
+  const a=report?.acceptance;
+  return <article className="panel spaced"><h2>Usability session</h2><p className="muted">Record one task attempt per form, with a pseudonymous consent reference. Include unsuccessful tasks and critical comments. Complete the questionnaires once per participant, after their tasks.</p>
+    <form onSubmit={submit} className="stack"><div className="form-grid"><label>Role group<input name="role_group" required minLength={2}/></label><label>Task<select name="task_id">{["register","find_patient","triage","call_next","override","complete_visit","check_token","read_analytics"].map(t=><option key={t}>{t}</option>)}</select></label><label>Consent reference<input name="consent_ref" required minLength={3}/></label><label>Completed<select name="completed"><option value="yes">Yes</option><option value="no">No</option></select></label><label>Duration (seconds)<input name="duration" type="number" min={0} required/></label><label>Error count<input name="errors" type="number" min={0} required/></label><label>Descriptive trust rating<select name="trust_rating"><option value="1">1 · Low</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 · High</option></select></label><label className="span-2">Comments<textarea name="comments" maxLength={2000}/></label></div>
+      {instruments&&<details><summary>System Usability Scale — 10 items, 1 strongly disagree to 5 strongly agree</summary><p className="muted" style={{fontSize:".82rem"}}>{instruments.sus.source}. Answer all ten or none.</p>{instruments.sus.items.map((item:string,i:number)=><Likert key={i} name={`sus${i}`} label={`${i+1}. ${item}`} points={5}/>)}</details>}
+      {instruments&&<details><summary>Acceptance (TAM) — 8 items, 1 strongly disagree to 7 strongly agree</summary><p className="muted" style={{fontSize:".82rem"}}>{instruments.tam.source}.</p><h3>Perceived usefulness</h3>{instruments.tam.items.perceived_usefulness.map((item:string,i:number)=><Likert key={i} name={`pu${i}`} label={item} points={7}/>)}<h3>Perceived ease of use</h3>{instruments.tam.items.perceived_ease_of_use.map((item:string,i:number)=><Likert key={i} name={`peou${i}`} label={item} points={7}/>)}</details>}
+      <button className="primary">Record feedback</button></form>
+    {notice&&<p role="status" className="callout">{notice}</p>}<button className="secondary" onClick={loadSummary}>Load aggregate task & acceptance summary</button>
+    {a&&<section className="metric-grid spaced"><article className="metric"><p>Mean SUS</p><strong>{a.sus.mean??"—"}</strong><small>n={a.sus.n}{a.sus.ci95?` · 95% CI ${a.sus.ci95[0]}–${a.sus.ci95[1]}`:""} · average ≈ 68</small></article><article className="metric"><p>Perceived usefulness</p><strong>{a.tam.perceived_usefulness.mean??"—"}</strong><small>of 7 · α {a.tam.perceived_usefulness.cronbach_alpha?.toFixed(2)??"n/a"}</small></article><article className="metric"><p>Perceived ease of use</p><strong>{a.tam.perceived_ease_of_use.mean??"—"}</strong><small>of 7 · α {a.tam.perceived_ease_of_use.cronbach_alpha?.toFixed(2)??"n/a"}</small></article><article className="metric"><p>Tasks completed</p><strong>{report.tasks_completed}/{report.tasks_observed}</strong><small>observed attempts</small></article></section>}
+    {report&&<details><summary>Full summary</summary><pre>{JSON.stringify(report,null,2)}</pre></details>}
+    <small>SUS uses standard scoring. TAM wording is adapted and needs piloting. Small samples are descriptive only.</small></article>;
+}
+
+function HourBars({rows,valueKey,unit}:{rows:any[];valueKey:string;unit:string}){
+  const max=Math.max(1e-9,...rows.map(r=>r[valueKey]));
+  return <div className="bars hour-bars">{rows.map(r=><div key={r.hour}><span>{String(r.hour).padStart(2,"0")}:00</span><div><i style={{width:`${r[valueKey]/max*100}%`}}/></div><strong>{Number(r[valueKey]).toFixed(1)} {unit}</strong></div>)}</div>;
+}
+
+export function BaselineReport({report}:{report:any}){
+  if(!report?.stages)return null;
+  const little=report.littles_law;
+  return <div className="stack" style={{marginTop:12}}>
+    <section className="metric-grid">
+      <article className="metric"><p>Journeys measured</p><strong>{report.journeys}</strong><small>{report.days_observed} days observed</small></article>
+      <article className="metric"><p>Arrival to provider</p><strong>{Math.round(report.arrival_to_provider_minutes?.mean??0)}</strong><small>mean minutes</small></article>
+      <article className="metric metric-alert"><p>Bottleneck</p><strong style={{fontSize:"1.25rem",textTransform:"capitalize",overflowWrap:"anywhere",fontFamily:"var(--font-ui)",fontWeight:600}}>{report.bottleneck_stage||"—"}</strong><small>longest mean wait</small></article>
+      <article className="metric"><p>Time spent waiting</p><strong>{report.time_share?.waiting==null?"—":`${Math.round(report.time_share.waiting*100)}%`}</strong><small>of summed visit time</small></article>
+    </section>
+    <div className="two-column">
+      <div><h3>Arrivals by hour</h3><p className="muted" style={{fontSize:".84rem"}}>{report.morning_arrival_share!=null&&`${Math.round(report.morning_arrival_share*100)}% arrive before noon.`}</p>{report.arrivals_by_hour&&<HourBars rows={report.arrivals_by_hour} valueKey="mean_arrivals_per_day" unit="/day"/>}</div>
+      <div><h3>Queue length by hour · {report.bottleneck_stage}</h3><p className="muted" style={{fontSize:".84rem"}}>Mean people waiting, from snapshots every {little?.snapshot_interval_minutes} minutes.</p>{report.queue_length_by_hour?.[report.bottleneck_stage]&&<HourBars rows={report.queue_length_by_hour[report.bottleneck_stage]} valueKey="mean_waiting" unit=""/>}</div>
+    </div>
+    <h3>Waiting and service at each point</h3>
+    <div className="table-wrap"><table><thead><tr><th>Stage</th><th>Mean wait</th><th>P90 wait</th><th>Mean service</th><th>Little&apos;s Law L / λW</th></tr></thead><tbody>{Object.entries(report.stages).map(([stage,v]:[string,any])=>{const l=little?.stages?.[stage];return <tr key={stage}><td style={{textTransform:"capitalize"}}>{stage}</td><td className="mono">{v.waiting_minutes.mean?.toFixed(1)}</td><td className="mono">{v.waiting_minutes.p90?.toFixed(1)}</td><td className="mono">{v.service_minutes.mean?.toFixed(1)}</td><td className="mono">{l?(l.assessable?`${l.ratio} ${l.consistent?"✓":"⚠"}`:"queue too short to assess"):"—"}</td></tr>;})}</tbody></table></div>
+    {little&&<p className="muted" style={{fontSize:".8rem"}}>{little.method}</p>}
+  </div>;
 }
 
 export function BaselinePanel(){
@@ -148,5 +210,5 @@ export function BaselinePanel(){
   async function loadSaved(){try{setSaved((await api<any[]>("/api/v1/research/datasets")).filter(d=>d.source_type==="SYNTHETIC_BASELINE"));}catch(e){setError(message(e));}}
   useEffect(()=>{loadSaved();},[]);
   async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();const data=new FormData(event.currentTarget);try{setReport(await api("/api/v1/research/baseline/import",{method:"POST",body:data}));setError("");await loadSaved();}catch(e){setError(message(e));}}
-  return <article className="panel spaced"><h2>Anonymous baseline timing import</h2><p>Import a synthetic time-motion CSV. Fieldwork targets remain 300 completed journeys across three weeks, subject to separate approval.</p><form onSubmit={submit} className="form-grid"><label>Name<input name="name" minLength={3} required/></label><label>Provenance<input name="provenance" minLength={5} required/></label><label className="span-2">CSV<input type="file" name="file" accept=".csv,text/csv" required/></label><label className="span-2">Column mapping (source name to standard name, JSON)<input name="column_mapping" defaultValue="{}"/></label><label>Import action<select name="preview_only"><option value="true">Validate and preview</option><option value="false">Register validated dataset</option></select></label><button className="primary">Process baseline</button></form><p>Columns: journey_no, stage, arrived_at, queued_at, started_at, ended_at. Timestamps require an explicit UTC offset.</p>{error&&<p className="error">{error}</p>}{report&&<pre>{JSON.stringify(report,null,2)}</pre>}{saved.map(d=><details key={d.id}><summary>Stored baseline: {d.name}</summary><small>SHA-256 {d.dataset_hash}</small><pre>{JSON.stringify(d.schema.report,null,2)}</pre></details>)}</article>;
+  return <article className="panel spaced"><h2>Anonymous baseline timing import</h2><p>Import a synthetic time-motion CSV. Fieldwork targets remain 300 completed journeys across three weeks, subject to separate approval.</p><form onSubmit={submit} className="form-grid"><label>Name<input name="name" minLength={3} required/></label><label>Provenance<input name="provenance" minLength={5} required/></label><label className="span-2">CSV<input type="file" name="file" accept=".csv,text/csv" required/></label><label className="span-2">Column mapping (source name to standard name, JSON)<input name="column_mapping" defaultValue="{}"/></label><label>Import action<select name="preview_only"><option value="true">Validate and preview</option><option value="false">Register validated dataset</option></select></label><button className="primary">Process baseline</button></form><p>Columns: journey_no, stage, arrived_at, queued_at, started_at, ended_at. Timestamps require an explicit UTC offset. <a href={`${API_URL}/api/v1/research/baseline/synthetic-example?days=15`}>Download a synthetic example</a> (15 walk-in days, FCFS).</p>{error&&<p className="error">{error}</p>}{report&&<><BaselineReport report={report}/><details><summary>Full report</summary><pre>{JSON.stringify({...report,wait_samples:undefined,arrival_to_provider_sample:undefined},null,2)}</pre></details></>}{saved.map(d=><details key={d.id}><summary>Stored baseline: {d.name}</summary><small>SHA-256 {d.dataset_hash}</small><BaselineReport report={d.schema.report}/></details>)}</article>;
 }

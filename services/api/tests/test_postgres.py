@@ -190,7 +190,7 @@ def test_postgres_research_evidence_immutability_and_concurrent_trials(pg):
                                     name='Frozen PG protocol', question='Do database boundaries protect synthetic research?', design='MANUAL_ONLY',
                                     config_json={'case_count': 2, 'operations_config': {}}, config_hash='c'*64)
         db.add(protocol); db.flush()
-        features = {'age_band': 'adult', 'visit_type': 'new', 'arrival_mode': 'walk_in', 'hour': 9, 'recorded_measurement': 0.}
+        features = {'age_band': 'adult', 'visit_type': 'new', 'arrival_mode': 'walk_in', 'hour': 9, 'temperature': 37.0, 'pulse': 80., 'respiratory_rate': 16., 'oxygen_saturation': 97., 'systolic_pressure': 120., 'diastolic_pressure': 76.}
         reviewed = ResearchCase(facility_id=clinician.facility_id, protocol_id=protocol.id, ordinal=1,
                                 features_json=features, synthetic_label='P2', source_row_hash='d'*64)
         unseen = ResearchCase(facility_id=clinician.facility_id, protocol_id=protocol.id, ordinal=2,

@@ -58,7 +58,7 @@ export function Triage({ visits, onDone, setNotice }: { visits: Visit[]; onDone:
           <button type="button" className={item.id === visit?.id ? "primary small" : "secondary small"} aria-pressed={item.id === visit?.id} onClick={() => setSelected(item.id)}>{item.id === visit?.id ? "Assessing" : "Assess"}</button>
         </div>)}</div>
       </article>}
-      <AdvisoryPanel visitId={visit?.id} onDecision={(value) => { setRecommendation(value); if (value?.decision === "ACCEPT" && value.suggestion) setUrgency(value.suggestion); }} />
+      <AdvisoryPanel visitId={visit?.id} observations={observations} onDecision={(value) => { setRecommendation(value); if (value?.decision === "ACCEPT" && value.suggestion) setUrgency(value.suggestion); }} />
     </div>
   </section>;
 }

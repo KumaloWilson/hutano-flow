@@ -34,6 +34,9 @@ class RankedEntry:
     deferred_until: datetime | None = None
     missed_calls: int = 0
     carried_over: bool = False
+    overtaken_by: int = 0
+    minutes_since_review: int = 0
+    review_recommended: bool = False
 
     def dict(self) -> dict:
         return asdict(self)
@@ -76,7 +79,26 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
     facility = db.get(Facility, facility_id)
     zone = ZoneInfo(facility.timezone if facility else "UTC")
     today = now.astimezone(zone).date()
+    # Bottom-of-queue protection (ADR-034): measure, for each waiting patient, how long since a
+    # clinician last reviewed them and how many later arrivals were called first. Crossing a
+    # threshold *recommends* clinician review; it never changes the order by itself.
+    prioritised = point.type not in {"registration", "triage"} and mode != "FCFS"
+    review_after = float(config.get("review_after_minutes", 2 * warning_minutes))
+    review_overtaken = int(config.get("review_overtaken", 5))
+    called = []
+    reviewed: dict = {}
+    if entries:
+        earliest = min(entry.joined_at for entry in entries)
+        called = db.execute(select(ServiceEpisode.queued_at, ServiceEpisode.called_at).where(
+            ServiceEpisode.service_point_id == service_point_id, ServiceEpisode.called_at.is_not(None),
+            ServiceEpisode.called_at >= earliest)).all()
+        reviewed = dict(db.execute(select(TriageAssessment.visit_id, func.max(TriageAssessment.assessed_at)).where(
+            TriageAssessment.visit_id.in_([entry.episode.visit_id for entry in entries])).group_by(TriageAssessment.visit_id)).all())
+    def aware(value):
+        return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
+    called = [(aware(q), aware(c)) for q, c in called if q is not None]
     scored: list[tuple] = []
+    protection: dict = {}
     for entry in entries:
         visit = entry.episode.visit
         if visit.status == "ESCALATION_REQUIRED":
@@ -115,6 +137,11 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
                 joined.astimezone(zone).date() < today,
             )
         )
+        since = max(joined, aware(reviewed.get(visit.id)) or joined)
+        overtaken = sum(1 for queued_at, called_at in called if queued_at > joined and called_at > since)
+        minutes_since = max(0, int((now - since).total_seconds() // 60))
+        protection[entry.id] = (overtaken, minutes_since,
+            bool(prioritised and urgency not in {None, "P1"} and (minutes_since >= review_after or overtaken >= review_overtaken)))
     # First rank the unpinned entries. Insert clinician pins at their requested positions.
     ordinary = sorted([item for item in scored if not item[7].manual_pin], key=lambda item: item[2:7])
     pins = sorted([item for item in scored if item[7].manual_pin], key=lambda item: (item[1], item[6]))
@@ -132,6 +159,9 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
             explanations.insert(0, f"Missed call; place kept, callable from {deferred_until.astimezone(zone):%H:%M}")
         if carried_over:
             explanations.insert(0, "Joined on an earlier day; review at day close")
+        overtaken, minutes_since, review = protection.get(entry.id, (0, 0, False))
+        if review:
+            explanations.insert(0, f"Clinician review suggested: {minutes_since} min since last review, {overtaken} later arrival(s) seen first. Order is unchanged until a clinician decides")
         if point.capacity == 0 or point.outage_state == "UNAVAILABLE":
             explanations.append("Service point unavailable; queue is paused")
         components = {
@@ -159,6 +189,9 @@ def rank_queue(db: Session, facility_id: uuid.UUID, service_point_id: uuid.UUID)
                 deferred_until=deferred_until,
                 missed_calls=entry.missed_calls or 0,
                 carried_over=carried_over,
+                overtaken_by=overtaken,
+                minutes_since_review=minutes_since,
+                review_recommended=review,
             ).dict()
         )
     return result

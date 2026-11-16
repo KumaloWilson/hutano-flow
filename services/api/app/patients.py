@@ -86,6 +86,9 @@ def observations(visit_id:uuid.UUID,payload:ObservationsInput,user=Depends(requi
     visit=require_visit(db,visit_id,user.facility_id)
     if visit.status not in {'AWAITING_TRIAGE','ACTIVE','ESCALATION_REQUIRED'}: raise HTTPException(409,'Observations require an active encounter')
     if len({o.field_code for o in payload.observations})!=len(payload.observations): raise HTTPException(422,'Each field may appear only once')
+    from app.advisory import check_recording_ranges
+    problems=check_recording_ranges({o.field_code:o.value for o in payload.observations})
+    if problems: raise HTTPException(422,'; '.join(problems))
     for o in payload.observations:
         db.add(Observation(facility_id=user.facility_id,visit_id=visit.id,field_code=o.field_code,value=None if o.value is None else str(o.value),unit=FIELDS[o.field_code][1],entered_by=user.id))
     evidence(db,user,'observations.recorded',visit.id,key)

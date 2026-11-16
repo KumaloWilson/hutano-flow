@@ -36,6 +36,17 @@ The 30 October clinic demonstration adds believable fictional identities, three 
 - **System health** for administrators and managers: database, worker, storage, backup age and encryption, sessions, displays and device clock skew.
 - **FHIR R4-shaped export** of synthetic records for administrators (not a certified interface).
 
+### Intelligence layer and the proposal (ADR-033 to ADR-036)
+
+| Proposal objective | What the system does |
+|---|---|
+| **O1** Quantify waits and bottlenecks | The time-and-motion import reports waits and service per point, total visit, arrivals by hour, queue length by hour, a Little's Law check, the bottleneck and the share of time spent waiting. |
+| **O2** Explainable model from routine data | The advisory reads registration context and the six triage vital signs from the visit record, says where each input came from, and shows missing values as *not recorded*. It explains itself as "suggests P2 rather than P3, mainly because of…". Clinicians decide. |
+| **O3** Dynamic prioritisation, tracking, visibility | Clinician-ordered queues with long-wait **Review suggested** prompts and overtaking counts for the patient at the bottom of the queue; patient status page; TV board. |
+| **O4** Evaluate against the existing process | Baseline-calibrated simulation that must first reproduce the measured baseline. Research-only policy arms (bounded ageing, duration-aware), fairness metrics, paired tests, Mann–Whitney comparison with the baseline, and SUS and TAM instruments. All are collected in **Research → Evaluation**. |
+
+Everything is synthetic until the approvals in proposal §1.8 are in place.
+
 ## Quick start
 
 Requirements: Docker Engine with Compose v2/BuildKit, at least 4 GB free memory, and localhost ports 3000, 8000 and 55432 available. Initial package downloads may be substantial.

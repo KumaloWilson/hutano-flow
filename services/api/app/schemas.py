@@ -144,6 +144,24 @@ class OutageConfig(APIModel):
     available_servers: int = Field(default=0, ge=0, le=20, strict=True)
 
 
+class ResearchArms(APIModel):
+    promote_minutes: float = Field(default=60, ge=5, le=480)
+    max_promotion_levels: int = Field(default=2, ge=1, le=4)
+    duration_guard_minutes: float = Field(default=60, ge=5, le=480)
+    prediction_error_sigma: float = Field(default=.35, ge=0, le=2)
+
+
+class CalibratedSimulationCreate(APIModel):
+    dataset_id: uuid.UUID
+    name: str = Field(default="Baseline-calibrated comparison", min_length=3, max_length=120)
+    seed: int = Field(default=2026, ge=0, le=2**31 - 1)
+    replications: int = Field(default=20, ge=2, le=100)
+    include_research_arms: bool = True
+    research: ResearchArms | None = None
+    urgency_mix: list[float] | None = None
+    validation_tolerance: float = Field(default=.25, gt=0, le=1)
+
+
 class SimulationCreate(APIModel):
     name: str = Field(default="Synthetic outpatient comparison", min_length=3, max_length=120)
     seed: int = Field(default=2026, ge=0, le=2**31 - 1)
@@ -162,6 +180,9 @@ class SimulationCreate(APIModel):
     outage: OutageConfig | None = None
     warning_minutes: float = Field(default=60, gt=0, le=1440)
     service_tail: float = Field(default=.5, ge=0, le=2)
+    # Research-only arms (ADR-034): bounded cross-category ageing and duration-aware ordering.
+    include_research_arms: bool = False
+    research: ResearchArms | None = None
 
     @model_validator(mode="after")
     def validate_scenario(self):
@@ -191,7 +212,10 @@ class ModelReview(APIModel):
 
 
 class InferenceRequest(APIModel):
-    features: dict[str, float | int | str | None]
+    # Optional: by default inputs come from the visit record (ADR-033). `observations` carries
+    # vital signs typed into the triage form but not yet saved; `features` is the legacy manual path.
+    features: dict[str, float | int | str | None] | None = None
+    observations: dict[str, float | None] | None = None
 
 
 
@@ -211,9 +235,14 @@ class FeedbackCreate(APIModel):
     @field_validator("response")
     @classmethod
     def feedback_fields(cls, value):
-        allowed = {"completed", "duration_seconds", "errors", "comments", "trust_rating", "explanation_clear"}
+        allowed = {"completed", "duration_seconds", "errors", "comments", "trust_rating", "explanation_clear", "sus", "tam"}
         if set(value) - allowed:
             raise ValueError("Unexpected feedback field")
+        from app.evaluation import validate_sus, validate_tam
+        if "sus" in value:
+            validate_sus(value["sus"])
+        if "tam" in value:
+            validate_tam(value["tam"])
         if "completed" in value and not isinstance(value["completed"], bool):
             raise ValueError("completed must be true or false")
         for field in ["duration_seconds", "errors"]:

@@ -5,9 +5,14 @@ import json
 from statistics import mean
 import numpy as np
 import simpy
-from scipy.stats import t
+from scipy.stats import t, ttest_rel, wilcoxon
 
 POLICIES = ["FCFS", "URGENCY_FIRST", "HYBRID"]
+# Research-only arms (ADR-034). They exist to quantify trade-offs for the patient at the
+# bottom of the queue and the value of duration prediction; neither is used by the live
+# queue, where only clinician-confirmed urgency orders patients.
+RESEARCH_POLICIES = ["AGEING_BOUNDED", "DURATION_AWARE"]
+RESEARCH_DEFAULTS = {"promote_minutes": 60.0, "max_promotion_levels": 2, "duration_guard_minutes": 60.0, "prediction_error_sigma": .35}
 URGENCY_ORDER = {f"P{i}": i for i in range(1, 6)}
 STAGES = ["registration", "triage", "consultation", "pharmacy"]
 
@@ -47,12 +52,24 @@ def generate_patients(seed, count, arrivals_per_hour, mean_service, urgency_mix=
         float(stage_values["pharmacy"][i]), bool(pharmacy[i])) for i in range(count)]
 
 
-def _select(waiting, policy, now, stage):
+def _select(waiting, policy, now, stage, research=None, predicted=None):
+    research = research or RESEARCH_DEFAULTS
+    prioritised = stage in {"consultation", "pharmacy"}
     def key(item):
         patient, queued, _ = item
-        group = URGENCY_ORDER.get(patient.urgency, 99) if policy != "FCFS" and stage in {"consultation", "pharmacy"} else 0
+        group = URGENCY_ORDER.get(patient.urgency, 99) if policy != "FCFS" and prioritised else 0
         age = -min(now - queued, 240) / 240 if policy == "HYBRID" else 0
-        return group, age, queued, patient.patient_no
+        if policy == "AGEING_BOUNDED" and prioritised:
+            # One category step per `promote_minutes` waited, capped; never above P1.
+            steps = min(int(research["max_promotion_levels"]), int((now - queued) // research["promote_minutes"]))
+            group = max(1, group - steps)
+        if policy == "DURATION_AWARE" and stage == "consultation":
+            # Within a category: anyone past the guard goes first (oldest first); otherwise
+            # shortest *predicted* consultation first. The guard prevents starvation.
+            overdue = (now - queued) >= research["duration_guard_minutes"]
+            shortest = 0.0 if overdue else (predicted or {}).get(patient.patient_no, patient.service)
+            return group, 0 if overdue else 1, shortest, queued, patient.patient_no
+        return group, 0, age, queued, patient.patient_no
     return min(waiting, key=key)
 
 
@@ -63,7 +80,15 @@ def summary(values):
         "p90": round(float(np.percentile(values, 90)), 4), "maximum": round(float(max(values)), 4)}
 
 
-def simulate_once(patients, policy, servers, stage_capacities=None, outage=None, warning_minutes=60):
+def tail(values):
+    """Extra distribution detail for fairness reporting (kept separate so `summary` is stable)."""
+    if not values:
+        return {"n": 0, "p95": None, "sd": None}
+    return {"n": len(values), "p95": round(float(np.percentile(values, 95)), 4),
+            "sd": round(float(np.std(values, ddof=1)), 4) if len(values) > 1 else None}
+
+
+def simulate_once(patients, policy, servers, stage_capacities=None, outage=None, warning_minutes=60, research=None, predicted=None):
     env = simpy.Environment()
     capacities = {"registration": 2, "triage": 1, "consultation": servers, "pharmacy": 1, **(stage_capacities or {})}
     queues = {stage: [] for stage in STAGES}
@@ -73,6 +98,7 @@ def simulate_once(patients, policy, servers, stage_capacities=None, outage=None,
     lengths = {stage: {"last": 0., "area": 0., "maximum": 0} for stage in STAGES}
     consultation_waits, all_waits, totals, arrival_provider = [], [], [], []
     by_urgency = {label: [] for label in URGENCY_ORDER}
+    consult_log = []  # (queued, started, urgency) for overtaking analysis
     traces = {}
 
     def changed(stage):
@@ -110,7 +136,7 @@ def simulate_once(patients, policy, servers, stage_capacities=None, outage=None,
                 if start <= env.now < end and index >= outage.get("available_servers", 0):
                     yield env.timeout(end - env.now)
                     continue
-            selected = _select(queues[stage], policy, env.now, stage)
+            selected = _select(queues[stage], policy, env.now, stage, research, predicted)
             changed(stage)
             queues[stage].remove(selected)
             patient, queued, done = selected
@@ -121,6 +147,7 @@ def simulate_once(patients, policy, servers, stage_capacities=None, outage=None,
                 consultation_waits.append(wait)
                 arrival_provider.append(started - patient.arrival)
                 by_urgency.setdefault(patient.urgency or "UNLABELLED", []).append(wait)
+                consult_log.append((queued, started, patient.urgency))
             duration = patient.service if stage == "consultation" else getattr(patient, stage)
             stage_service[stage].append(duration)
             yield env.timeout(duration)
@@ -143,20 +170,91 @@ def simulate_once(patients, policy, servers, stage_capacities=None, outage=None,
         "stage_waits": stage_waits, "stage_services": stage_service, "stage_utilisation": utilisation,
         "queue_lengths": {stage: {"mean": lengths[stage]["area"] / horizon if horizon else 0.,
             "maximum": lengths[stage]["maximum"]} for stage in STAGES},
+        "overtaken": overtaking(consult_log),
         "traces": traces}
+
+
+def overtaking(log):
+    """For each consultation, how many patients who queued *later* started *earlier*."""
+    result = {label: [] for label in URGENCY_ORDER}
+    ordered = sorted(log)
+    for index, (queued, started, urgency) in enumerate(ordered):
+        count = sum(1 for other_queued, other_started, _ in ordered[index + 1:] if other_queued > queued and other_started < started)
+        result.setdefault(urgency or "UNLABELLED", []).append(count)
+    return result
+
+
+def paired_test(first, second):
+    """Paired comparison of replication means (second - first)."""
+    differences = [b - a for a, b in zip(first, second) if a is not None and b is not None]
+    if len(differences) < 2:
+        return {"n": len(differences), "mean_difference": float(np.mean(differences)) if differences else None,
+                "ci95": None, "t_p_value": None, "wilcoxon_p_value": None}
+    diff = np.asarray(differences, dtype=float)
+    margin = float(t.ppf(.975, len(diff) - 1) * diff.std(ddof=1) / np.sqrt(len(diff)))
+    result = {"n": len(diff), "mean_difference": float(diff.mean()), "ci95": [float(diff.mean() - margin), float(diff.mean() + margin)]}
+    if np.allclose(diff, 0):
+        result.update(t_p_value=1.0, wilcoxon_p_value=1.0, note="Identical in every replication")
+    else:
+        result["t_p_value"] = float(ttest_rel(second[:len(diff)], first[:len(diff)]).pvalue)
+        try:
+            result["wilcoxon_p_value"] = float(wilcoxon(diff).pvalue)
+        except ValueError:
+            result["wilcoxon_p_value"] = None
+    return result
+
+
+def predicted_durations(seed, patients, sigma):
+    """Imperfect duration predictions from a separate stream, so the shared patient sequence
+    (and every non-research result) is unchanged by enabling research arms."""
+    rng = np.random.default_rng(np.random.SeedSequence([seed, 7919]))
+    noise = rng.lognormal(-sigma ** 2 / 2, sigma, len(patients)) if sigma > 0 else np.ones(len(patients))
+    return {p.patient_no: float(p.service * n) for p, n in zip(patients, noise)}
+
+
+def validate_against_baseline(runs, target, tolerance):
+    """Does the simulated FCFS facility reproduce the observed baseline? (proposal §1.8)"""
+    rows, observed_stages = [], target.get("stages", {})
+    for stage in STAGES:
+        observed = observed_stages.get(stage)
+        if not observed or observed.get("waiting_minutes", {}).get("mean") is None:
+            continue
+        simulated = summary([v for r in runs for v in r["stage_waits"][stage]])
+        for statistic in ("mean", "p90"):
+            obs, sim = observed["waiting_minutes"].get(statistic), simulated.get(statistic)
+            if obs is None or sim is None:
+                continue
+            allowed = max(tolerance * obs, 5.0)
+            rows.append({"stage": stage, "statistic": f"wait {statistic}", "observed_minutes": round(obs, 2), "simulated_minutes": round(sim, 2),
+                         "absolute_error": round(abs(sim - obs), 2), "allowed_error": round(allowed, 2), "within_tolerance": abs(sim - obs) <= allowed})
+    for key, label in (("arrival_to_provider_minutes", "arrival to provider"), ("total_visit_minutes", "total visit")):
+        obs = (target.get(key) or {}).get("mean")
+        simulated = summary([v for r in runs for v in r["arrival_to_provider" if key.startswith("arrival") else "total_visit"]])["mean"]
+        if obs is not None and simulated is not None:
+            allowed = max(tolerance * obs, 5.0)
+            rows.append({"stage": "journey", "statistic": f"{label} mean", "observed_minutes": round(obs, 2), "simulated_minutes": round(simulated, 2),
+                         "absolute_error": round(abs(simulated - obs), 2), "allowed_error": round(allowed, 2), "within_tolerance": abs(simulated - obs) <= allowed})
+    reproduced = bool(rows) and all(row["within_tolerance"] for row in rows)
+    return {"reproduces_baseline": reproduced, "tolerance": f"max({int(tolerance * 100)}% of observed, 5 minutes)", "checks": rows,
+            "interpretation": "Policy comparisons are only interpretable for this facility if the FCFS simulation reproduces the measured baseline."
+                              if reproduced else "The simulated facility does NOT reproduce the measured baseline within tolerance; treat policy comparisons as exploratory and revisit the calibration."}
 
 
 def run_comparison(*, seed, patient_count, replications, servers, arrival_rate_per_hour, mean_service_minutes,
                    urgency_mix=None, pharmacy_probability=.75, arrival_pattern="poisson", hourly_rates=None,
-                   stage_means=None, stage_capacities=None, outage=None, warning_minutes=60, service_tail=.5):
-    collected = {policy: [] for policy in POLICIES}
+                   stage_means=None, stage_capacities=None, outage=None, warning_minutes=60, service_tail=.5,
+                   include_research_arms=False, research=None, validation_target=None, validation_tolerance=.25, calibration=None):
+    research = {**RESEARCH_DEFAULTS, **(research or {})}
+    policies = POLICIES + (RESEARCH_POLICIES if include_research_arms else [])
+    collected = {policy: [] for policy in policies}
     paired, input_hashes = [], []
     for replication in range(replications):
         patients = generate_patients(seed + replication, patient_count, arrival_rate_per_hour, mean_service_minutes,
             urgency_mix, pharmacy_probability, arrival_pattern, hourly_rates, stage_means, service_tail)
         input_hashes.append(hashlib.sha256(json.dumps([asdict(p) for p in patients], sort_keys=True).encode()).hexdigest())
-        runs = {policy: simulate_once(patients, policy, servers, stage_capacities, outage, warning_minutes) for policy in POLICIES}
-        for policy in POLICIES:
+        predicted = predicted_durations(seed + replication, patients, research["prediction_error_sigma"]) if include_research_arms else None
+        runs = {policy: simulate_once(patients, policy, servers, stage_capacities, outage, warning_minutes, research, predicted) for policy in policies}
+        for policy in policies:
             collected[policy].append(runs[policy])
         if runs["FCFS"]["all_stage_waits"] and runs["HYBRID"]["all_stage_waits"]:
             baseline, proposed = mean(runs["FCFS"]["all_stage_waits"]), mean(runs["HYBRID"]["all_stage_waits"])
@@ -177,7 +275,13 @@ def run_comparison(*, seed, patient_count, replications, servers, arrival_rate_p
                 "utilisation": mean(r["stage_utilisation"][stage] for r in runs),
                 "queue_length_mean": mean(r["queue_lengths"][stage]["mean"] for r in runs),
                 "queue_length_maximum": max(r["queue_lengths"][stage]["maximum"] for r in runs)} for stage in STAGES},
-            "replication_mean_waits": [mean(r["all_stage_waits"]) if r["all_stage_waits"] else None for r in runs]}
+            "replication_mean_waits": [mean(r["all_stage_waits"]) if r["all_stage_waits"] else None for r in runs],
+            "fairness": {"wait_tail_by_urgency": {u: tail([v for r in runs for v in r["by_urgency"].get(u, [])]) for u in URGENCY_ORDER},
+                "overtaken_by_urgency": {u: {"mean": round(float(np.mean(vals)), 3) if vals else None, "maximum": max(vals) if vals else None}
+                    for u in URGENCY_ORDER for vals in [[v for r in runs for v in r["overtaken"].get(u, [])]]},
+                "low_urgency_max_wait": max([v for r in runs for u in ["P4", "P5"] for v in r["by_urgency"].get(u, [])], default=None),
+                "definition": "Consultation stage. Overtaken = later arrivals who started consultation first; the cost of priority borne by each patient."},
+            "research_only": policy in RESEARCH_POLICIES}
     differences = [p["difference_minutes"] for p in paired]
     delta = float(np.mean(differences)) if differences else None
     interval = None
@@ -185,7 +289,21 @@ def run_comparison(*, seed, patient_count, replications, servers, arrival_rate_p
         margin = float(t.ppf(.975, len(differences) - 1) * np.std(differences, ddof=1) / np.sqrt(len(differences)))
         interval = [delta - margin, delta + margin]
     baseline = summaries["FCFS"]["waiting_minutes"]["mean"]
-    return {"research_label": "SYNTHETIC SIMULATION — NOT CLINICAL EVIDENCE", "seed": seed,
+    fcfs_means = summaries["FCFS"]["replication_mean_waits"]
+    versus_fcfs = {policy: paired_test(fcfs_means, summaries[policy]["replication_mean_waits"]) for policy in policies if policy != "FCFS"}
+    extra = {"inferential": {"paired_vs_fcfs_mean_journey_wait": versus_fcfs,
+                             "method": "Replication-level paired comparison with common random numbers: paired t-test and Wilcoxon signed-rank; descriptive at the replication level, not patient-level significance",
+                             "multiple_comparisons": "Several policies are compared with FCFS; interpret p-values descriptively (no correction applied)"}}
+    if include_research_arms:
+        extra["research_arms"] = {"policies": RESEARCH_POLICIES, "parameters": research,
+            "AGEING_BOUNDED": f"Waiting time promotes a patient one category per {research['promote_minutes']:g} minutes, at most {research['max_promotion_levels']} categories. RESEARCH ONLY: crosses clinician-confirmed categories, which the live queue never does.",
+            "DURATION_AWARE": f"Within a category, shortest predicted consultation first (prediction error σ={research['prediction_error_sigma']}); anyone waiting {research['duration_guard_minutes']:g}+ minutes goes first. RESEARCH ONLY.",
+            "safety": "Research arms quantify trade-offs for discussion; adopting either would require clinical governance review (ADR-034)."}
+    if validation_target:
+        extra["calibration_validation"] = validate_against_baseline(collected["FCFS"], validation_target, validation_tolerance)
+    if calibration:
+        extra["calibration"] = calibration
+    return {**extra,"research_label": "SYNTHETIC SIMULATION — NOT CLINICAL EVIDENCE", "seed": seed,
         "replications": replications, "patient_count_per_replication": patient_count,
         "input_sequence_hashes": input_hashes, "policy_version": "safe-groups-v2",
         "parameters": {"servers": servers, "arrival_rate_per_hour": arrival_rate_per_hour,

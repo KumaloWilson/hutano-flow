@@ -31,10 +31,13 @@ def test_five_temporal_partitions_and_no_preprocessing_leakage(calibrated_model)
     artifact = joblib.load(calibrated_model["artifact_path"])
     fit = generate_synthetic_training_data(8, 300).iloc[:150]
     imputer = artifact["pipeline"]["preprocess"].named_transformers_["number"]["impute"]
-    assert imputer.statistics_.tolist() == pytest.approx(fit[["hour", "recorded_measurement"]].median().tolist())
+    from app.ml.pipeline import NUMERIC_FEATURES
+    assert imputer.statistics_.tolist() == pytest.approx(fit[NUMERIC_FEATURES].median().tolist())
     assert research["threshold_selection"]["frozen_before_final_test"]
     assert artifact["reference_profile"]["n"] == 150
-    assert "dimensionless" in metrics["feature_schema"]["metadata"]["recorded_measurement"]["unit"]
+    metadata = metrics["feature_schema"]["metadata"]
+    assert metadata["pulse"]["unit"] == "beats/min" and "missing stays missing" in metadata["pulse"]["definition"]
+    assert "not clinical thresholds" in metrics["feature_schema"]["generator_assumptions"]
 
 
 def test_final_test_labels_cannot_select_estimator_calibrator_or_threshold(calibrated_model, tmp_path):
@@ -84,7 +87,7 @@ def test_threshold_utility_and_guarded_risk_denominators():
 
 
 def test_exact_raw_contrast_and_calibrated_log_probability_ratio(calibrated_model):
-    features = {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "recorded_measurement": 0}
+    features = {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "temperature": 37.0, "pulse": 80, "respiratory_rate": 16, "oxygen_saturation": 97, "systolic_pressure": 120, "diastolic_pressure": 76}
     result = evaluate_shadow(calibrated_model["artifact_path"], features)
     contrast = result["contrastive"]
     reconstructed = (sum(f["logit_difference_contribution"] for f in contrast["factors"])
@@ -96,10 +99,26 @@ def test_exact_raw_contrast_and_calibrated_log_probability_ratio(calibrated_mode
     assert result["requires_clinician_review"] and not result["model_suggestion_applied_automatically"]
 
 
-@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf"), "NaN", "Infinity", True, {}, []])
+def test_unrecorded_vital_is_explicit_not_imputed_silently(calibrated_model):
+    """A missing (NaN/None) vital is 'not recorded' within the allowance, never treated as normal."""
+    for missing in (float("nan"), None):
+        result = explain_prediction(calibrated_model["artifact_path"], {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "temperature": 37.0, "pulse": missing, "respiratory_rate": 16, "oxygen_saturation": 97, "systolic_pressure": 120, "diastolic_pressure": 76})
+        assert result["confidence"] is not None and "pulse" in result["not_recorded"]
+        assert not any("pulse" in reason for reason in result["reasons"])
+    three_missing = explain_prediction(calibrated_model["artifact_path"], {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9,
+        "temperature": None, "pulse": None, "respiratory_rate": 16, "oxygen_saturation": None, "systolic_pressure": 120, "diastolic_pressure": 76})
+    assert three_missing["abstained"] and three_missing["confidence"] is None
+    assert any("Too many measurements not recorded (3 of 5" in reason for reason in three_missing["reasons"])
+    # Systolic and diastolic come from one reading: a missing cuff counts once.
+    no_cuff = explain_prediction(calibrated_model["artifact_path"], {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9,
+        "temperature": 37.0, "pulse": 80, "respiratory_rate": None, "oxygen_saturation": 97, "systolic_pressure": None, "diastolic_pressure": None})
+    assert not any("Too many" in reason for reason in no_cuff["reasons"])
+
+
+@pytest.mark.parametrize("value", [float("inf"), -float("inf"), "NaN", "Infinity", True, {}, []])
 def test_inference_rejects_malformed_or_nonfinite_measurement(calibrated_model, value):
     result = explain_prediction(calibrated_model["artifact_path"], {
-        "age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "recorded_measurement": value})
+        **{"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "temperature": 37.0, "pulse": 80, "respiratory_rate": 16, "oxygen_saturation": 97, "systolic_pressure": 120, "diastolic_pressure": 76}, "pulse": value})
     assert result["abstained"] and result["suggestion"] is None and result["confidence"] is None
     assert result["reasons"]
     json.dumps(result, allow_nan=False)
@@ -127,7 +146,7 @@ def test_legacy_artifact_remains_usable(calibrated_model, tmp_path):
     artifact.pop("threshold")
     legacy_path = tmp_path / "legacy.joblib"
     joblib.dump(artifact, legacy_path)
-    result = explain_prediction(str(legacy_path), {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "recorded_measurement": 0})
+    result = explain_prediction(str(legacy_path), {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "temperature": 37.0, "pulse": 80, "respiratory_rate": 16, "oxygen_saturation": 97, "systolic_pressure": 120, "diastolic_pressure": 76})
     assert result["abstention_threshold"] == .55
     assert result["calibration_temperature"] == 1
     assert result["confidence"] == result["raw_confidence"]
@@ -140,7 +159,7 @@ def test_tied_class_logits_still_explain_a_distinct_alternative(calibrated_model
     classifier.intercept_[:] = [2, 2, 1, 0, -1]
     path = tmp_path / "tied-logits.joblib"
     joblib.dump(artifact, path)
-    result = explain_prediction(str(path), {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "recorded_measurement": 0})
+    result = explain_prediction(str(path), {"age_band": "adult", "visit_type": "new", "arrival_mode": "walk_in", "hour": 9, "temperature": 37.0, "pulse": 80, "respiratory_rate": 16, "oxygen_saturation": 97, "systolic_pressure": 120, "diastolic_pressure": 76})
     assert result["contrastive"]["predicted_class"] == "P1"
     assert result["contrastive"]["alternative_class"] == "P2"
     assert result["contrastive"]["raw_logit_difference"] == 0
@@ -160,7 +179,7 @@ def test_equal_timestamps_stay_together_or_reject_insufficient_partitions():
 
 def test_dataset_numeric_infinities_and_final_partition_class_diagnostics():
     frame = generate_synthetic_training_data(8, 300)
-    frame.loc[0, "recorded_measurement"] = np.inf
+    frame.loc[0, "pulse"] = np.inf
     with pytest.raises(ValueError, match="Malformed values"):
         validate_frame(frame)
     small = generate_synthetic_training_data(8, 50)

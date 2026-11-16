@@ -79,6 +79,7 @@ from app.schemas import (
     RecommendationDecisionCreate,
     RegisterVisit,
     SimulationCreate,
+    CalibratedSimulationCreate,
     TriageCreate,
     VisitCreate,
     ModelTrain,
@@ -631,6 +632,10 @@ def triage_visit(
     )
     db.add(assessment)
     from app.patients import FIELDS
+    from app.advisory import check_recording_ranges
+    problems = check_recording_ranges({k: v for k, v in payload.observations.items() if isinstance(v, (int, float))})
+    if problems:
+        raise HTTPException(status_code=422, detail="; ".join(problems))
     for field_code, value in payload.observations.items():
         if len(field_code) > 80:
             raise HTTPException(status_code=422, detail="Observation field code is too long")
@@ -1321,6 +1326,51 @@ def create_simulation(
     return result
 
 
+@app.post("/api/v1/simulations/calibrated", status_code=202)
+def create_calibrated_simulation(
+    payload: CalibratedSimulationCreate,
+    user: User = Depends(require_roles("ADMIN", "MANAGER", "RESEARCHER")),
+    db: Session = Depends(get_db, scope="function"),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    """Fit the simulator from an imported baseline, then compare policies (proposal §1.8, §1.10)."""
+    from app.simulation.calibration import calibrated_config, validation_target
+    key = require_idempotency(idempotency_key)
+    rate_limiter.check(f"simulation:{user.id}", 10, 300)
+    dataset = db.scalar(select(Dataset).where(Dataset.id == payload.dataset_id, Dataset.facility_id == user.facility_id,
+                                              Dataset.source_type == "SYNTHETIC_BASELINE"))
+    if not dataset:
+        raise HTTPException(404, "Baseline dataset not found")
+    report = (dataset.schema_json or {}).get("report", {})
+    try:
+        fitted = calibrated_config(report)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    config = {**fitted, "seed": payload.seed, "replications": payload.replications, "urgency_mix": payload.urgency_mix,
+              "include_research_arms": payload.include_research_arms,
+              "research": payload.research.model_dump() if payload.research else None,
+              "validation_target": validation_target(report), "validation_tolerance": payload.validation_tolerance,
+              "calibration": {"baseline_dataset_id": str(dataset.id), "baseline_dataset_hash": dataset.dataset_hash,
+                              "baseline_name": dataset.name, "fitted_inputs": report.get("simulation_inputs")}}
+    if config["patient_count"] * payload.replications > 100000:
+        raise HTTPException(422, "Limit total simulated patients to 100,000 per experiment")
+    scenario = SimulationScenario(facility_id=user.facility_id, owner_id=user.id, name=payload.name,
+                                  scenario_json={**payload.model_dump(mode="json"), "fitted": fitted}, synthetic_flag=True)
+    db.add(scenario)
+    db.flush()
+    run = SimulationRun(facility_id=user.facility_id, scenario_id=scenario.id, policy="COMPARISON", seed=payload.seed,
+                        replications=payload.replications, status="PENDING", started_at=utcnow())
+    db.add(run)
+    db.flush()
+    job = Job(facility_id=user.facility_id, type="SIMULATION", config_json=config, result_ref=str(run.id))
+    db.add(job)
+    db.flush()
+    record_audit(db, facility_id=user.facility_id, actor_id=user.id, action="simulation.calibrated_submitted", object_type="SimulationRun",
+                 object_id=run.id, correlation_id=key, new={"seed": run.seed, "replications": run.replications, "baseline": dataset.dataset_hash})
+    commit(db)
+    return {"id": str(run.id), "job_id": str(job.id), "status": run.status, "fitted_inputs": report.get("simulation_inputs"), "results": {}}
+
+
 @app.get("/api/v1/simulations")
 def list_simulations(user: User = Depends(require_roles("ADMIN", "MANAGER", "RESEARCHER")), db: Session = Depends(get_db, scope="function")):
     rows=db.execute(select(SimulationRun,SimulationScenario.name).join(SimulationScenario,SimulationScenario.id==SimulationRun.scenario_id).where(SimulationRun.facility_id==user.facility_id).order_by(SimulationRun.started_at.desc()).limit(30)).all()
@@ -1503,15 +1553,28 @@ def infer_recommendation(visit_id: uuid.UUID, payload: InferenceRequest,
     user: User = Depends(require_roles("CLINICIAN", "TRIAGE_NURSE")), db: Session = Depends(get_db, scope="function"),
     idempotency_key: str = Header(alias="Idempotency-Key")):
     visit = require_visit(db, visit_id, user.facility_id)
-    if set(payload.features) - set(FEATURES):
+    from app.advisory import check_recording_ranges, visit_inputs
+    from app.ml.pipeline import LEGACY_FEATURES, VITAL_FEATURES
+    if payload.features and set(payload.features) - set(FEATURES) - set(LEGACY_FEATURES):
         raise HTTPException(422, "Unapproved model feature")
+    if payload.observations and set(payload.observations) - set(VITAL_FEATURES):
+        raise HTTPException(422, "Only the six recorded vital signs can be supplied")
+    problems = check_recording_ranges(payload.observations or {})
+    if problems:
+        raise HTTPException(422, "; ".join(problems))
     model = db.scalar(select(ModelVersion).where(ModelVersion.facility_id == user.facility_id, ModelVersion.active.is_(True), ModelVersion.status == "REVIEWED"))
     if not model:
         return {"available": False, "message": "Model unavailable — clinician assessment required"}
+    values, sources = visit_inputs(db, visit, payload.observations)
+    if payload.features:
+        values.update(payload.features)
+        sources.update({key: "entered for this advisory" for key in payload.features})
     try:
-        explanation = advisory_for_display(explain_prediction(model.artifact_path, payload.features))
+        explanation = advisory_for_display(explain_prediction(model.artifact_path, values))
     except (FileNotFoundError, OSError):
         return {"available": False, "message": "Model unavailable — clinician assessment required"}
+    explanation["inputs"] = [{"feature": key, "value": values.get(key), "source": sources.get(key, "not recorded")}
+                             for key in (FEATURES if "recorded_measurement" not in values else LEGACY_FEATURES)]
     recommendation = PriorityRecommendation(facility_id=user.facility_id, visit_id=visit.id,
         algorithm_type="SYNTHETIC_LOGISTIC_REGRESSION", model_version=model.version,
         suggestion=explanation["suggestion"], confidence=explanation["confidence"], explanation_json=explanation)
@@ -1585,7 +1648,23 @@ def feedback_summary(user: User = Depends(require_roles("ADMIN", "RESEARCHER", "
         "tasks_completed":sum(r.response_json.get("completed") is True for r in rows),
         "task_duration_seconds":summary(durations), "error_count":sum(r.response_json.get("errors",0) for r in rows),
         "trust_rating_1_to_5":summary(trust), "trust_instrument":"Unvalidated descriptive question, not SUS or a clinical safety measure",
+        "acceptance": acceptance_summary(rows),
         "limitations":["Convenience sample; no generalisation", "Consent references and free-text comments excluded from aggregate exports"]}
+
+
+from app.evaluation import acceptance_summary, evaluation_report, SUS_ITEMS, TAM_ITEMS
+
+
+@app.get("/api/v1/research/instruments")
+def research_instruments(user: User = Depends(require_roles("ADMIN", "RESEARCHER", "MANAGER"))):
+    return {"sus": {"items": SUS_ITEMS, "scale": [1, 5], "anchors": ["Strongly disagree", "Strongly agree"], "source": "Brooke (1996)"},
+            "tam": {"items": TAM_ITEMS, "scale": [1, 7], "anchors": ["Strongly disagree", "Strongly agree"], "source": "Adapted from Davis (1989); pilot before use"}}
+
+
+@app.get("/api/v1/research/evaluation")
+def research_evaluation(user: User = Depends(require_roles("ADMIN", "RESEARCHER", "MANAGER")), db: Session = Depends(get_db, scope="function")):
+    """Evidence for each proposal objective and research question (ADR-036)."""
+    return jsonable_encoder(evaluation_report(db, user.facility_id))
 
 
 from app.admin import router as admin_router

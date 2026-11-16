@@ -20,12 +20,13 @@ import { Queues, ServiceConsole } from "@/components/Queues";
 import { DayClose, Downtime } from "@/components/FloorOps";
 import { DisplayScreens, FhirExport, ServicePoints, SystemHealth } from "@/components/AdminPanels";
 import { Analytics, Audit, Help, Simulation } from "@/components/Insights";
+import { Evaluation } from "@/components/Evaluation";
 import { LockScreen, MoreSheet, PasswordDialog, PasswordGate, Sidebar, TabBar, Topbar, type NavSection } from "@/components/shell/AppShell";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/primitives";
 
 type Tab = "home" | "registration" | "triage" | "queues" | "service" | "patients" | "journeys" | "operations" | "dayclose" | "downtime"
-  | "analytics" | "simulation" | "experiments" | "research" | "workbench" | "admin" | "system" | "audit" | "demo" | "help";
+  | "analytics" | "simulation" | "experiments" | "research" | "workbench" | "evaluation" | "admin" | "system" | "audit" | "demo" | "help";
 
 // Accessible names are part of the browser-test contract; keep them stable.
 const PAGES: Record<Tab, { label: string; icon: string; sub: string }> = {
@@ -44,6 +45,7 @@ const PAGES: Record<Tab, { label: string; icon: string; sub: string }> = {
   experiments: { label: "Experiments", icon: "sparkle", sub: "Finite-day staffing scenarios with replay" },
   research: { label: "AI research", icon: "book", sub: "Synthetic datasets and advisory model registry" },
   workbench: { label: "Research workbench", icon: "book", sub: "Protocols, calibration and independent review" },
+  evaluation: { label: "Evaluation", icon: "file", sub: "Evidence for each proposal objective and research question" },
   admin: { label: "Facility admin", icon: "settings", sub: "Service points, staff, displays and policy" },
   system: { label: "System health", icon: "activity", sub: "Database, worker, backups, sessions and displays" },
   audit: { label: "Audit log", icon: "shield", sub: "Every command with actor, reason and correlation" },
@@ -71,6 +73,7 @@ function allowedTabs(user: User | null): Tab[] {
   add("experiments", ["ADMIN", "MANAGER", "RESEARCHER"]);
   add("research", ["ADMIN", "RESEARCHER"]);
   add("workbench", ["ADMIN", "RESEARCHER", "CLINICIAN", "TRIAGE_NURSE"]);
+  add("evaluation", ["ADMIN", "MANAGER", "RESEARCHER"]);
   add("admin", ["ADMIN", "CLINICIAN", "SERVICE_PROVIDER"]);
   add("system", ["ADMIN", "MANAGER"]);
   add("audit", ["ADMIN", "MANAGER", "RESEARCHER"]);
@@ -86,7 +89,7 @@ function primaryTabs(user: User, tabs: Tab[]): Tab[] {
     : r.includes("TRIAGE_NURSE") ? ["home", "triage", "queues", "patients"]
     : r.some((x) => ["PHARMACY", "SERVICE_PROVIDER"].includes(x)) ? ["home", "service", "queues", "journeys"]
     : r.includes("ADMIN") ? ["home", "queues", "admin", "system"]
-    : ["home", "analytics", "simulation", "workbench"];
+    : ["home", "evaluation", "analytics", "simulation"];
   return pick.filter((t) => tabs.includes(t as Tab)) as Tab[];
 }
 
@@ -188,7 +191,7 @@ export default function Dashboard() {
   const sections: NavSection[] = [
     { title: "Clinic", items: (["home", "registration", "triage", "queues", "service", "patients", "journeys"] as Tab[]).filter((t) => tabs.includes(t)).map(item) },
     { title: "Operations", items: (["operations", "dayclose", "downtime", "analytics"] as Tab[]).filter((t) => tabs.includes(t)).map(item) },
-    { title: "Research", items: (["simulation", "experiments", "research", "workbench"] as Tab[]).filter((t) => tabs.includes(t)).map(item) },
+    { title: "Research", items: (["evaluation", "simulation", "experiments", "research", "workbench"] as Tab[]).filter((t) => tabs.includes(t)).map(item) },
     { title: "Workspace", items: (["admin", "system", "audit", "demo", "help"] as Tab[]).filter((t) => tabs.includes(t)).map(item) },
   ];
   const page = PAGES[tab];
@@ -227,6 +230,7 @@ export default function Dashboard() {
             <ReviewPanel user={user} />
           </div>}
           {tab === "system" && <SystemHealth />}
+          {tab === "evaluation" && <Evaluation />}
           {tab === "audit" && <Audit />}
           {tab === "help" && <><Help /><ReviewPanel user={user} />{hasAny(user, ["ADMIN", "RESEARCHER", "MANAGER"]) && <FeedbackPanel />}</>}
         </ActionDialogProvider></fieldset>

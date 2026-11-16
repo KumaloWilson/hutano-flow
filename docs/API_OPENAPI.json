@@ -2014,6 +2014,77 @@
         }
       }
     },
+    "/api/v1/simulations/calibrated": {
+      "post": {
+        "summary": "Create Calibrated Simulation",
+        "description": "Fit the simulator from an imported baseline, then compare policies (proposal \u00a71.8, \u00a71.10).",
+        "operationId": "create_calibrated_simulation_api_v1_simulations_calibrated_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "hutano_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hutano Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalibratedSimulationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/simulations/{run_id}": {
       "get": {
         "summary": "Get Simulation",
@@ -2886,6 +2957,95 @@
       "get": {
         "summary": "Feedback Summary",
         "operationId": "feedback_summary_api_v1_research_feedback_summary_get",
+        "parameters": [
+          {
+            "name": "hutano_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hutano Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/instruments": {
+      "get": {
+        "summary": "Research Instruments",
+        "operationId": "research_instruments_api_v1_research_instruments_get",
+        "parameters": [
+          {
+            "name": "hutano_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hutano Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/evaluation": {
+      "get": {
+        "summary": "Research Evaluation",
+        "description": "Evidence for each proposal objective and research question (ADR-036).",
+        "operationId": "research_evaluation_api_v1_research_evaluation_get",
         "parameters": [
           {
             "name": "hutano_session",
@@ -4046,6 +4206,61 @@
               "type": "string",
               "format": "date",
               "title": "To Date"
+            }
+          },
+          {
+            "name": "hutano_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hutano Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/baseline/synthetic-example": {
+      "get": {
+        "summary": "Synthetic Example",
+        "description": "Download an explicitly synthetic time-and-motion CSV (FCFS simulation of a walk-in day).",
+        "operationId": "synthetic_example_api_v1_research_baseline_synthetic_example_get",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 15,
+              "title": "Days"
             }
           },
           {
@@ -7148,6 +7363,78 @@
         ],
         "title": "Body_import_dataset_api_v1_research_datasets_import_post"
       },
+      "CalibratedSimulationCreate": {
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Dataset Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Name",
+            "default": "Baseline-calibrated comparison"
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 2026
+          },
+          "replications": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 2.0,
+            "title": "Replications",
+            "default": 20
+          },
+          "include_research_arms": {
+            "type": "boolean",
+            "title": "Include Research Arms",
+            "default": true
+          },
+          "research": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchArms"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "urgency_mix": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Urgency Mix"
+          },
+          "validation_tolerance": {
+            "type": "number",
+            "maximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Validation Tolerance",
+            "default": 0.25
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dataset_id"
+        ],
+        "title": "CalibratedSimulationCreate"
+      },
       "CaseResponse": {
         "properties": {
           "id": {
@@ -8302,31 +8589,56 @@
       "InferenceRequest": {
         "properties": {
           "features": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "number"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "type": "object",
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Features"
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations"
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "features"
-        ],
         "title": "InferenceRequest"
       },
       "LabelReview": {
@@ -9403,6 +9715,21 @@
             "type": "boolean",
             "title": "Carried Over",
             "default": false
+          },
+          "overtaken_by": {
+            "type": "integer",
+            "title": "Overtaken By",
+            "default": 0
+          },
+          "minutes_since_review": {
+            "type": "integer",
+            "title": "Minutes Since Review",
+            "default": 0
+          },
+          "review_recommended": {
+            "type": "boolean",
+            "title": "Review Recommended",
+            "default": false
           }
         },
         "type": "object",
@@ -9621,6 +9948,41 @@
           "version"
         ],
         "title": "RegisterVisit"
+      },
+      "ResearchArms": {
+        "properties": {
+          "promote_minutes": {
+            "type": "number",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Promote Minutes",
+            "default": 60
+          },
+          "max_promotion_levels": {
+            "type": "integer",
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Max Promotion Levels",
+            "default": 2
+          },
+          "duration_guard_minutes": {
+            "type": "number",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Duration Guard Minutes",
+            "default": 60
+          },
+          "prediction_error_sigma": {
+            "type": "number",
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Prediction Error Sigma",
+            "default": 0.35
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ResearchArms"
       },
       "ResearchReceipt": {
         "properties": {
@@ -10510,6 +10872,21 @@
             "minimum": 0.0,
             "title": "Service Tail",
             "default": 0.5
+          },
+          "include_research_arms": {
+            "type": "boolean",
+            "title": "Include Research Arms",
+            "default": false
+          },
+          "research": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchArms"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

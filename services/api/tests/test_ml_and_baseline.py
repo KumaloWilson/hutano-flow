@@ -25,7 +25,7 @@ def test_training_evaluation_and_explanation(trained):
     assert metrics['calibration']['bins']
     assert metrics['duration']['median_baseline_mae_minutes'] >= 0
     assert 'temporal' in metrics['split_strategy']
-    prediction = explain_prediction(trained['artifact_path'], {'age_band':'adult','visit_type':'new','arrival_mode':'walk_in','hour':9,'recorded_measurement':0})
+    prediction = explain_prediction(trained['artifact_path'], {'age_band':'adult','visit_type':'new','arrival_mode':'walk_in','hour':9,'temperature':37.0,'pulse':80,'respiratory_rate':16,'oxygen_saturation':97,'systolic_pressure':120,'diastolic_pressure':76})
     assert prediction['requires_clinician_review']
     assert prediction['factors']
     assert sum(f['logit_contribution'] for f in prediction['factors']) + prediction['other_logit_contributions'] + prediction['intercept'] == pytest.approx(prediction['class_logit'])
@@ -38,7 +38,7 @@ def test_training_reproducible(trained, tmp_path):
     assert again['version'] == trained['version']
 
 
-@pytest.mark.parametrize('features', [{}, {'age_band':'unseen','visit_type':'new','arrival_mode':'walk_in','hour':9,'recorded_measurement':0}, {'age_band':'adult','visit_type':'new','arrival_mode':'walk_in','hour':100,'recorded_measurement':0}])
+@pytest.mark.parametrize('features', [{}, {'age_band':'unseen','visit_type':'new','arrival_mode':'walk_in','hour':9,'temperature':37.0,'pulse':80,'respiratory_rate':16,'oxygen_saturation':97,'systolic_pressure':120,'diastolic_pressure':76}, {'age_band':'adult','visit_type':'new','arrival_mode':'walk_in','hour':100,'temperature':37.0,'pulse':80,'respiratory_rate':16,'oxygen_saturation':97,'systolic_pressure':120,'diastolic_pressure':76}])
 def test_missing_or_out_of_distribution_abstains(trained, features):
     prediction = explain_prediction(trained['artifact_path'],features)
     assert prediction['suggestion'] is None and prediction['abstained']

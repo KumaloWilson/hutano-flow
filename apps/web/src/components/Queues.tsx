@@ -32,6 +32,8 @@ function Flags({ entry }: { entry: QueueEntry }) {
     {entry.deferred_until && <span className="badge deferred">Missed call · back {formatClock(entry.deferred_until)}</span>}
     {!entry.deferred_until && (entry.missed_calls ?? 0) > 0 && <span className="badge attention">Missed {entry.missed_calls}×</span>}
     {entry.carried_over && <span className="badge carried">From an earlier day</span>}
+    {entry.review_recommended && <span className="badge attention" title={`${entry.minutes_since_review} min since last clinician review; ${entry.overtaken_by} later arrival(s) seen first`}>Review suggested</span>}
+    {!entry.review_recommended && (entry.overtaken_by ?? 0) > 0 && <span className="badge plain" title="Later arrivals seen first while this patient waited">Overtaken {entry.overtaken_by}×</span>}
   </>;
 }
 
@@ -48,6 +50,18 @@ export function Queues({ points, visits, user, onDone, setNotice, navigate }: { 
   }, [points]);
   useEffect(() => { load().catch((e) => setLoadError(e.message)); }, [load]);
   const call = useCallAction(onDone, setNotice, load);
+  async function review(entry: QueueEntry) {
+    const visit = byVisit.get(entry.visit_id);
+    if (!visit) return;
+    const response = await ask({ title: `Review ${entry.public_token}`, description: `Waiting ${entry.minutes_since_review} min since the last clinician review; ${entry.overtaken_by} later arrival(s) seen first. Confirm the category to keep their place, or change it. The system never changes it for you.`,
+      submit: "Record review", fields: [{ name: "urgency", label: "Confirmed category", type: "select", value: entry.confirmed_urgency || "P3", options: choices(["P1", "P2", "P3", "P4", "P5"]) }, { ...reasonField, value: "Reviewed after a long wait" }] });
+    if (!response) return;
+    try {
+      await api(`/api/v1/visits/${visit.id}/reassess`, { method: "POST", body: JSON.stringify({ version: visit.version, configured_urgency: response.urgency, reason: response.reason, action: "REASSESS" }) });
+      await Promise.all([load(), onDone()]);
+      setNotice({ kind: "success", text: `${entry.public_token} reviewed: ${response.urgency === entry.confirmed_urgency ? "category confirmed" : `category changed to ${response.urgency}`}.` });
+    } catch (e) { setNotice({ kind: "error", text: errorText(e, "Review failed") }); }
+  }
   async function pin(entry: QueueEntry) {
     const response = await ask({ title: "Clinician queue override", description: "Moves this patient to a specific place. Recorded with your reason; releases when they are called.", fields: [{ name: "rank", label: "New rank", type: "number", value: "1", min: 1, required: true }, reasonField] });
     if (!response) return;
@@ -88,9 +102,10 @@ export function Queues({ points, visits, user, onDone, setNotice, navigate }: { 
               <details className="why"><summary>Why this position</summary><ul>{entry.explanations.map((line) => <li key={line}>{line}</li>)}</ul></details>
             </div>
             <div className="row-actions">
-              {hasAny(user, ["RECEPTIONIST", "TRIAGE_NURSE", "CLINICIAN"]) && visit?.patient && <button className="ghost small" onClick={() => navigate("patients", visit.patient!.id)}>Record</button>}
-              {hasAny(user, ["CLINICIAN", "TRIAGE_NURSE"]) && <button className="secondary small" onClick={() => pin(entry)}>Override</button>}
               {canCall(user, point.type) && <button className={head ? "primary small" : "secondary small"} disabled={paused} onClick={() => call(entry)}>Call</button>}
+              {hasAny(user, ["CLINICIAN", "TRIAGE_NURSE"]) && entry.review_recommended && <button className="attention small" onClick={() => review(entry)}>Review</button>}
+              {hasAny(user, ["CLINICIAN", "TRIAGE_NURSE"]) && <button className="secondary small" onClick={() => pin(entry)}>Override</button>}
+              {hasAny(user, ["RECEPTIONIST", "TRIAGE_NURSE", "CLINICIAN"]) && visit?.patient && <button className="ghost small" onClick={() => navigate("patients", visit.patient!.id)}>Record</button>}
             </div>
           </li>;
         })}</ol> : <Empty icon={paused ? "pause" : "check"} text={paused ? "Queue paused while capacity is zero. Nobody is removed." : all.length ? "No rows match the filter." : "No eligible waiting visits."} />}

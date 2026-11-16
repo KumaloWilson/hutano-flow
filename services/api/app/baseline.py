@@ -15,12 +15,15 @@ from app.models import Dataset, User
 from app.security import require_roles, rate_limiter
 from app.services.audit import record_audit
 from app.simulation.engine import summary
+from app.simulation.calibration import analyse_baseline, synthetic_baseline_csv
+from fastapi.responses import Response as RawResponse
+from app.models import Facility
 
 router = APIRouter(prefix="/api/v1/research/baseline", route_class=CommandRoute)
 COLUMNS = {"journey_no", "stage", "arrived_at", "queued_at", "started_at", "ended_at"}
 
 
-def inspect_baseline(raw: bytes, mapping: dict):
+def inspect_baseline(raw: bytes, mapping: dict, zone: str = "Africa/Harare"):
     frame = pd.read_csv(io.BytesIO(raw)).rename(columns=mapping)
     if set(frame.columns) != COLUMNS or len(frame.columns) != len(COLUMNS):
         raise ValueError("Exactly journey_no, stage, arrived_at, queued_at, started_at, ended_at are permitted")
@@ -56,7 +59,17 @@ def inspect_baseline(raw: bytes, mapping: dict):
         "stages": {str(stage): {"waiting_minutes": summary(g.wait.tolist()), "service_minutes": summary(g.service.tolist())} for stage,g in frame.groupby("stage")},
         "observation_period": [frame.arrived_at.min().isoformat(), frame.ended_at.max().isoformat()],
         "definitions": "Waiting=start-queued; service=end-start; total=last end-arrival. No pause data in this import.",
+        **analyse_baseline(frame, zone),
         "preview": [{"stage": str(r.stage), "wait_minutes": r.wait, "service_minutes": r.service} for r in frame.head(5).itertuples()]}
+
+
+@router.get("/synthetic-example")
+def synthetic_example(days: int = 15, user: User = Depends(require_roles("ADMIN", "RESEARCHER")), db: Session = Depends(get_db, scope="function")):
+    """Download an explicitly synthetic time-and-motion CSV (FCFS simulation of a walk-in day)."""
+    if not 3 <= days <= 30:
+        raise HTTPException(422, "Choose 3–30 synthetic days")
+    body = synthetic_baseline_csv(days=days, zone_name=db.get(Facility, user.facility_id).timezone)
+    return RawResponse(body, media_type="text/csv", headers={"Content-Disposition": 'attachment; filename="synthetic-time-motion-baseline.csv"'})
 
 
 @router.post("/import", status_code=201)
@@ -73,7 +86,7 @@ async def import_baseline(file: UploadFile = File(...), name: str = Form(...), p
         mapping = json.loads(column_mapping)
         if not isinstance(mapping, dict) or any(v not in COLUMNS for v in mapping.values()):
             raise ValueError("Invalid column mapping")
-        frame, report = inspect_baseline(raw, mapping)
+        frame, report = inspect_baseline(raw, mapping, db.get(Facility, user.facility_id).timezone)
     except (ValueError, TypeError, KeyError) as error:
         raise HTTPException(422, str(error)) from error
     digest = hashlib.sha256(raw).hexdigest()

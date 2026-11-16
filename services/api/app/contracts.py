@@ -97,6 +97,9 @@ class QueueEntryResponse(BaseModel):
     deferred_until: datetime | None = None
     missed_calls: int = 0
     carried_over: bool = False
+    overtaken_by: int = 0
+    minutes_since_review: int = 0
+    review_recommended: bool = False
 
 
 class QueueResponse(BaseModel):

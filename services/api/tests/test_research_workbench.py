@@ -57,7 +57,8 @@ def test_frozen_protocol_blinding_provenance_and_permissions(client, db_session,
     csrf = login(client, "research@test.local")
     p = publish(client, csrf, research_data)
     assert p["configuration"]["dataset_hash"] == research_data.dataset_hash
-    assert p["configuration"]["feature_schema"]["recorded_measurement"]["unit"] == "dimensionless"
+    assert p["configuration"]["feature_schema"]["pulse"]["unit"] == "beats/min"
+    assert "no clinical cut-off" in p["configuration"]["feature_schema"]["pulse"]["meaning"]
     detail = client.get(BASE+f"/protocols/{p['id']}").json()
     assert len(detail["cases"]) == 12
     assert all(c["own_review"] is None and "synthetic_label" not in c for c in detail["cases"])

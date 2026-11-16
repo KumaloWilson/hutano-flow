@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 from app.commands import CommandRoute
 from app.config import settings
 from app.database import get_db
-from app.ml.pipeline import FEATURES, LABELS, CATEGORIES, validate_frame, advisory_for_display
+from app.ml.pipeline import FEATURES, LABELS, CATEGORIES, NUMERIC_FEATURES, UNITS, VITAL_FEATURES, validate_frame, advisory_for_display
 from app.ml.reliability import probability_diagnostics
 from app.models import (CaseAdjudication, CaseReview, Dataset, Job, ModelVersion,
                         ResearchCase, ResearchProtocol, ResearchStudyRun, ResearchTrial, utcnow)
@@ -48,7 +48,8 @@ FEATURE_METADATA = {
     "visit_type": {"unit": "category", "values": CATEGORIES["visit_type"], "available_at": "synthetic intake"},
     "arrival_mode": {"unit": "category", "values": CATEGORIES["arrival_mode"], "available_at": "synthetic arrival"},
     "hour": {"unit": "hour 0–23", "available_at": "synthetic arrival"},
-    "recorded_measurement": {"unit": "dimensionless", "available_at": "synthetic assessment", "meaning": "Generator input, NOT a vital sign or clinical cutoff"},
+    **{field: {"unit": UNITS[field], "available_at": "synthetic triage observation",
+               "meaning": "Synthetic vital sign from a documented generator; no clinical cut-off is encoded"} for field in VITAL_FEATURES},
     "missingness": "Null remains missing; no normal vital signs are assumed",
     "excluded_predictors": ["urgency", "service_minutes", "post-assessment decisions", "identifiers"],
 }
@@ -539,7 +540,7 @@ def monitor_report(db, p):
             base["None"] = missing_fraction
             observed = {str(k): sum(str(r.get(f)) == str(k) for r in rows)/n for k in set(base) | {str(r.get(f)) for r in rows}}
             drift[f] = {"total_variation": float(.5*sum(abs(observed[k]-base.get(k, 0)) for k in observed)), "observed": observed, "reference": base}
-        for f in ["hour", "recorded_measurement"]:
+        for f in NUMERIC_FEATURES:
             values = [float(r[f]) for r in rows if r.get(f) is not None]
             baseline = reference.get("numeric_mean_std", {}).get(f, {})
             if values and baseline.get("std", 0) > 0:

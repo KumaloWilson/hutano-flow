@@ -20,41 +20,92 @@ from app.ml.reliability import (RELIABILITY_VERSION, bootstrap_intervals, fit_te
     probability_diagnostics, risk_coverage, select_threshold, selective_summary,
     temperature_probabilities, wilson_interval)
 
-FEATURES = ["age_band", "visit_type", "arrival_mode", "hour", "recorded_measurement"]
+# Feature schema v3 (ADR-033): visit context plus the six vital signs recorded at triage.
+CONTEXT_FEATURES = ["age_band", "visit_type", "arrival_mode", "hour"]
+VITAL_FEATURES = ["temperature", "pulse", "respiratory_rate", "oxygen_saturation", "systolic_pressure", "diastolic_pressure"]
+FEATURES = CONTEXT_FEATURES + VITAL_FEATURES
+NUMERIC_FEATURES = ["hour"] + VITAL_FEATURES
+LEGACY_FEATURES = ["age_band", "visit_type", "arrival_mode", "hour", "recorded_measurement"]
+SCHEMA_VERSION = "clinical-features-v3"
+# Data-entry plausibility for recorded values. These reject impossible entries; they are
+# NOT clinical normal ranges, triage cut-offs or alert thresholds (ADR-002).
+RECORDING_RANGES = {"hour": (0, 23), "temperature": (30, 45), "pulse": (20, 250), "respiratory_rate": (4, 80),
+                    "oxygen_saturation": (50, 100), "systolic_pressure": (50, 260), "diastolic_pressure": (20, 160)}
+# Up to this many *measurements* may be unrecorded (systolic and diastolic come from one
+# blood-pressure reading). They are modelled through explicit missingness indicators and
+# shown to the clinician as "not recorded", never assumed normal.
+MAX_MISSING_VITALS = 2
+MEASUREMENTS = {"temperature": ["temperature"], "pulse": ["pulse"], "respiratory_rate": ["respiratory_rate"],
+                "oxygen_saturation": ["oxygen_saturation"], "blood_pressure": ["systolic_pressure", "diastolic_pressure"]}
+HUMAN_NAMES = {"age_band": "Age band", "visit_type": "Visit type", "arrival_mode": "Arrival", "hour": "Arrival hour",
+               "temperature": "Temperature", "pulse": "Pulse", "respiratory_rate": "Respiratory rate",
+               "oxygen_saturation": "Oxygen saturation", "systolic_pressure": "Systolic pressure",
+               "diastolic_pressure": "Diastolic pressure", "recorded_measurement": "Legacy synthetic measurement"}
+UNITS = {"hour": ":00", "temperature": "°C", "pulse": "beats/min", "respiratory_rate": "breaths/min",
+         "oxygen_saturation": "%", "systolic_pressure": "mmHg", "diastolic_pressure": "mmHg"}
 TARGET = "urgency"
 LABELS = ["P1", "P2", "P3", "P4", "P5"]
 ORDER = {label: index for index, label in enumerate(LABELS)}
 CATEGORIES = {"age_band": ["child", "adult", "older_adult"], "visit_type": ["new", "follow_up", "referral"], "arrival_mode": ["walk_in", "referred"]}
 ALLOWED_COLUMNS = set(FEATURES + ["urgency", "service_minutes", "observed_at"])
 WARNING = "EXPERIMENTAL — NOT VALIDATED FOR PATIENT CARE; synthetic label agreement only"
-PIPELINE_VERSION = "synthetic-logreg-v4-monitored-reliability"
+PIPELINE_VERSION = "synthetic-logreg-v5-clinical-features"
 FEATURE_METADATA = {
-    "age_band": {"unit": None, "definition": "Synthetic age category", "available_at": "synthetic observation timestamp"},
-    "visit_type": {"unit": None, "definition": "Synthetic visit category", "available_at": "synthetic observation timestamp"},
-    "arrival_mode": {"unit": None, "definition": "Synthetic arrival category", "available_at": "synthetic observation timestamp"},
-    "hour": {"unit": "hour of day, 0–23", "definition": "Synthetic observation context", "available_at": "synthetic observation timestamp"},
-    "recorded_measurement": {"unit": "dimensionless synthetic value", "definition": "Generated proxy; NOT pulse, temperature or another clinical measurement", "available_at": "synthetic observation timestamp"},
+    "age_band": {"unit": None, "definition": "Patient age band recorded at registration", "available_at": "registration"},
+    "visit_type": {"unit": None, "definition": "New, follow-up or referral visit", "available_at": "registration"},
+    "arrival_mode": {"unit": None, "definition": "Walk-in or referred arrival", "available_at": "registration"},
+    "hour": {"unit": "hour of day, 0–23", "definition": "Local arrival hour", "available_at": "arrival"},
+    **{field: {"unit": UNITS[field], "definition": f"{HUMAN_NAMES[field]} recorded at triage; missing stays missing",
+               "available_at": "triage observation", "recording_range": list(RECORDING_RANGES[field])} for field in VITAL_FEATURES},
 }
+GENERATOR_ASSUMPTIONS = ("Synthetic generator: a latent severity variable shifts vital-sign distributions and labels are "
+                         "quantiles of a noisy latent score. These are illustrative generator assumptions, not clinical "
+                         "thresholds or validated physiology, and must not be cited as clinical evidence.")
 
 
 def generate_synthetic_training_data(seed: int = 2026, count: int = 1000) -> pd.DataFrame:
+    """Synthetic triage-style rows: context, six vital signs with realistic missingness, label.
+
+    A latent severity variable shifts vital-sign distributions (age-dependent baselines);
+    the label is a quantile of a noisy latent score. See GENERATOR_ASSUMPTIONS.
+    """
     rng = np.random.default_rng(seed)
     bands = rng.choice(CATEGORIES["age_band"], count, p=[0.2, 0.6, 0.2])
     visit_types = rng.choice(CATEGORIES["visit_type"], count)
     modes = rng.choice(CATEGORIES["arrival_mode"], count, p=[0.85, 0.15])
-    measurement = rng.normal(0, 1, count)
-    score = measurement + (modes == "referred") * 0.7 + (bands == "older_adult") * 0.25 + rng.normal(0, 1, count)
+    severity = rng.normal(0, 1, count)
+    child, older = bands == "child", bands == "older_adult"
+    temperature = 36.8 + 0.4 * severity + rng.normal(0, 0.35, count)
+    pulse = np.where(child, 104, np.where(older, 74, 78)) + 10 * severity + rng.normal(0, 8, count)
+    respiratory = np.where(child, 24, np.where(older, 17, 16)) + 2.4 * severity + rng.normal(0, 2, count)
+    saturation = 97.6 - 1.3 * np.clip(severity, 0, None) + rng.normal(0, 0.9, count)
+    systolic = np.where(child, 100, np.where(older, 136, 122)) - 4 * severity + rng.normal(0, 11, count)
+    diastolic = 0.6 * systolic + rng.normal(4, 6, count)
+    score = severity + (modes == "referred") * 0.6 + older * 0.25 + rng.normal(0, 0.3, count)
     urgency = pd.cut(score, [-np.inf, -1.2, -0.35, 0.35, 1.2, np.inf], labels=list(reversed(LABELS)))
+    def bounded(values, field, decimals):
+        low, high = RECORDING_RANGES[field]
+        return np.round(np.clip(values, low, high), decimals)
     frame = pd.DataFrame({"age_band": bands, "visit_type": visit_types, "arrival_mode": modes,
-        "hour": rng.integers(6, 18, count), "recorded_measurement": measurement,
+        "hour": rng.integers(6, 18, count),
+        "temperature": bounded(temperature, "temperature", 1), "pulse": bounded(pulse, "pulse", 0),
+        "respiratory_rate": bounded(respiratory, "respiratory_rate", 0), "oxygen_saturation": bounded(saturation, "oxygen_saturation", 0),
+        "systolic_pressure": bounded(systolic, "systolic_pressure", 0), "diastolic_pressure": bounded(diastolic, "diastolic_pressure", 0),
         "urgency": urgency.astype(str),
-        "service_minutes": np.round(np.clip(10 + (visit_types == "new") * 4 + rng.normal(0, 3, count), 1, 40), 3),
+        "service_minutes": np.round(np.clip(10 + (visit_types == "new") * 4 + 1.5 * np.clip(severity, 0, None) + rng.normal(0, 3, count), 1, 40), 3),
         "observed_at": pd.date_range("2026-01-01", periods=count, freq="15min", tz="UTC").astype(str)})
-    frame.loc[rng.choice(count, max(1, count // 20), replace=False), "recorded_measurement"] = np.nan
+    # Missing completely at random, at rates resembling equipment availability in small clinics.
+    for field, rate in {"temperature": .04, "pulse": .04, "respiratory_rate": .18, "oxygen_saturation": .22,
+                        "systolic_pressure": .12, "diastolic_pressure": .12}.items():
+        frame.loc[rng.random(count) < rate, field] = np.nan
+    diastolic_missing = frame.systolic_pressure.isna()
+    frame.loc[diastolic_missing, "diastolic_pressure"] = np.nan
     return frame
 
 
 def validate_frame(frame: pd.DataFrame) -> dict:
+    if "recorded_measurement" in frame.columns:
+        raise ValueError("Legacy v2 dataset ('recorded_measurement'): use the v3 clinical schema with the six recorded vital signs")
     unknown = set(frame.columns) - ALLOWED_COLUMNS
     if unknown:
         raise ValueError("Unexpected columns rejected: " + ", ".join(sorted(unknown)))
@@ -68,7 +119,7 @@ def validate_frame(frame: pd.DataFrame) -> dict:
             raise ValueError(f"Invalid category in {column}")
     if frame[TARGET].isna().any():
         raise ValueError("Target labels cannot be missing")
-    for column, lower, upper in [("hour", 0, 23), ("recorded_measurement", -1000, 1000), ("service_minutes", 0.01, 1440)]:
+    for column, (lower, upper) in [*RECORDING_RANGES.items(), ("service_minutes", (0.01, 1440))]:
         values = pd.to_numeric(frame[column], errors="raise")
         if values.notna().sum() == 0:
             raise ValueError(f"Training requires observed values for {column}")
@@ -81,6 +132,8 @@ def validate_frame(frame: pd.DataFrame) -> dict:
     if frame.duplicated().any():
         raise ValueError("Duplicate rows rejected to reduce leakage risk")
     return {"columns": list(frame.columns), "missing": {k: int(v) for k, v in frame.isna().sum().items()},
+            "missing_fraction": {k: round(float(v), 4) for k, v in frame.isna().mean().items()},
+            "missing_vitals_per_row": {str(k): int(v) for k, v in frame[VITAL_FEATURES].isna().sum(axis=1).value_counts().sort_index().items()},
             "class_distribution": {str(k): int(v) for k, v in frame[TARGET].value_counts().items()},
             "label_source": "SYNTHETIC", "warnings": ["No subject identifiers: repeated-subject leakage cannot be ruled out for external data."]}
 
@@ -90,7 +143,7 @@ def preprocessing() -> ColumnTransformer:
         ("category", Pipeline([("impute", SimpleImputer(strategy="constant", fill_value="MISSING")),
             ("encode", OneHotEncoder(handle_unknown="ignore"))]), list(CATEGORIES)),
         ("number", Pipeline([("impute", SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True)),
-            ("scale", StandardScaler())]), ["hour", "recorded_measurement"]),
+            ("scale", StandardScaler())]), NUMERIC_FEATURES),
     ])
 
 
@@ -118,20 +171,33 @@ def temporal_partitions(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
     fit = parts["fit"]
     if set(fit.urgency) != set(LABELS) or fit.urgency.value_counts().min() < 3:
         raise ValueError("Training fit partition needs at least three examples of every urgency category")
-    if any(fit[column].notna().sum() < 3 for column in ("hour", "recorded_measurement")):
+    if any(fit[column].notna().sum() < 3 for column in NUMERIC_FEATURES):
         raise ValueError("Training fit partition needs at least three observed values for each numeric feature")
     return parts
 
 
+def schema_features(schema: dict) -> list[str]:
+    return list(schema.get("features") or LEGACY_FEATURES)
+
+
 def feature_reasons(schema: dict, features: dict) -> list[str]:
-    """Guard inference before imputation; training imputation is not a normality claim."""
-    reasons = []
-    for field in FEATURES:
+    """Guard inference before imputation; training imputation is not a normality claim.
+
+    Context fields are always required. Up to `max_missing_vitals` vital signs may be
+    unrecorded (modelled via missingness indicators and shown as "not recorded").
+    """
+    reasons, missing_vitals = [], []
+    vitals = set(schema.get("vital_features", []))
+    categories = schema.get("categories", CATEGORIES)
+    for field in schema_features(schema):
         value = features.get(field)
         if value is None or (isinstance(value, (float, np.floating)) and np.isnan(value)):
-            reasons.append(f"Missing {field}")
+            if field in vitals:
+                missing_vitals.append(field)
+            else:
+                reasons.append(f"Missing {field}")
         elif field in CATEGORIES:
-            if not isinstance(value, str) or value not in schema.get("categories", CATEGORIES)[field]:
+            if not isinstance(value, str) or value not in categories[field]:
                 reasons.append(f"Unseen category: {field}")
         else:
             try:
@@ -144,11 +210,17 @@ def feature_reasons(schema: dict, features: dict) -> list[str]:
                         reasons.append(f"Outside training range: {field}")
             except (ValueError, TypeError, OverflowError):
                 reasons.append(f"Invalid numeric field: {field}")
+    allowed = int(schema.get("max_missing_vitals", 0))
+    groups = schema.get("measurements") or {field: [field] for field in vitals}
+    missing_groups = [name for name, members in groups.items() if any(member in missing_vitals for member in members)]
+    if len(missing_groups) > allowed:
+        reasons.append(f"Too many measurements not recorded ({len(missing_groups)} of {len(groups)}; at most {allowed}): "
+                       + ", ".join(name.replace("_", " ") for name in missing_groups))
     return reasons
 
 
 def eligibility(schema: dict, frame: pd.DataFrame) -> np.ndarray:
-    return np.array([not feature_reasons(schema, row) for row in frame[FEATURES].to_dict("records")], dtype=bool)
+    return np.array([not feature_reasons(schema, row) for row in frame[schema_features(schema)].to_dict("records")], dtype=bool)
 
 
 def reference_profile(frame: pd.DataFrame) -> dict:
@@ -156,9 +228,9 @@ def reference_profile(frame: pd.DataFrame) -> dict:
             "missingness": {field: float(frame[field].isna().mean()) for field in FEATURES},
             "categorical_frequencies": {field: {str(k): float(v) for k, v in frame[field].value_counts(normalize=True).items()} for field in CATEGORIES},
             "numeric_quantiles": {field: {str(q): float(frame[field].quantile(q)) for q in (0, .1, .25, .5, .75, .9, 1)}
-                                  for field in ("hour", "recorded_measurement")},
+                                  for field in NUMERIC_FEATURES},
             "numeric_mean_std": {field: {"mean": float(frame[field].mean()), "std": float(frame[field].std(ddof=0))}
-                                 for field in ("hour", "recorded_measurement")}}
+                                 for field in NUMERIC_FEATURES}}
 
 
 def classifier_pipeline(seed: int, c: float = 1.0) -> Pipeline:
@@ -206,13 +278,13 @@ def stress_evaluation(pipeline, test: pd.DataFrame, schema: dict, temperature: f
     rng = np.random.default_rng(seed + 391)
     variants = {"unchanged": test.copy()}
     selected = rng.choice(len(test), max(1, int(len(test) * .3)), replace=False)
-    missing = test.copy(); missing.loc[missing.index[selected], "recorded_measurement"] = np.nan
+    missing = test.copy(); missing.loc[missing.index[selected], ["temperature", "pulse", "respiratory_rate"]] = np.nan
     variants["measurement_missing_30_percent"] = missing
     unseen = test.copy(); unseen.loc[unseen.index[selected], "visit_type"] = "unseen_synthetic_type"
     variants["unseen_category_30_percent"] = unseen
-    outside = test.copy(); outside.loc[outside.index[selected], "recorded_measurement"] = schema["numeric_bounds"]["recorded_measurement"][1] + 1
+    outside = test.copy(); outside.loc[outside.index[selected], "pulse"] = schema["numeric_bounds"]["pulse"][1] + 1
     variants["outside_fit_range_30_percent"] = outside
-    shifted = test.copy(); shifted["recorded_measurement"] += schema["reference_profile"]["numeric_mean_std"]["recorded_measurement"]["std"] * .75
+    shifted = test.copy(); shifted["pulse"] += schema["reference_profile"]["numeric_mean_std"]["pulse"]["std"] * .75
     variants["measurement_shift_0_75_fit_std"] = shifted
     weights = np.where(test[TARGET].isin(["P1", "P5"]), 3.0, 1.0)
     variants["extreme_category_prior_reweight"] = test.iloc[rng.choice(len(test), len(test), replace=True, p=weights / weights.sum())].reset_index(drop=True)
@@ -242,7 +314,8 @@ def stability_evaluation(pipeline, test: pd.DataFrame, schema: dict, temperature
     base_probs = temperature_probabilities(base_logits, temperature)
     base_labels = base_probs.argmax(axis=1)
     comparisons = []
-    for field, delta in [("hour", 1.0), ("recorded_measurement", .05 * schema["reference_profile"]["numeric_mean_std"]["recorded_measurement"]["std"])]:
+    for field, delta in [("hour", 1.0), ("pulse", .05 * schema["reference_profile"]["numeric_mean_std"]["pulse"]["std"]),
+                         ("respiratory_rate", .05 * schema["reference_profile"]["numeric_mean_std"]["respiratory_rate"]["std"])]:
         changed = valid.copy()
         lower, upper = schema["numeric_bounds"][field]
         changed[field] = np.clip(changed[field].astype(float) + delta, lower, upper)
@@ -291,7 +364,7 @@ def monitoring_challenge(pipeline, development, test, schema, temperature, seed)
                 if window >= shift_window and scenario != "UNCHANGED":
                     changed = rng.choice(window_size, int(window_size * .6), replace=False)
                     if scenario == "MISSING_INPUT_SHIFT":
-                        sample.loc[changed, "recorded_measurement"] = np.nan
+                        sample.loc[changed, ["temperature", "pulse", "respiratory_rate"]] = np.nan
                     else:
                         sample.loc[changed, TARGET] = sample.loc[changed, TARGET].map(lambda value: LABELS[(ORDER[value]+1) % len(LABELS)])
                 probs = temperature_probabilities(pipeline.decision_function(sample[FEATURES]), temperature)
@@ -348,11 +421,12 @@ def train_model(frame: pd.DataFrame, artifact_dir: Path, seed: int = 2026) -> di
     selection_score, best_c, pipeline = max(candidates, key=lambda item: (item[0], -item[1]))
     cv = cross_val_score(classifier_pipeline(seed, best_c), train[FEATURES], train[TARGET],
                          cv=StratifiedKFold(3, shuffle=True, random_state=seed), scoring="f1_macro", n_jobs=1)
-    schema = {"version": "synthetic-features-v2", "features": FEATURES, "metadata": FEATURE_METADATA,
+    schema = {"version": SCHEMA_VERSION, "features": FEATURES, "vital_features": VITAL_FEATURES,
+              "max_missing_vitals": MAX_MISSING_VITALS, "measurements": MEASUREMENTS, "metadata": FEATURE_METADATA, "generator_assumptions": GENERATOR_ASSUMPTIONS,
               "categories": {field: [value for value in options if value in set(train[field].dropna())] for field, options in CATEGORIES.items()},
-              "numeric_bounds": {column: [float(train[column].min()), float(train[column].max())] for column in ("hour", "recorded_measurement")},
+              "numeric_bounds": {column: [float(train[column].min()), float(train[column].max())] for column in NUMERIC_FEATURES},
               "reference_profile": reference_profile(train),
-              "missingness_rule": "Training median/imputation learned only on fit rows; advisory inference abstains for missing inputs",
+              "missingness_rule": f"Medians and missingness indicators learned on fit rows only. Context fields are required; up to {MAX_MISSING_VITALS} unrecorded vital signs are modelled explicitly and displayed as not recorded, never assumed normal",
               "excluded_outcomes": ["urgency", "service_minutes"],
               "provenance": "Independent generated synthetic observations; no clinical measurements or patient identities"}
     calibration_fit = fit_temperature(pipeline.decision_function(calibration[FEATURES]), calibration[TARGET], pipeline.classes_)
@@ -448,9 +522,11 @@ def explain_prediction(model_path: str, features: dict) -> dict:
                 "abstention_threshold": threshold, "calibration_temperature": temperature,
                 "model_suggestion_applied_automatically": False}
     pipeline = artifact["pipeline"]
-    row = pd.DataFrame([{key: features[key] for key in FEATURES}])
-    for field in ("hour", "recorded_measurement"):
-        row[field] = row[field].astype(float)
+    schema = artifact["schema"]
+    fields = schema_features(schema)
+    row = pd.DataFrame([{key: features.get(key) for key in fields}])
+    for field in schema.get("numeric_bounds", {}):
+        row[field] = pd.to_numeric(row[field], errors="coerce").astype(float)
     logits = pipeline.decision_function(row)
     probs = temperature_probabilities(logits, temperature)[0]
     raw_probs = temperature_probabilities(logits)[0]
@@ -485,7 +561,66 @@ def explain_prediction(model_path: str, features: dict) -> dict:
                         "method": "Exact predicted-minus-runner-up raw logit decomposition; divide total by temperature for calibrated log probability ratio",
                         "limitation": "Explains a fitted synthetic model, not biological mechanisms, treatment or a clinical counterfactual"},
         "reasons": ["Below research-selected confidence threshold"] if confidence < threshold else [],
+        "plain_language": plain_language(names, difference, features, schema, str(pipeline.classes_[index]), str(pipeline.classes_[alternate])),
+        "not_recorded": [field for field in schema.get("vital_features", []) if _is_missing(features.get(field))],
         "warning": WARNING, "model_suggestion_applied_automatically": False}
+
+
+def _is_missing(value) -> bool:
+    return value is None or (isinstance(value, (float, np.floating)) and np.isnan(value))
+
+
+def _factor_field(name: str, fields: list[str]) -> tuple[str, str]:
+    """Map a transformed column back to (source field, kind)."""
+    body = name.split("__", 1)[-1]
+    if body.startswith("missingindicator_"):
+        return body.removeprefix("missingindicator_"), "missing"
+    if body in fields:
+        return body, "value"
+    for field in sorted(fields, key=len, reverse=True):
+        if body.startswith(field + "_"):
+            return field, "category"
+    return body, "value"
+
+
+def describe_input(field: str, features: dict, schema: dict) -> str:
+    label = HUMAN_NAMES.get(field, field.replace("_", " "))
+    value = features.get(field)
+    if _is_missing(value):
+        return f"{label} not recorded"
+    if field in CATEGORIES:
+        return f"{label}: {str(value).replace('_', ' ')}"
+    median = schema.get("reference_profile", {}).get("numeric_quantiles", {}).get(field, {}).get("0.5")
+    shown = f"{float(value):g}{'' if field == 'hour' else ' '}{UNITS.get(field, '')}".strip()
+    if field == "hour":
+        shown = f"{int(float(value)):02d}:00"
+    if median is None:
+        return f"{label} {shown}"
+    relation = "above" if float(value) > median else "below" if float(value) < median else "at"
+    reference = f"{int(median):02d}:00" if field == "hour" else f"{median:g}"
+    return f"{label} {shown} ({relation} the training-data median of {reference})"
+
+
+def plain_language(names, difference, features: dict, schema: dict, predicted: str, alternative: str) -> dict:
+    """Selective, contrastive explanation (Miller 2019): the few inputs that most separated
+    the suggested category from the runner-up, in words a clinician can check quickly.
+    Aggregates one-hot and missingness columns back to their source field."""
+    fields = schema_features(schema)
+    totals: dict[str, float] = {}
+    for name, value in zip(names, difference):
+        if abs(float(value)) < 1e-9:
+            continue
+        field, _ = _factor_field(str(name), fields)
+        totals[field] = totals.get(field, 0.0) + float(value)
+    ranked = sorted(totals.items(), key=lambda item: -abs(item[1]))
+    supporting = [describe_input(field, features, schema) for field, value in ranked if value > 0][:2]
+    opposing = [describe_input(field, features, schema) for field, value in ranked if value < 0][:2]
+    headline = f"Suggests {predicted} rather than {alternative}"
+    if supporting:
+        headline += ", mainly because of " + " and ".join(item[0].lower() + item[1:] for item in supporting)
+    return {"headline": headline + ".", "predicted": predicted, "alternative": alternative,
+            "supporting": supporting, "opposing": opposing,
+            "caveat": "A pattern learned from synthetic training data, not a clinical rule. You decide the category."}
 
 
 def evaluate_shadow(model_path: str, features: dict) -> dict:
@@ -506,7 +641,7 @@ def advisory_for_display(inference: dict) -> dict:
     """
     visible = dict(inference)
     if visible.get("abstained"):
-        for key in ("predicted_label", "probabilities", "contrastive", "intercept",
+        for key in ("predicted_label", "probabilities", "contrastive", "intercept", "plain_language",
                     "class_logit", "other_logit_contributions", "explanation_method"):
             visible.pop(key, None)
         visible["suggestion"] = None
