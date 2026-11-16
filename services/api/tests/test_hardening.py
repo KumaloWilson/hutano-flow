@@ -341,7 +341,11 @@ def test_paper_downtime_visit_is_back_entered_and_labelled(client, db_session):
     assert detail["entry_mode"] == "RETROSPECTIVE" and detail["status"] == "COMPLETED" and len(detail["episodes"]) == 3
     client.cookies.clear()
     login(client, "research@test.local")
-    assert client.get("/api/v1/analytics/overview").json()["retrospective_visits"] == 1
+    overview = client.get("/api/v1/analytics/overview").json()
+    assert overview["retrospective_visits"] == 1
+    # Regression: the overview must keep its core timing summaries alongside the new field.
+    assert {"waiting", "service", "arrival_to_provider_minutes", "total_visit_minutes"} <= set(overview)
+    assert overview["waiting"]["mean"] is not None
 
 
 def test_back_entry_rejects_impossible_paper_times(client):

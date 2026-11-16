@@ -16,7 +16,9 @@ def test_public_status_is_minimal(client):
     text = response.text.lower()
     assert "private synthetic name" not in text
     assert "urgency" not in text
-    assert set(response.json()) == {"token", "stage", "status", "people_ahead", "estimated_wait", "updated_at", "research_notice"}
+    # Deliberately extended (ADR-032): own stage names and called room only — never urgency or identity.
+    assert set(response.json()) == {"token", "stage", "status", "people_ahead", "estimated_wait", "journey", "room", "updated_at", "research_notice"}
+    assert set().union(*[set(step) for step in response.json()["journey"]]) == {"name", "state"}
     assert client.post("/api/v1/patient-status/lookup", json={"token": "A-001.this-is-a-wrong-private-token"}).status_code == 404
 
 

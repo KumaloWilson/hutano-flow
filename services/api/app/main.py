@@ -1134,9 +1134,37 @@ def restricted_status(db: Session, opaque_token: str) -> dict:
         "status": current.status if current else visit.status,
         "people_ahead": ahead,
         "estimated_wait": estimate,
+        "journey": patient_journey(db, visit, current),
+        "room": called_room(db, current),
         "updated_at": utcnow(),
         "research_notice": "Research prototype — not for clinical use",
     }
+
+
+def patient_journey(db: Session, visit: Visit, current: ServiceEpisode | None) -> list[dict]:
+    """The patient's own stages by service name only: no times, urgency or reasons (ADR-032)."""
+    steps, seen = [], set()
+    for episode in visit.episodes:
+        if episode.status in {"CANCELLED", "TRANSFERRED", "SKIPPED"}:
+            continue
+        state = "current" if current is not None and episode.id == current.id else ("done" if episode.status == "COMPLETED" else "next")
+        steps.append({"name": episode.service_point.name, "state": state})
+        seen.add(episode.service_point.type)
+    names = {p.type: p.name for p in db.scalars(select(ServicePoint).where(ServicePoint.facility_id == visit.facility_id))}
+    if visit.status not in {"COMPLETED", "CANCELLED", "LEFT_WITHOUT_SERVICE"}:
+        for service in visit.planned_services or []:
+            if service not in seen and service in names:
+                steps.append({"name": names[service], "state": "next"})
+                seen.add(service)
+    return steps[:8]
+
+
+def called_room(db: Session, current: ServiceEpisode | None) -> str | None:
+    if current is None or current.status != "CALLED":
+        return None
+    from app.models import ResourceAssignment, Room
+    return db.scalar(select(Room.name).join(ResourceAssignment, ResourceAssignment.room_id == Room.id)
+                     .where(ResourceAssignment.episode_id == current.id, ResourceAssignment.released_at.is_(None)))
 
 
 @app.post("/api/v1/patient-status/lookup")

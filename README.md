@@ -25,6 +25,17 @@ The 30 October clinic demonstration adds believable fictional identities, three 
 - Separate fitting, model selection, calibration, abstention selection and final evaluation; ordinal baselines, risk–coverage, uncertainty, stress/stability and offline drift-detection diagnostics.
 - Supporting direct waiting-time intervals and forecast-informed planning against fixed/pooling/historical baselines at equal paid staffing budgets, with durable runs and reproducible exports.
 
+### Clinic-floor features (November 2026)
+
+- **Waiting-room display** (`/display`): a full-screen TV board of ticket numbers being called and queue lengths, with optional chime and spoken announcements generated on the device. Create a revocable display link under *Facility admin → Waiting-room displays*. No names or priorities are ever shown.
+- **QR receipts**: tickets print at thermal-printer width with a QR code. Patients scan it to see their stage, position and estimated wait in English, Shona or Ndebele (draft translations; see ADR-032).
+- **Missed calls**: *Call again* re-announces a patient; *Not here* keeps their place but lets others be called for a grace period.
+- **Close the day**: review open visits at closing and record unseen ones as left without service. Nothing is deleted, and patients still in service block the close.
+- **Downtime kit**: a printable paper sheet for outages, and back-entry of paper records labelled as such in reports.
+- **Accounts**: lockout after repeated failures, temporary passwords that must be changed, self-service password change, admin reset and unlock, and an idle lock screen with server-side idle expiry for shared PCs.
+- **System health** for administrators and managers: database, worker, storage, backup age and encryption, sessions, displays and device clock skew.
+- **FHIR R4-shaped export** of synthetic records for administrators (not a certified interface).
+
 ## Quick start
 
 Requirements: Docker Engine with Compose v2/BuildKit, at least 4 GB free memory, and localhost ports 3000, 8000 and 55432 available. Initial package downloads may be substantial.
@@ -121,6 +132,19 @@ Generate the OpenAPI snapshot and matching TypeScript schemas:
 make contracts
 ```
 
+## Clinic LAN over HTTPS
+
+To let tablets and a display TV on the clinic network connect, set `DEMO_HOST` to this machine's LAN IP:
+
+```bash
+DEMO_HOST=192.168.1.20 docker compose -f docker-compose.yml -f docker-compose.lan.yml up -d --build
+# Export Caddy's local CA certificate once and install it on each device:
+DEMO_HOST=192.168.1.20 docker compose -f docker-compose.yml -f docker-compose.lan.yml cp \
+  tls:/data/caddy/pki/authorities/local/root.crt ./hutano-local-ca.crt
+```
+
+Open `https://192.168.1.20`. Only the TLS proxy listens on the LAN; plain HTTP stays on loopback, and cookies are marked Secure. HTTPS is also required for the installable app and its service worker on tablets. The setup is still for fictional data only.
+
 ## Reset, backup and restore
 
 Reset removes this Compose project's demo database/model volumes. Existing local records and private model files are lost unless backed up:
@@ -132,8 +156,9 @@ make reset CONFIRM=RESET_SYNTHETIC_DEMO
 For synthetic demo data only:
 
 ```bash
-./scripts/backup_demo.sh
-# Use the unique directory printed by the backup command:
+# Recommended: encrypt (AES-256 via GPG); plaintext never touches disk.
+BACKUP_PASSPHRASE_FILE=~/.config/hutano/backup-passphrase ./scripts/backup_demo.sh
+# Use the unique directory printed by the backup command (encrypted snapshots also need BACKUP_PASSPHRASE_FILE):
 CONFIRM=RESTORE_SYNTHETIC_DEMO ./scripts/restore_demo.sh backups/demo-XXXXXXXX
 # Non-destructive-to-source restore verification using a disposable database:
 python scripts/verify_backup_restore.py
@@ -143,7 +168,7 @@ python scripts/verify_clean_boot.py
 python scripts/verify_live_streams.py
 ```
 
-Backups contain authentication and private artifact data even in synthetic mode. They are permission-restricted, ignored by source control, and **not encrypted**. Each backup uses a new directory without overwriting earlier snapshots. Keep the database and artifact archives together. Verify with no active writes/research jobs. Restore only trusted local snapshots: database dumps contain executable SQL. Restoration replaces this project's database; do not point it at another system. It restores archived artifact files without deleting unrelated newer files.
+Backups contain authentication and private artifact data even in synthetic mode. They are permission-restricted and ignored by source control. They are encrypted only when `BACKUP_PASSPHRASE_FILE` is set; `REQUIRE_BACKUP_ENCRYPTION=1` refuses unencrypted backups, and System health flags old or unencrypted ones. Losing the passphrase makes the backup unrecoverable. Each backup uses a new directory without overwriting earlier snapshots. Keep the database and artifact archives together. Verify with no active writes/research jobs. Restore only trusted local snapshots: database dumps contain executable SQL. Restoration replaces this project's database; do not point it at another system. It restores archived artifact files without deleting unrelated newer files.
 
 ## Reproduce aggregate evidence
 
@@ -173,7 +198,9 @@ Run with a Python environment containing the locked dependencies. This submits r
 - Dataset upload is synthetic-only in this build and rejects obvious direct-identifier columns. This does not replace a real de-identification review.
 - The prototype has not undergone clinical validation, penetration testing, legal review, medical-device review or ethics/facility approval.
 - Staff & rooms reports utilisation only over recorded staffing intervals, with explicit breaks/outages and no inferred prior history. Original simulations retain nominal-capacity metrics; the finite-day experiment reports scheduled availability and occupied time separately.
-- Process-local rate limits and public demo passwords are for this loopback-only demonstration, not an internet-facing deployment.
+- Per-IP rate limits are process-local (single API worker); account lockout is stored in the database. Public demo passwords are for demonstration only, not an internet-facing deployment.
+- Patient-facing Shona and Ndebele copy consists of draft translations that need native-speaker review before field use.
+- LAN HTTPS uses a self-managed local certificate authority; each device must trust it explicitly.
 
 ## Troubleshooting
 

@@ -65,6 +65,7 @@ def overview(db, facility_id, from_date=None, to_date=None):
         "active_visits": sum(v.status in {"REGISTERING", "AWAITING_TRIAGE", "TRIAGED", "ACTIVE", "ESCALATION_REQUIRED"} for v in visits),
         "completed_visits": sum(v.status == "COMPLETED" for v in visits),
         "retrospective_visits": sum((v.entry_mode or "LIVE") == "RETROSPECTIVE" for v in visits),
+        "waiting": summary(waits), "service": summary(services),
         "arrival_to_provider_minutes": summary(provider), "total_visit_minutes": summary(totals),
         "observation_period": {"from": min((v.arrival_at for v in visits), default=None), "through": max((v.completed_at or v.arrival_at for v in visits), default=None)},
         "service_points": stages, "arrivals_by_hour": [{"hour": h, "arrivals": hours[h]} for h in range(24)],

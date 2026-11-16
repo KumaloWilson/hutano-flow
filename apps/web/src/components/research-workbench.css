@@ -1,31 +1,31 @@
 .research-workbench { min-width: 0; }
-.research-workbench > details > summary { color: var(--green); font-size: 1rem; font-weight: 750; padding: 10px 0; min-height: 44px; cursor: pointer; }
+.research-workbench > details > summary { color: var(--ink); font-size: 1rem; font-weight: 600; padding: 10px 0; min-height: 44px; cursor: pointer; }
 .research-workbench .panel > p { max-width: 90ch; }
 .research-workbench .rw-protocol-form { margin-top: 16px; }
 .research-workbench .rw-checkbox { display: flex; align-items: center; gap: 12px; padding: 14px 0; line-height: 1.5; }
 .research-workbench .rw-checkbox input { width: 20px; min-height: 20px; flex: 0 0 20px; }
-.research-workbench caption { text-align: left; padding: 14px 0 9px; font-weight: 700; color: var(--green); }
+.research-workbench caption { text-align: left; padding: 14px 0 9px; font-weight: 700; color: var(--ink); }
 .research-workbench .rw-summary th { width: 38%; white-space: normal; }
 .research-workbench .rw-summary td { overflow-wrap: anywhere; white-space: normal; max-width: 600px; }
 .research-workbench .rw-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
-.research-workbench .rw-features > div { background: #f0f4ef; border: 1px solid var(--line); border-radius: 12px; padding: 15px; }
+.research-workbench .rw-features > div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 15px; }
 .research-workbench .rw-features dt { font-size: .73rem; color: var(--muted); text-transform: capitalize; margin-bottom: 8px; }
 .research-workbench .rw-features dd { margin: 0; overflow-wrap: anywhere; font-weight: 650; }
 .research-workbench .rw-features small { display: block; font-size: .7rem; font-weight: 400; margin-top: 9px; line-height: 1.5; }
 .research-workbench .rw-muted { color: var(--muted); font-size: .75rem; }
 .research-workbench .rw-adjudication, .research-workbench .rw-trial { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
-.research-workbench .rw-advisory { background: #f4f0e6; border-left: 4px solid var(--gold); border-radius: 6px 14px 14px 6px; padding: 20px; margin: 20px 0; }
+.research-workbench .rw-advisory { background: var(--amber-soft); border-left: 4px solid var(--amber); border-radius: 6px 14px 14px 6px; padding: 20px; margin: 20px 0; }
 .research-workbench .rw-advisory h3 { margin-top: 0; }
 .research-workbench .rw-run-list { display: grid; gap: 10px; }
 .research-workbench .rw-run { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .research-workbench .rw-run p { margin-bottom: 0; }
 .research-workbench .rw-chart { max-width: 800px; }
-.research-workbench .rw-chart svg { width: 100%; height: auto; background: #fafbf8; border-radius: 12px; }
-.research-workbench .rw-chart svg text { font-family: inherit; font-size: 13px; fill: #41594c; }
+.research-workbench .rw-chart svg { width: 100%; height: auto; background: var(--surface-2); border-radius: 12px; }
+.research-workbench .rw-chart svg text { font-family: inherit; font-size: 13px; fill: var(--muted); }
 .research-workbench .rw-json { margin: 15px 0; }
 .research-workbench .rw-json summary { min-height: 44px; padding: 11px 0; cursor: pointer; font-weight: 650; }
-.research-workbench .rw-json pre { padding: 16px; border: 1px solid var(--line); background: #f4f6f1; border-radius: 10px; max-height: 520px; overflow: auto; font-size: .7rem; line-height: 1.6; }
-.research-workbench summary:focus-visible { outline: 3px solid var(--green-2); outline-offset: 3px; border-radius: 4px; }
+.research-workbench .rw-json pre { padding: 16px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; max-height: 520px; overflow: auto; font-size: .7rem; line-height: 1.6; }
+.research-workbench summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
 @media (max-width: 600px) {
   .research-workbench .panel-head, .research-workbench .rw-run { flex-direction: column; align-items: flex-start; }
   .research-workbench .rw-features { grid-template-columns: 1fr; }

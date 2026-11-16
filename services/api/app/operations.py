@@ -353,7 +353,7 @@ def display_board(payload: DisplayBoardRequest, request: Request, db: Session = 
                         .order_by(ServicePoint.name)).all()
     queues = []
     for point in points:
-        if point.type == "registration":
+        if point.type in {"registration", "discharge"}:
             continue
         waiting = len(rank_queue(db, screen.facility_id, point.id))
         queues.append({"service": point.name, "service_type": point.type, "waiting": waiting,

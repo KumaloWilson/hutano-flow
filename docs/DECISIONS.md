@@ -137,3 +137,44 @@ Shadow monitoring compares completed independent responses with hidden-at-decisi
 
 An additional reproducible challenge resamples synthetic test rows into eight 20-row windows over five replications, with a shift after three unchanged windows and labels delayed one window. Unchanged, missing-input shift and label shift are retained. Guard/error alert thresholds use model-selection rates plus 0.20, capped at one. False alarms, missed detections (null delay) and detection delay are exported; repeating synthetic rows limits independence/generalisation. This is a transparent monitor demonstration, not a validated statistical detector. Missed label-shift detections are retained in the evidence.
 
+
+## ADR-027 — Real client addresses, account lockout and shared-workstation sessions
+
+**Status:** accepted, 2026-11-15.
+Rate limits previously keyed on `request.client.host`. Behind the Next.js proxy that is always the web container, so one bucket served the whole clinic: four patients polling their status page every 10 s exceeded the 20/minute limit, and one mistyped password loop could block every staff sign-in. `X-Forwarded-For` is now honoured only when the direct peer is a configured trusted proxy (`TRUSTED_PROXIES`, default loopback and the Compose network). The chain is read right to left and the first untrusted hop is used, because proxies append hops. A client therefore cannot pick its own bucket.
+
+Patient-status lookups are limited strictly on *misses* per real address (20/minute), per token (20/minute) and by a generous per-address ceiling (600/minute) for a waiting room behind one NAT. Tokens carry 192 bits or more of secret, so the miss limit is what prevents enumeration.
+
+Sign-in uses Argon2 for unknown emails too, so timing does not reveal which accounts exist. Five consecutive failures lock an account for 15 minutes. The lockout is stored in PostgreSQL (multi-worker safe), audited, and released by an administrator's access change or password reset. Unknown emails show the same lockout message, so the lockout reveals nothing either. IP limits remain process-local (single uvicorn worker, ADR-013).
+
+Administrator-set passwords are temporary: the server blocks all other endpoints until the person chooses their own password. The password policy is length-first (12+ characters, common and identity-derived passwords blocked), following NIST SP 800-63B rather than composition rules. Changing a password revokes other sessions. Sessions have an idle window (`SESSION_IDLE_MINUTES`, default 30) inside the absolute lifetime. Only genuine user input refreshes the window, so background polling cannot keep an unattended reception PC signed in. The UI also shows a lock screen after a shorter period.
+
+## ADR-028 — Missed calls: recall and deferral
+
+A called patient who does not appear can be **recalled** (re-announced on the display; status stays CALLED) or **deferred**. Deferral returns them to WAITING with their original `queued_at` and `joined_at`, so measured waits still start at first arrival. Until `deferred_until` (1–60 minutes, default 10), they rank after every callable entry. After that their original place returns. This deliberately overrides urgency order for a patient who is physically absent; it is a presence state, not ageing, and it is time-limited and audited. After three missed calls deferral is refused and staff must record a no-show or a clinician must keep the place by override. The first call stays in `queue_state_events`.
+
+## ADR-029 — Day close
+
+Without an end-of-day step, unseen WAITING entries carried into the next morning with 15-hour waits, distorting within-group ordering, ETAs and analytics. An administrator or clinician now reviews open visits for a local date and closes the day. Unseen, not-started episodes become CANCELLED and the visit becomes LEFT_WITHOUT_SERVICE, with audit reason code `DAY_CLOSE_UNSEEN`. Visits already in service block the close until they are finished or explicitly kept open. The preview's count must match (optimistic concurrency) and each date can be closed once. `day_closures` is append-only in PostgreSQL. Queue entries from an earlier local day are flagged `carried_over` and counted in System health. Nothing is closed automatically (consistent with ADR-012 on operating hours).
+
+## ADR-030 — Downtime, LAN TLS, encrypted backups and system health
+
+**Downtime.** Staff print a downtime sheet (current queue order plus blank rows) and work on paper during an outage. Afterwards, reception or an admin back-enters paper records from the last seven days as visits with `entry_mode = RETROSPECTIVE` and a paper reference, with validated stage ordering. These are new records with paper times; they are not offline-queued commands, so ADR-006 still holds. Analytics count them separately.
+
+**LAN TLS.** `docker-compose.lan.yml` now exposes only a Caddy TLS proxy using its own local CA, with secure cookies and HTTPS origins. Plain HTTP stays on loopback. HTTPS is also what makes the PWA and service worker work on LAN tablets.
+
+**Backups.** With `BACKUP_PASSPHRASE_FILE` set, archives stream through GPG (AES-256, symmetric) and no plaintext is written to disk. `REQUIRE_BACKUP_ENCRYPTION=1` refuses unencrypted backups. A SHA256SUMS manifest is checked before restore.
+
+**System health.** A status file sits on a separate volume (so a restore cannot rewind it) and feeds an admin/manager System health view: database, worker, storage, backup age and encryption, locked accounts, carried-over entries, display liveness and device clock skew.
+
+## ADR-031 — Waiting-room display and FHIR-shaped export
+
+Displays authenticate with revocable per-screen keys (stored as SHA-256 digests, shown once, stripped from the idempotency replay ledger). The board shows only display numbers being called, destination and room, and per-service queue counts. It never shows names, urgency, the order of waiting patients or reasons, so it cannot be used to infer who was prioritised.
+
+The spec section 14 export is an admin-only, synthetic-only, one-way FHIR R4-shaped Bundle (Patient without pseudonym, Encounter, Observation) using local code systems and a structural self-check. It is explicitly not a certified FHIR interface, and P1–P5 are exported as a neutral local category (ADR-002).
+
+## ADR-032 — Patient-facing status extension and interface redesign
+
+The public status response now also returns the patient's *own* stage names with done/current/next state, and the room they are called to. It still excludes identity, urgency, times and reasons; the minimality test pins the new exact key set. Receipts carry a QR code to `/status#t=<token>`. The fragment is never sent to the server, and the page removes it from the address bar and history after reading it.
+
+The interface was redesigned around role-specific work and offline-capable self-hosted fonts. It keeps a neutral ink ramp for P1–P5, with no alarm palette that would imply clinical acuity. Patient-facing copy is in English, chiShona and isiNdebele. **These translations are drafts for usability testing and must be reviewed by native speakers before any field use.** Accessible names relied on by the browser suite are kept stable.

@@ -63,6 +63,15 @@ export function formatTime(value?: string | null): string {
   }).format(new Date(value));
 }
 
+export function formatClock(value?: string | Date | null): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("en-ZW", { timeZone: "Africa/Harare", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value));
+}
+
+export function errorText(error: unknown, fallback = "Request failed"): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function waitForJob(jobId: string): Promise<{ result_ref: string }> {
   for (let attempt = 0; attempt < 300; attempt++) {
     const job = await api<{ status: string; result_ref: string; error?: string }>(`/api/v1/research/jobs/${jobId}`);
