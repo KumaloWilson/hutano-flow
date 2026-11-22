@@ -1,96 +1,88 @@
-# Verification evidence
+# Verification evidence — 22 November 2026
 
-Historical 26 October report. See [28 October research-depth verification](RESEARCH_DEPTH_EVIDENCE.md) for the current 105-test backend, expanded browser/frontend suites and research results. Shared `docs/evidence` exports are refreshed by verification scripts; their own timestamps identify the latest run.
+Current report for commit `9982310` plus the 22 November changes (readable fictional
+clinic, evaluation browser test, host environment fix). Earlier reports:
+[26 October](TEST_EVIDENCE_20261026.md), [25 October](TEST_EVIDENCE_20261025.md),
+[28 October research depth](RESEARCH_DEPTH_EVIDENCE.md).
 
-Verified locally on **26 October 2026** with Python 3.12, Node 22.23.4, PostgreSQL 17.2 and Google Chrome. These results verify a synthetic research prototype, **not clinical validity, patient-care approval or public-production readiness**.
+These checks verify a **synthetic research prototype**. They do not show clinical
+validity, approval for patient care or readiness for public production.
+
+Environment: Linux, Docker Compose, PostgreSQL 17, Python 3.12.8 (API image) and 3.12.14 (host
+`.venv`), Node 22.23.4, Google Chrome.
 
 ## Executed checks
 
-| Check | Result | Evidence |
+| Check | Result | Command |
 |---|---|---|
-| Backend API/security/research suite, including real PostgreSQL | **67 passed** on host (56.22 s) and in Docker (63.90 s) | [JUnit](evidence/pytest-enhanced.xml), [tests](../services/api/tests/) |
-| PostgreSQL-specific checks | **5 passed**, included above | Concurrent calls and room approvals, active-reservation uniqueness, immutable records, migration round-trip and model/schema parity |
-| Frontend unit tests | **10 passed** on host and in the dedicated Docker test image | Safe command client, permissions, dialog submission/cancel/Escape/focus |
-| Full-stack browser workflows | **6 passed**, 58.4 s | [Machine-readable summary](evidence/browser-enhanced.json), [browser tests](../apps/web/tests/e2e/), local HTML report in `apps/web/playwright-report/index.html` |
-| TypeScript and optimised Next.js build | PASS | `npm run typecheck`; Docker production build |
-| Generated API contracts | PASS: **76 schemas** | [OpenAPI](API_OPENAPI.json), generated browser types; structured tuple support |
-| Migration and schema drift | PASS: revision `20261025_0003`; no new upgrade operations detected | `alembic check`; isolated upgrade → downgrade → upgrade test |
-| Main Docker deployment | PASS: database/API healthy, web/worker running, migration completed | Loopback web :3000, API :8000, database :55432 |
-| Fresh-volume boot and actual restore commands | PASS: two fresh boots, reset of only disposable volumes, matching restored private dataset hashes | [Clean-boot report](evidence/clean-boot-reset.json) |
-| Repeated busy-clinic worker experiments | PASS: complete results and traces exactly equal across two runs | [Reproducibility report](evidence/enhancement-demo.json), [JSON](evidence/busy-clinic.json), [CSV](evidence/busy-clinic.csv), [SVG](evidence/busy-clinic.svg) |
-| Operational model training and evaluation | PASS: real durable worker, private artifact, temporal holdout and baseline comparison | [Evaluation](evidence/operational-prediction.json) |
-| Backup/restore | PASS: counts and digests match after restore into a disposable database, including new research/workspace tables | [Restore report](evidence/backup-restore.json) |
-| Live connections | PASS: 20 simultaneous SSE streams with responsive database-backed reads | [Live-stream report](evidence/live-streams.json) |
+| Backend unit/API/integration, including real PostgreSQL | **146 passed, 0 skipped** (93 s) | API image, `TEST_POSTGRES_URL` → disposable `postgres:17` container |
+| Backend on host | **139 passed, 7 skipped** (PostgreSQL-only, no database URL) | `make test-local` |
+| Frontend unit tests | **20 passed** (7 files) | `npm test` |
+| TypeScript | PASS, no errors | `npm run typecheck` |
+| Full-stack browser workflows | **11 passed, 0 skipped** (60 s); [summary](evidence/browser-enhanced.json) | `python3 scripts/verify_browser.py` |
+| Clean boot, reset and backup/restore | PASS: two fresh boot cycles; restricted runtime inserted journeys; actual backup/restore commands restored visits and private dataset hashes | `python3 scripts/verify_clean_boot.py` |
+| OpenAPI drift | PASS: generated spec identical to [API_OPENAPI.json](API_OPENAPI.json) (102 schemas, 102 paths); generated TypeScript unchanged | `python -m app.cli openapi` |
 
-The final browser run used a uniquely named disposable Compose project, its own PostgreSQL/model volumes, 300 generated histories and the real durable worker. The test project and volumes were removed after verification; the main demonstration was preserved. Earlier attempts exposed ambiguous daily-token test targeting and exact-label selectors; these were corrected and the complete suite rerun. Two visits created by the interrupted checks in the main demo were explicitly cancelled with audit reasons, retaining their history. No pre-existing visit was cancelled.
+The browser suite runs in a uniquely named disposable Compose project with its own
+PostgreSQL volume, migrations, durable worker, 300 generated research visits and the
+prepared fictional clinic. The project and its volumes are removed afterwards; the main
+demo is not touched. The one remaining warning is the upstream Starlette notice about a
+future `httpx2` test client; it is not a test failure.
 
-The backend run retains one upstream Starlette warning about a future `httpx2` test-client migration; it is not a failed test. Dependency versions were not changed by this enhancement. Point-in-time dependency audit results from 25 October are retained in the [earlier verification record](TEST_EVIDENCE_20261025.md); no new penetration test or container-OS audit is claimed.
+### New since 26 October
 
-## Connected workflows demonstrated
+- **Evaluation and calibration in the browser** ([evaluation.spec.ts](../apps/web/tests/e2e/evaluation.spec.ts)).
+  A researcher runs a baseline-calibrated simulation from the seeded synthetic
+  time-and-motion baseline. The test checks that the baseline-reproduction verdict and paired comparison
+  appear. It opens the Evaluation view (objectives O1–O4, research questions, limitations)
+  and records one consented usability session with SUS and TAM. It checks the score
+  (SUS 75, PU 6, PEOU 5) reaches the O4 evidence. Screenshots:
+  [calibrated simulation](evidence/calibrated-simulation.png), [evaluation](evidence/evaluation-objectives.png).
+- **Readable fictional clinic** ([ADR-037](DECISIONS.md), [demo_cast.py](../services/api/app/demo_cast.py)).
+  `test_cast_is_coherent_and_supports_the_advisory` checks sex and age consistency,
+  the sex mix, tokens rising with arrival time, that only returning patients have
+  earlier visits, enough recorded vitals for the advisory on every triaged case, and that
+  seeded text contains no diagnoses or prescriptions. The clinic browser test opens a
+  returning patient's record by name. Screenshots: [overview](evidence/clinic-overview.png),
+  [patient history](evidence/clinic-patient-history.png).
+- **Host environment.** The previous `.venv` pointed to an interpreter under `/tmp`, which a reboot
+  removed, so `make test-local` failed. `make venv` now rebuilds it from the lock file with a
+  persistent Python 3.12. `make test-local` reports a broken environment clearly.
 
-- Reception → clinician assessment → consultation → pharmacy → completed visit, with private mobile status, second-tab updates, clinician override and offline/reconnect safeguards.
-- Patient search, append-only observations with units, encounter note, handover to laboratory, acknowledgement, staffed-room approval, laboratory completion, **return consultation as a new episode**, and a follow-up encounter retaining earlier history.
-- Reception is denied clinical workspace details. Pharmacy/providers are restricted to their service operations. Cross-facility objects remain hidden.
-- Explicit room/staff reservations reject stale resource snapshots, overlapping shifts, duplicate approvals and conflicting database inserts. A new outage blocks a not-yet-started reservation but does not interrupt service already started. No-shows and completion release reservations.
-- Researchers save immutable scenario revisions, execute a 50-arrival/3-room experiment, inspect sensitivity, urgency slices and staged comparator ablations, replay individual journeys, and retrieve real exports.
-- Real training jobs produce an inactive experimental urgency classifier and a separate operational duration model. Neither inference nor resource choice changes clinician-confirmed priority.
-- Worker failure/recovery, invalid observation inputs, insufficient prediction data, forecast arithmetic, finite-horizon censoring, repeated-run determinism and distinct resource-choice strategies have automated coverage.
+## Acceptance mapping (specification §16)
 
-Screenshots: [patient workspace](evidence/patient-workspace.png), [staffed-room assignment](evidence/staffed-room-assignment.png), [busy-clinic results](evidence/busy-clinic-experiment.png), [operational evaluation](evidence/operational-prediction.png), [completed journey](evidence/completed-journey.png), [private mobile status](evidence/patient-mobile.png).
+PASS means demonstrated today for this local, synthetic-only prototype. Research figures
+are not re-derived here; they are the recorded outputs linked below.
 
-## Actual research outputs
+| Criterion | Result | Evidence |
+|---|---|---|
+| F1 Boots from documented commands with PostgreSQL | PASS | Clean-boot run above; [README](../README.md) |
+| F2 Demo accounts work; unauthorised operations fail server-side | PASS | [security tests](../services/api/tests/test_security_and_queue.py), [hardening](../services/api/tests/test_hardening.py); browser logins for each role |
+| F3 Walk-in registration → triage → consultation → pharmacy → complete with timestamps | PASS | [workflow.spec.ts](../apps/web/tests/e2e/workflow.spec.ts); [completed journey](evidence/completed-journey.png) |
+| F4 Concurrent patients, deterministic ordering, visible wait ages | PASS | [queue engine](../services/api/app/services/queue.py), [invariants](../services/api/tests/test_invariants.py); seeded consultation queue orders P2 → P3 (45, 31 min) → P4 → P5 |
+| F5 View/accept/reject/override recommendation with audit | PASS | [ML tests](../services/api/tests/test_ml_and_baseline.py), [intelligence tests](../services/api/tests/test_intelligence.py) |
+| F6 AI unavailable → manual workflow continues | PASS | Browser journey with no active model; no invented urgency |
+| F7 Service-point outage keeps state | PASS | `test_outage_blocks_calls_without_removing_queue`; clinic browser test resumes a paused room |
+| F8 Dashboards update without reload | PASS | Second-tab assertions in [workflow.spec.ts](../apps/web/tests/e2e/workflow.spec.ts); [live-stream report](evidence/live-streams.json) |
+| F9 Token reveals only own status; not cheaply enumerable | PASS | Guessed-token browser test; [private status](evidence/patient-mobile.png) |
+| F10 FCFS / urgency / hybrid in simulator only | PASS | [simulation tests](../services/api/tests/test_research.py); live queue never re-ranks across confirmed categories |
+| R1 ≥ 300 reproducible synthetic visits | PASS | Browser setup generated 300 with seed 2026; repeated runs insert zero |
+| R2 Baseline formulas | PASS | [baseline tests](../services/api/tests/test_ml_and_baseline.py), [definitions](RESEARCH_EVALUATION.md) |
+| R3 Same scenarios per policy; reproducible exports with seeds | PASS | Paired runs with shared input hashes; [reproducibility](evidence/simulation-reproducibility.json) |
+| R4 Mean, P90, low-urgency warnings; no blanket benefit claim | PASS | [standard run](evidence/simulation-standard.json); recorded hybrid − FCFS **+4.43 min** (interval crosses zero) and [no-improvement control](evidence/simulation-no-improvement.json) |
+| R5 Label provenance and limitations | PASS | [model evaluation](evidence/model-evaluation.json); only synthetic labels; macro-F1 recorded against synthetic labels, not diagnostic accuracy |
+| R6 Provenance, model/policy version, explanatory factors | PASS | Versioned model/policy/dataset hashes in exports and queue rows |
+| E1 Unit, API/integration and E2E pass locally | PASS | 146 backend + 20 frontend + 11 browser, above |
+| E2 No duplicate allocations from concurrency or repeats | PASS | [PostgreSQL race tests](../services/api/tests/test_postgres.py) (7/7), idempotency keys, stale versions |
+| E3 Facility scoping, token leakage, RBAC, audit integrity tested | PASS | Cross-facility, role and immutable-audit tests; clinic snapshot hides names from researchers |
+| E4 No PHI/secrets committed; `.env.example` placeholders | PASS | Repository scan finds no `.env`, keys or credentials; all people fictional |
+| E5 Error/loading/empty/offline flows | PASS | Browser invalid-login, guessed-token, offline/reconnect assertions |
+| E6 Seed/reset, backup/restore, README on a clean machine | PASS on fresh Docker volumes | Clean-boot run above; separate physical machine not claimed |
+| E7 OpenAPI generated; frontend types match | PASS | Drift check above; TypeScript check |
+| E8 Working demo script/screenshots with completed timeline | PASS | [Clinic walkthrough](CLINIC_DEMO.md), [demo script](DEMO_SCRIPT.md), screenshots in [evidence/](evidence/) |
 
-The saved busy-clinic preset uses 50 synthetic arrivals, 3 rooms, 5 paired replications, explicit shifts, breaks/outages, no-shows and laboratory returns. Room duration multipliers are deliberately not in room-number order: 1.5, 0.7, 1.0. The full configuration and shared input hashes are exported.
+## Outside the software
 
-| Base-demand policy | Mean completed-journey wait (min) | Mean replication P90 (min) | Completed per run | Unserved per run |
-|---|---:|---:|---:|---:|
-| Fixed room | 94.2010 | 180.7688 | 48.4 | 1.6 |
-| Next available | 76.6611 | 126.8764 | 48.4 | 1.6 |
-| Capacity aware | 76.5231 | 127.4031 | 48.4 | 1.6 |
-
-Capacity aware minus fixed room: **−17.6779 minutes**, paired 95% interval **−26.3588 to −8.9970**. This is conditional on synthetic assumptions, not evidence of real clinical benefit or validation of the live room-history heuristic. Capacity aware was only about 0.14 minutes better in mean than next available, and its P90 was slightly **worse**. Completed-only means can be selection-biased; unserved counts and urgency slices remain visible. Ablations are staged policy comparators, not a full factorial causal study: capacity aware → next available removes resource-aware choice; next available → fixed room removes pooling/routing flexibility.
-
-The operational duration pipeline selected the **stage-median baseline**, not gradient boosting. Untouched temporal test MAE: **2.9825 minutes**; interval coverage: **78.75%** against a nominal 80%; mean interval width: **9.4810 minutes**. There were 709 training, 229 calibration and 240 test rows from 300 synthetic visit groups after outcome-availability purging. This is not evidence of model superiority or a patient-specific guarantee.
-
-The original FCFS/urgency/hybrid comparison is retained: its previously verified hybrid-minus-FCFS result was **+4.4319 minutes**, with an interval crossing zero. The new resource experiment does not overwrite that adverse result. The urgency classifier's previously recorded macro F1 against synthetic labels was **0.4046**, not diagnostic accuracy.
-
-## Acceptance mapping
-
-The original specification remains the primary contract. The existing acceptance coverage is retained by the expanded regression suite; see the [earlier detailed F/R/E mapping](TEST_EVIDENCE_20261025.md#acceptance-mapping-specification-16).
-
-| Scope | Current verification |
-|---|---|
-| F1–F3: PostgreSQL startup, roles, complete patient workflow | Full-stack clean instance, real accounts, recorded episodes and follow-up history |
-| F4–F7: queues, clinician authority, AI fallback, outages | Queue regressions plus reservation races, non-preemptive outages and unchanged-priority assertions |
-| F8–F9: live views and private status | Multi-context browser workflow, offline controls, 20-stream test, token/privacy tests |
-| F10 / R1–R4: simulation, reproducibility, timing, adverse results | Original policies retained; distinct resource comparators, identical worker reruns, finite-day losses and exports |
-| R5–R6: provenance, evaluation, explanations | Synthetic-label boundaries, temporal operational evaluation, baseline selection, version/config/input hashes |
-| E1–E3: tests, concurrency, security/audit | 67 backend + 10 frontend + 6 browser tests; PostgreSQL constraints and role-scoped APIs |
-| E4–E6: synthetic delivery, error states and recovery | Local-only stack, explicit fallbacks, preserved records, isolated backups and browser fixtures |
-| E7–E8: API types and working demonstration | 76 generated schemas, successful build, [enhanced demo guide](ENHANCED_DEMO.md), saved runs and screenshots |
-
-## Reproduce
-
-From the workspace root, with the documented local configuration:
-
-```bash
-docker compose build api worker migrate web
-docker compose up -d --no-build --wait --wait-timeout 90
-# Supply your local owner test URI only to the isolated test process:
-docker compose run --rm --no-deps -e TEST_POSTGRES_URL=YOUR_LOCAL_TEST_URI api pytest -q
-make test-web
-make contracts
-python scripts/verify_browser.py
-python scripts/verify_enhanced_demo.py
-python scripts/verify_backup_restore.py
-python scripts/verify_live_streams.py
-python scripts/verify_clean_boot.py
-```
-
-Use the locked Python environment and documented Node version. Browser verification needs free loopback ports 3100/8100 and Chrome (or installed Chromium plus `PLAYWRIGHT_CHANNEL=chromium`). `verify_enhanced_demo.py` deliberately **adds** saved synthetic scenario/run records and trains the operational predictor in the main demo; it does not alter patient priorities or staffing. No Git repository or remote CI execution was supplied, so no commit, clone or hosted CI run is claimed.
-
-## Boundaries
-
-All six enhancement areas in [the implementation plan](ENHANCEMENT_PLAN.md) are connected and exercised for the local research prototype. This does not complete field research: approved real-world observations/interviews, clinical validation, protocol adoption and ethics/governance approval remain future work. The 50-arrival experiment is simulated, not 50 observed clinical cases.
-
-Other limits remain explicit: neutral fixed P1–P5 labels, no vital-sign thresholds or autonomous decisions, recorded rather than verified attendance, non-causal room-history suggestions, approximate public waiting ranges, synthetic-only uploads, no offline clinical edits, no FHIR/EHR integration, no public hosting/TLS service, process-local rate limits and unencrypted local backups. Browser tests exercise representative workflows, not every administrator form or every scenario combination. See [engineering decisions](DECISIONS.md).
+These remain outside the software, as the [Evaluation view](../apps/web/src/components/Evaluation.tsx) also states:
+fieldwork baseline at a real facility, ethics and facility approval, recruited usability
+participants, independent clinician labels, and any clinical validation of the advisory.

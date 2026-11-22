@@ -24,8 +24,10 @@ from app.services.audit import record_audit, enqueue_event
 from app.services.workflow import ACTIVE_VISIT_STATES, transition_episode
 from app.ml.pipeline import generate_synthetic_training_data
 from app.seed import POINTS
+from app.patients import FIELDS
+from app.demo_cast import CAST, CONCERNS, background_identity, plan_text, sample_vitals, triage_reason
 
-VERSION = "fictional-clinic-v2"
+VERSION = "fictional-clinic-v3"
 FACILITY_ID = uuid.uuid5(uuid.NAMESPACE_URL, "hutano:fictional-community-clinic")
 STAFF = [
     ("admin", "Tariro Dube", "DemoAdmin1!", ["ADMIN"]),
@@ -37,27 +39,13 @@ STAFF = [
     ("laboratory", "Ruvimbo Chirwa", "DemoLaboratory1!", ["SERVICE_PROVIDER"]),
     ("research", "Kudzai Ncube", "DemoResearch1!", ["RESEARCHER", "MANAGER"]),
 ]
-FIRST = "Anesu Chiedza Tinashe Nyasha Rutendo Farai Rumbidzai Tapiwa Vimbai Tatenda Kudzai Chipo Simbarashe Rudo Tafadzwa Tendai Shingai Natsai Munashe Ruvimbo".split()
-LAST = "Moyo Dube Ndlovu Banda Ncube Chirwa Mupfumi Sibanda Mlambo Chikore Maposa Mavhunga Nyathi Chikomo Mathe Zhou Mupunga Chuma Shava Moyo-Ncube".split()
-SCRIPTS = [
-    ("registration", "WAITING", None, 4, "New walk-in registration"),
-    ("triage", "WAITING", None, 11, "Returning patient awaiting independent assessment"),
-    ("triage", "WAITING", None, 18, "Walk-in awaiting assessment"),
-    ("triage", "WAITING", None, 25, "Referral intake awaiting assessment"),
-    ("consultation", "WAITING", "P2", 27, "Confirmed priority awaiting consultation"),
-    ("consultation", "WAITING", "P3", 45, "Follow-up consultation"),
-    ("consultation", "WAITING", "P4", 72, "Long-wait demonstration"),
-    ("consultation", "WAITING", "P3", 31, "Walk-in consultation"),
-    ("consultation", "WAITING", "P5", 22, "Routine review"),
-    ("consultation", "IN_SERVICE", "P3", 17, "Consultation in progress"),
-    ("consultation", "PAUSED", "P4", 21, "Paused service retaining its room"),
-    ("pharmacy", "WAITING", "P3", 12, "Consultation completed; pharmacy handover"),
-    ("pharmacy", "WAITING", "P4", 19, "Pharmacy completion pathway"),
-    ("laboratory", "WAITING", "P3", 9, "Laboratory pathway with return consultation"),
-    ("triage", "ESCALATION_REQUIRED", "P1", 6, "Scripted clinician-directed escalation"),
-    ("pharmacy", "COMPLETED", "P4", 36, "Completed outpatient journey"),
-    ("consultation", "COMPLETED", "P3", 43, "Completed follow-up review"),
-]
+# Name lists used by v1/v2 preparations; kept only to recognise and refresh those names.
+LEGACY_FIRST = "Anesu Chiedza Tinashe Nyasha Rutendo Farai Rumbidzai Tapiwa Vimbai Tatenda Kudzai Chipo Simbarashe Rudo Tafadzwa Tendai Shingai Natsai Munashe Ruvimbo".split()
+LEGACY_LAST = "Moyo Dube Ndlovu Banda Ncube Chirwa Mupfumi Sibanda Mlambo Chikore Maposa Mavhunga Nyathi Chikomo Mathe Zhou Mupunga Chuma Shava Moyo-Ncube".split()
+# Minutes of service per stage for the earlier steps of a scripted journey.
+SERVICE_MINUTES = {"registration": (2, 5), "triage": (4, 9), "consultation": (9, 18), "laboratory": (6, 12), "pharmacy": (3, 7)}
+# Urgency mix for completed history. P1 is left out: an immediate case is escalated, not queued FCFS.
+HISTORY_URGENCY = (("P2", .06), ("P3", .32), ("P4", .42), ("P5", .20))
 
 
 def ident(name):
@@ -146,18 +134,25 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
     refreshed_names=0
     for i in range(300):
         patient = db.get(Patient, ident(f"patient:{i}"))
-        name=f"{FIRST[i%20]} {LAST[(i*7+i//20)%20]}"
+        if i < len(CAST):
+            c=CAST[i]; who={"name":c.name,"sex":c.sex,"age_band":c.age_band,"age":c.age}
+        else:
+            who=background_identity(i)
+        legacy={f"{LEGACY_FIRST[i%20]} {LEGACY_LAST[i//20]}", f"{LEGACY_FIRST[i%20]} {LEGACY_LAST[(i*7+i//20)%20]}"}
         if not patient:
-            patient = Patient(id=ident(f"patient:{i}"), facility_id=facility.id, pseudonym=name, age_band=["adult","adult","older_adult","adult","child"][i%5], sex=["female","male","not_recorded"][i%3], synthetic_flag=True)
+            patient = Patient(id=ident(f"patient:{i}"), facility_id=facility.id, synthetic_flag=True)
             db.add(patient)
-        elif patient.synthetic_flag and patient.pseudonym==f"{FIRST[i%20]} {LAST[i//20]}" and patient.pseudonym!=name:
-            patient.pseudonym=name;refreshed_names+=1
+        elif not (patient.synthetic_flag and patient.pseudonym in legacy and patient.pseudonym != who["name"]):
+            patients.append(patient); continue
+        else:
+            refreshed_names+=1
+        patient.pseudonym=who["name"]; patient.sex=who["sex"]; patient.age_band=who["age_band"]; patient.year_of_birth=local.year-who["age"]
         patients.append(patient)
     if refreshed_names:
-        record_audit(db,facility_id=facility.id,actor_id=None,action="demo.fictional_names_refreshed",object_type="Facility",object_id=facility.id,correlation_id=str(session_id),new={"count":refreshed_names,"version":VERSION},reason="Spread invented surnames across rehearsal cases; only unchanged v1-generated pseudonyms matched")
+        record_audit(db,facility_id=facility.id,actor_id=None,action="demo.fictional_names_refreshed",object_type="Facility",object_id=facility.id,correlation_id=str(session_id),new={"count":refreshed_names,"version":VERSION},reason="Replace earlier generated fictional identities with sex- and age-consistent ones; only unchanged v1/v2 pseudonyms matched")
     db.flush()
     actors = {k: users[{"registration":"reception","triage":"triage","consultation":"clinician","pharmacy":"pharmacy","laboratory":"laboratory","discharge":"reception"}[k]] for k in points}
-    def episode(visit, kind, sequence, queued, start=None, end=None, status="COMPLETED", category=None):
+    def episode(visit, kind, sequence, queued, start=None, end=None, status="COMPLETED", category=None, reason=None):
         actor = actors[kind]
         ep = ServiceEpisode(facility_id=facility.id, visit_id=visit.id, service_point_id=points[kind].id, sequence_no=sequence, status=status, queued_at=queued, called_at=start, started_at=start, ended_at=end, clinician_id=actor.id if start else None, created_at=queued)
         if status == "PAUSED": ep.paused_at = anchor-timedelta(minutes=2)
@@ -171,7 +166,7 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
             db.add(QueueStateEvent(facility_id=facility.id, episode_id=ep.id, actor_id=actor.id, from_status=before, to_status=after, occurred_at=at, metadata_json={"scripted_demo":True,"version":VERSION}))
         if kind == "registration" and end: visit.registered_at=end
         if kind == "triage" and category:
-            db.add(TriageAssessment(facility_id=facility.id, visit_id=visit.id, assessor_id=users["triage"].id, configured_urgency=category, reason="Scripted fictional reference for demonstration; not an actual clinician assessment", assessed_at=end or queued))
+            db.add(TriageAssessment(facility_id=facility.id, visit_id=visit.id, assessor_id=users["triage"].id, configured_urgency=category, reason=reason or "Fictional triage assessment", assessed_at=end or queued))
         return ep
     def new_visit(patient, arrival, route, status, number, visit_id=None):
         visit_id = visit_id or uuid.uuid4()
@@ -179,21 +174,51 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
         visit = Visit(id=visit_id, facility_id=facility.id, patient_id=patient.id, public_token=token, token_day=arrival.astimezone(ZoneInfo(facility.timezone)).date(), token_secret_hash=token_digest(status_secret(visit_id,token)), arrival_at=arrival, created_at=arrival, status=status, visit_type="follow_up" if db.scalar(select(Visit.id).where(Visit.patient_id==patient.id).limit(1)) else "walk_in", planned_services=route[1:])
         db.add(visit); db.flush(); return visit
     historical = 0
+    # Scripted first-time patients have no earlier visits; returning ones do.
+    pool = [p for i, p in enumerate(patients) if i >= len(CAST) or CAST[i].returning]
+    slot = 0
+    cast_by_patient = {patients[i].id: case for i, case in enumerate(CAST)}
+    # Every weekday has 24 historical arrivals; find each pool member's final slot.
+    total_slots = 24*sum((local.date()-timedelta(days=21-d)).weekday() < 5 for d in range(21))
+    last_slot = {p.id: k + (total_slots-1-k)//len(pool)*len(pool) for k, p in enumerate(pool) if k < total_slots}
+    def observe(visit, values, at):
+        for code, value in values.items():
+            if value is None: continue
+            db.add(Observation(facility_id=facility.id, visit_id=visit.id, field_code=code, value=str(value), unit=FIELDS[code][1], source="fictional_demo", entered_by=users["triage"].id, observed_at=at))
     for day_index in range(21):
         day = local.date()-timedelta(days=21-day_index)
         if day.weekday() >= 5: continue
         opening = datetime.combine(day, datetime.min.time(), ZoneInfo(facility.timezone)).replace(hour=8).astimezone(timezone.utc)
         for index, at, stages in historical_paths(seed, day_index):
+            patient = pool[slot % len(pool)]; this_slot = slot; slot += 1
             visit_id = ident(f"history:{seed}:{day}:{index}")
             if db.get(Visit,visit_id): continue
-            patient=patients[(day_index*24+index)%len(patients)]
+            # Content uses its own stream so the SimPy timings above are unchanged.
+            detail = random.Random(f"{seed}:{day}:{index}:detail")
+            category = detail.choices([c for c, _ in HISTORY_URGENCY], [w for _, w in HISTORY_URGENCY])[0]
+            band = patient.age_band if patient.age_band in CONCERNS else "adult"
+            concern = detail.choice(CONCERNS[band])
+            # A returning scripted patient's earlier visits explain why they are back today.
+            if patient.id in cast_by_patient and this_slot == last_slot.get(patient.id):
+                concern = cast_by_patient[patient.id].history or concern
+            route = [s[0] for s in stages]
             # Never add a historical visit with the same display token as a staff-created record.
             number=(db.scalar(select(func.count(Visit.id)).where(Visit.facility_id==facility.id,Visit.token_day==day)) or 0)+1
-            visit=new_visit(patient, opening+timedelta(minutes=at), [s[0] for s in stages], "COMPLETED", number, visit_id)
+            visit=new_visit(patient, opening+timedelta(minutes=at), route, "COMPLETED", number, visit_id)
+            prior = None; consultations = 0
             for sequence,(kind,q,s,e) in enumerate(stages,1):
-                ep=episode(visit,kind,sequence,opening+timedelta(minutes=q),opening+timedelta(minutes=s),opening+timedelta(minutes=e),category=["P3","P4","P4","P5","P2"][index%5])
-                if kind=="consultation" and index%6==0:
-                    db.add(EncounterNote(facility_id=facility.id,episode_id=ep.id,actor_id=actors[kind].id,text="Fictional encounter: attendance and onward service reviewed. This note demonstrates preserved history and contains no diagnosis or treatment.",created_at=ep.ended_at))
+                ep=episode(visit,kind,sequence,opening+timedelta(minutes=q),opening+timedelta(minutes=s),opening+timedelta(minutes=e),category=category,reason=triage_reason(category, concern))
+                if kind == "triage":
+                    observe(visit, sample_vitals(detail, band, category), ep.ended_at)
+                if kind == "consultation":
+                    consultations += 1
+                    opening_line = f"{concern}. History taken and examined." if consultations == 1 else "Returned with the laboratory result and reviewed."
+                    db.add(EncounterNote(facility_id=facility.id,episode_id=ep.id,actor_id=actors[kind].id,text=f"{opening_line} {plan_text(route[sequence:])}",created_at=ep.ended_at))
+                if kind in {"laboratory", "pharmacy"} and prior is not None:
+                    db.add(Handover(facility_id=facility.id,visit_id=visit.id,source_episode_id=prior.id,target_point_id=points[kind].id,actor_id=actors["consultation"].id,
+                        message="Blood test, then back to consultation with the result." if kind == "laboratory" else "Collect medicines.",
+                        created_at=prior.ended_at,acknowledged_at=ep.started_at,acknowledged_by=actors[kind].id))
+                prior = ep
             visit.completed_at=ep.ended_at; historical+=1
     # Staff schedules are explicit rehearsal windows around preparation time.
     rooms={}
@@ -207,36 +232,54 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
             db.add(StaffShift(facility_id=facility.id,room_id=room.id,staff_id=users[staff].id,starts_at=anchor-timedelta(hours=2),ends_at=anchor+timedelta(hours=8)))
             db.add(ResourceBlock(facility_id=facility.id,staff_id=users[staff].id,starts_at=anchor+timedelta(minutes=90),ends_at=anchor+timedelta(minutes=110),reason="Fictional roster: scheduled staff break"))
     db.flush()
-    cases=[]
-    for i,(kind,state,category,wait,story) in enumerate(SCRIPTS):
+    planned=[]
+    for i,case in enumerate(CAST):
         patient=patients[i]
         if db.scalar(select(Visit.id).where(Visit.patient_id==patient.id,Visit.status.in_(ACTIVE_VISIT_STATES))):
             continue # An independently registered encounter is preserved.
-        if state in {"IN_SERVICE","PAUSED"}:
-            room,staff=rooms["Consultation room 1" if state=="IN_SERVICE" else "Consultation room 2"]
+        if case.state in {"IN_SERVICE","PAUSED"}:
+            room,staff=rooms["Consultation room 1" if case.state=="IN_SERVICE" else "Consultation room 2"]
             if db.scalar(select(ResourceAssignment.id).where(ResourceAssignment.released_at.is_(None),
                 (ResourceAssignment.room_id==room.id)|(ResourceAssignment.staff_id==staff.id))):
                 continue # Never displace a staff-created room reservation.
-        route=["registration"] if kind=="registration" else ["registration","triage"]
-        if kind in {"consultation","laboratory","pharmacy"}: route += ["consultation"]
-        if kind in {"laboratory","pharmacy"}: route += [kind]
-        arrival=anchor-timedelta(minutes=wait+8*(len(route)-1))
+        route=["registration"] if case.stage=="registration" else ["registration","triage"]
+        if case.stage in {"consultation","laboratory","pharmacy"}: route += ["consultation"]
+        if case.stage in {"laboratory","pharmacy"}: route += [case.stage]
+        # Work backwards from the current queue so each step starts when the previous one ended.
+        rng=random.Random(f"{seed}:case:{i}")
+        minutes=lambda low,high: timedelta(seconds=round(rng.uniform(low,high)*60))
+        q=anchor-timedelta(minutes=case.wait)
+        if case.state=="IN_SERVICE": start,end=anchor-timedelta(minutes=6),None
+        elif case.state=="PAUSED": start,end=anchor-timedelta(minutes=9),None
+        elif case.state=="COMPLETED":
+            start=q+min(minutes(4,10),timedelta(minutes=case.wait/3))
+            end=min(start+minutes(*SERVICE_MINUTES[case.stage]),anchor-timedelta(minutes=1))
+        else: start=end=None
+        timing=[(q,start,end)]
+        for stage in reversed(route[:-1]):
+            stage_end=timing[0][0]; stage_start=stage_end-minutes(*SERVICE_MINUTES[stage])
+            timing.insert(0,(stage_start-minutes(3,14),stage_start,stage_end))
+        planned.append((timing[0][0],i,case,patient,route,timing))
+    created={}
+    # Created in arrival order, so token numbers rise through the morning as at a real desk.
+    for arrival,i,case,patient,route,timing in sorted(planned,key=lambda row:row[0]):
+        state=case.state
         number=(db.scalar(select(func.count(Visit.id)).where(Visit.facility_id==facility.id,Visit.token_day==arrival.astimezone(ZoneInfo(facility.timezone)).date())) or 0)+1
-        status="COMPLETED" if state=="COMPLETED" else "ESCALATION_REQUIRED" if state=="ESCALATION_REQUIRED" else "REGISTERING" if kind=="registration" else "AWAITING_TRIAGE" if kind=="triage" else "ACTIVE"
+        status="COMPLETED" if state=="COMPLETED" else "ESCALATION_REQUIRED" if state=="ESCALATION_REQUIRED" else "REGISTERING" if case.stage=="registration" else "AWAITING_TRIAGE" if case.stage=="triage" else "ACTIVE"
         visit=new_visit(patient,arrival,route,status,number)
-        visit.visit_type="referral" if "Referral" in story else "follow_up" if any(word in story.lower() for word in ["follow-up","returning","review"]) else "walk_in"
+        visit.visit_type=case.visit_type
+        room_staff=users["provider"] if state=="PAUSED" else users["clinician"]
         prior=None
-        for sequence,stage in enumerate(route,1):
-            final=sequence==len(route);q=arrival+timedelta(minutes=(sequence-1)*8)
-            start=(anchor-timedelta(minutes=6) if state=="IN_SERVICE" else anchor-timedelta(minutes=9)) if final and state in {"IN_SERVICE","PAUSED"} else q+timedelta(minutes=2)
-            end=q+timedelta(minutes=8)
-            if final and state not in {"IN_SERVICE","PAUSED","COMPLETED"}: start=None;end=None
-            if final and state in {"IN_SERVICE","PAUSED"}: end=None
-            ep=episode(visit,stage,sequence,q,start,end,state if final else "COMPLETED",category)
-            if stage=="consultation":
-                db.add(EncounterNote(facility_id=facility.id,episode_id=ep.id,actor_id=users["clinician"].id,text=f"Fictional rehearsal: {story}. Service history and handover should be reviewed before the next step.",created_at=start or q))
-            if final and kind in {"laboratory","pharmacy"} and prior:
-                db.add(Handover(facility_id=facility.id,visit_id=visit.id,source_episode_id=prior.id,target_point_id=points[kind].id,actor_id=users["clinician"].id,message="Fictional handover: complete the requested service and return to consultation." if kind=="laboratory" else "Fictional handover: review the service record, complete pharmacy service and close the visit.",created_at=q,acknowledged_at=end if state=="COMPLETED" else None,acknowledged_by=actors[kind].id if state=="COMPLETED" else None))
+        for sequence,(stage,(q,start,end)) in enumerate(zip(route,timing),1):
+            final=sequence==len(route)
+            ep=episode(visit,stage,sequence,q,start,end,state if final else "COMPLETED",case.category,
+                       reason=triage_reason(case.category,case.concern) if case.category else None)
+            if stage=="triage" and case.category:
+                observe(visit,case.vitals,end or q)
+            if stage=="consultation" and start and case.note:
+                db.add(EncounterNote(facility_id=facility.id,episode_id=ep.id,actor_id=room_staff.id,text=case.note,created_at=end or anchor-timedelta(minutes=2)))
+            if final and case.stage in {"laboratory","pharmacy"} and prior:
+                db.add(Handover(facility_id=facility.id,visit_id=visit.id,source_episode_id=prior.id,target_point_id=points[case.stage].id,actor_id=users["clinician"].id,message=case.handover,created_at=q,acknowledged_at=start if state=="COMPLETED" else None,acknowledged_by=actors[case.stage].id if state=="COMPLETED" else None))
             prior=ep
         if state=="COMPLETED": visit.completed_at=ep.ended_at
         if state in {"IN_SERVICE","PAUSED"}:
@@ -244,10 +287,9 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
             if not db.scalar(select(ResourceAssignment.id).where(ResourceAssignment.room_id==room.id,ResourceAssignment.released_at.is_(None))):
                 ep.clinician_id=staff.id
                 db.add(ResourceAssignment(facility_id=facility.id,episode_id=ep.id,room_id=room.id,staff_id=staff.id,approved_by=users["clinician"].id,approved_at=ep.started_at,started_at=ep.started_at,prediction_json={"scripted_demo":True}))
-        if category:
-            for code,value,unit in [("pulse",str(68+i%9),"beats/min"),("temperature",str(36.5+(i%5)*.1),"°C")]:
-                db.add(Observation(facility_id=facility.id,visit_id=visit.id,field_code=code,value=value,unit=unit,source="fictional_demo",entered_by=users["triage"].id,observed_at=arrival+timedelta(minutes=8)))
-        cases.append({"patient_id":str(patient.id),"visit_id":str(visit.id),"story":story,"initial_stage":kind,"initial_status":state})
+        created[i]={"patient_id":str(patient.id),"visit_id":str(visit.id),"story":case.story,"concern":case.concern,"initial_stage":case.stage,"initial_status":state}
+    # The guide lists cases in walkthrough order, not creation order.
+    cases=[created[i] for i in sorted(created)]
     frame=generate_synthetic_training_data(seed=seed)
     payload=frame.to_csv(index=False).encode();digest=hashlib.sha256(payload).hexdigest()
     directory=settings.model_artifact_dir/str(facility.id);directory.mkdir(parents=True,exist_ok=True)

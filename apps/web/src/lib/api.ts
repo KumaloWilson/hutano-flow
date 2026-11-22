@@ -56,7 +56,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 
 export function formatTime(value?: string | null): string {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("en-ZW", {
+  return new Intl.DateTimeFormat("en-GB", { // en-ZW locale data renders "22 Nov,2026"; en-GB has the same day-month order
     timeZone: "Africa/Harare",
     dateStyle: "medium",
     timeStyle: "short",

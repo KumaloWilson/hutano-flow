@@ -118,18 +118,18 @@ PLAYWRIGHT_CHANNEL=chromium python scripts/verify_browser.py
 
 Use Node 22.23.4 (or a compatible newer supported release) for host tests. If Google Chrome is already installed, `npm run test:e2e` uses it by default. `make test-web` builds a dedicated test image; the minimal runtime web image intentionally has no test tooling.
 
-Backend tests use isolated SQLite databases, plus six opt-in tests that create and remove uniquely named PostgreSQL schemas. Run the full set in Docker with owner authority **only for the test process**:
+Backend tests use isolated SQLite databases, plus seven opt-in tests that create and remove uniquely named PostgreSQL schemas. Run the full set in Docker with owner authority **only for the test process**:
 
 ```bash
 docker compose run --rm api sh -c 'TEST_POSTGRES_URL="$1" pytest -q' sh \
   'postgresql+psycopg://hutano:YOUR_LOCAL_OWNER_PASSWORD@db:5432/hutano_flow'
 ```
 
-Do not use real credentials in shared shell history. These are local synthetic-demo credentials only. Without `TEST_POSTGRES_URL`, the six PostgreSQL-only tests are explicitly skipped, not counted as passed. The production command service continues to use the restricted application role. `npm run test:e2e` alone targets the current demo and creates synthetic records; prefer the isolated script to avoid existing active visits consuming test capacity.
+Do not use real credentials in shared shell history. These are local synthetic-demo credentials only. Without `TEST_POSTGRES_URL`, the seven PostgreSQL-only tests are explicitly skipped, not counted as passed. The production command service continues to use the restricted application role. `npm run test:e2e` alone targets the current demo and creates synthetic records; prefer the isolated script to avoid existing active visits consuming test capacity.
 
-For host development use Python **3.12**, a virtual environment and `pip install -r services/api/requirements.lock`. Run Alembic/seed from `services/api`, set `DATABASE_URL` to localhost:55432, and use the same absolute `MODEL_ARTIFACT_DIR` for API, seed and worker. Start `uvicorn app.main:app --host 127.0.0.1 --port 8000`, `python -m app.worker`, and `npm run dev` in separate terminals. `.env` loading is relative to the working directory; do not assume root `.env` is read from `services/api`.
+For host development use Python **3.12**: `make venv` creates `.venv` from `services/api/requirements.lock` (with [uv](https://docs.astral.sh/uv/) if installed, otherwise `python3.12`), then `make test-local` runs backend and frontend unit tests. Run Alembic/seed from `services/api`, set `DATABASE_URL` to localhost:55432, and use the same absolute `MODEL_ARTIFACT_DIR` for API, seed and worker. Start `uvicorn app.main:app --host 127.0.0.1 --port 8000`, `python -m app.worker`, and `npm run dev` in separate terminals. `.env` loading is relative to the working directory; do not assume root `.env` is read from `services/api`.
 
-If an old `.venv` points to a removed interpreter, recreate it with Python 3.12 or use the Docker test commands; do not install the ML stack into an incompatible host interpreter. `verify_research_depth.py`, `verify_browser.py`, `verify_backup_restore.py` and `verify_clean_boot.py` use the Python standard library and can be orchestrated with host `python3`.
+If `make test-local` reports a missing or broken environment (for example, an old `.venv` whose interpreter lived under `/tmp` and was removed at reboot), run `make venv` again or use the Docker test commands; do not install the ML stack into an incompatible host interpreter. `verify_research_depth.py`, `verify_browser.py`, `verify_backup_restore.py` and `verify_clean_boot.py` use the Python standard library and can be orchestrated with host `python3`.
 
 Generate 300 reproducible completed synthetic journeys:
 

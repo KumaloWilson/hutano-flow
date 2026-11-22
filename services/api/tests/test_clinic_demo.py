@@ -75,7 +75,7 @@ def test_snapshot_and_visit_search_are_role_and_facility_scoped(client,db_sessio
     assert snapshot['facility']['name']=='Hutano Community Clinic'
     assert snapshot['demonstration']['cases']==[]
     assert snapshot['counts']['stored_visits']==377
-    assert 'Anesu' not in str(snapshot)
+    assert 'Rutendo Chari' not in str(snapshot)
     comparisons=client.get('/api/v1/simulations').json()
     assert len(comparisons)==1 and comparisons[0]['status']=='PENDING'
     assert client.get('/api/v1/analytics/overview?from_date=2026-10-30&to_date=2026-10-01').status_code==422
@@ -83,8 +83,8 @@ def test_snapshot_and_visit_search_are_role_and_facility_scoped(client,db_sessio
     client.cookies.clear()
     client.post('/api/v1/auth/login',json={'email':'clinician@showcase.hutano.test','password':'DemoClinician1!'})
     assert len(client.get('/api/v1/clinic/snapshot').json()['demonstration']['cases'])==17
-    rows=client.get('/api/v1/visits',params={'q':'Anesu Moyo'}).json()
-    assert rows and all(v['patient']['pseudonym']=='Anesu Moyo' for v in rows)
+    rows=client.get('/api/v1/visits',params={'q':'Rutendo Chari'}).json()
+    assert rows and all(v['patient']['pseudonym']=='Rutendo Chari' for v in rows)
     assert len(client.get('/api/v1/visits',params={'limit':5}).json())==5
     assert client.get('/api/v1/simulations').status_code==403
     client.cookies.clear()
@@ -112,3 +112,35 @@ def test_rehearsal_pause_resume_and_completion_notes_are_preserved(client,db_ses
     assert visit['status']=='COMPLETED' and any(n['text']==note for n in visit['notes'])
     # The rehearsal seed also audits the episode's original start; the resume is the latest one.
     assert db_session.scalar(select(AuditEvent.reason).where(AuditEvent.object_id==ep['id'],AuditEvent.action=='episode.started').order_by(AuditEvent.occurred_at.desc()).limit(1))=='Fictional patient returned to room'
+
+
+def test_cast_is_coherent_and_supports_the_advisory(db_session,monkeypatch,tmp_path):
+    """Scripted people read like real attendances and carry enough vitals for the advisory."""
+    from app.demo_cast import CAST
+    from app.advisory import visit_inputs
+    from app.ml.pipeline import MEASUREMENTS, MAX_MISSING_VITALS
+    from app.models import EncounterNote, TriageAssessment
+    db=db_session;session=build(db,monkeypatch,tmp_path)
+    people=db.scalars(select(Patient).where(Patient.facility_id==FACILITY_ID)).all()
+    assert all(p.sex in {'female','male'} and p.age_band and p.year_of_birth for p in people)
+    women=sum(p.sex=='female' for p in people)/len(people)
+    assert .45<women<.70
+    by_name={c.name:c for c in CAST}
+    visits={c['visit_id']:db.get(Visit,uuid.UUID(c['visit_id'])) for c in session.manifest_json['cases']}
+    # Tokens rise with arrival time among today's scripted cases.
+    ordered=sorted(visits.values(),key=lambda v:v.arrival_at)
+    assert [v.public_token for v in ordered]==sorted(v.public_token for v in ordered)
+    for case in session.manifest_json['cases']:
+        visit=visits[case['visit_id']];cast=by_name[visit.patient.pseudonym]
+        assert visit.visit_type==cast.visit_type and case['story']==cast.story
+        earlier=db.scalar(select(func.count(Visit.id)).where(Visit.patient_id==visit.patient_id,Visit.id!=visit.id))
+        assert (earlier>0)==cast.returning, cast.name
+        if cast.category:
+            values,_=visit_inputs(db,visit)
+            missing=sum(all(values[f] is None for f in fields) for fields in MEASUREMENTS.values())
+            assert missing<=MAX_MISSING_VITALS, cast.name
+    texts=[n.text for n in db.scalars(select(EncounterNote).where(EncounterNote.facility_id==FACILITY_ID))]
+    texts+=[t.reason for t in db.scalars(select(TriageAssessment).where(TriageAssessment.facility_id==FACILITY_ID))]
+    assert texts and not any('Fictional rehearsal' in t or 'Scripted' in t for t in texts)
+    # No diagnoses or prescriptions are seeded (ADR-017, ADR-037).
+    assert not any(word in t.lower() for t in texts for word in ['diagnos','mg ','prescribed','tablets'])

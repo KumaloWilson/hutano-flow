@@ -226,3 +226,15 @@ Usability uses the System Usability Scale with standard scoring and Cronbach's �
 The Evaluation view is organised by Objectives 1–4 and their research questions. For each it lists the proposal's requirements, whether each is met, the evidence held, and what remains outside the software (staff interviews, approvals). Waiting time against the existing process uses a two-sided Mann–Whitney U test with rank-biserial effect size, which suits skewed independent samples. Simulation reports replication-level paired tests.
 
 Every section is labelled as a synthetic demonstration of the method, not findings about a facility.
+
+## ADR-037 — Readable fictional clinic content (fictional-clinic-v3)
+
+**Status:** accepted, 2026-11-22.
+
+The Hutano Community Clinic rehearsal is what most people see first, so its content now reads like a morning at a real outpatient clinic. It remains entirely fictional and every patient keeps `synthetic_flag = true`.
+
+- **People.** Seventeen scripted people (`app/demo_cast.py`) have a name, sex, age and a plain-language reason for attending. Each case's guide text says what it demonstrates. Background people get sex-consistent given names and a realistic mix: about 58% women, a quarter children and a fifth older adults. Every person has a year of birth. Earlier generated names (v1/v2) are replaced only where unchanged, and the replacement is audited.
+- **Coherence.** New patients have no earlier visits. Returning patients do, and their most recent earlier visit explains why they are back. Today's tokens rise with arrival time. Earlier stage timings are seeded and vary instead of using fixed 8-minute steps.
+- **Records.** Every earlier visit has a reason for attending, a triage note, six triage vital signs (with realistic gaps, such as blood pressure often not taken in children), a consultation note and laboratory/pharmacy handovers. Scripted triaged cases carry enough vitals for the advisory to suggest or abstain on its merits (ADR-033). Previously they carried only two, so the advisory always abstained.
+- **Clinical boundary (ADR-002, ADR-017).** Notes say why someone came and what happened next. They contain no diagnoses, prescriptions or orders, and a test enforces this. Urgency remains the neutral P1–P5 labels, set by the fictional triage nurse. History excludes P1 because an immediate case is escalated, not queued.
+- **Unchanged.** SimPy historical timings (the analytics/baseline inputs), the original research workspace and its `Synthetic NNN` cohort, and all recorded research results. The repeated "Fictional rehearsal:" prefix was removed from note text. Fictional status is shown by the clinic-wide badge, `synthetic_flag` and `source = fictional_demo`, not repeated in every note.

@@ -12,7 +12,7 @@ The seeded 300-visit generator produces independent synthetic durations across 2
 
 SimPy generates a shared arrival/route/service/category sequence for each seed + replication index, then executes FCFS, urgency-first and within-category ageing against those same inputs. Differences and the Student-t 95% interval use paired replication means. P90 is pooled across eligible observations, not a confidence interval. Long-wait counts retain low-urgency outcomes. Unserved journeys are excluded from completed-journey means and reported separately; zero capacity therefore produces unavailable means, not a misleading zero wait. Busy time uses nominal configured capacity over the drained horizon, with non-preemptive outages, not measured staffing rosters.
 
-The standard recorded run produced a +4.4319 minute hybrid-minus-FCFS difference; its interval spans zero. The all-P3 control produces no difference. Neither is evidence of an effect in a real clinic. See [actual outputs](TEST_EVIDENCE.md).
+The standard recorded run produced a +4.4319 minute hybrid-minus-FCFS difference; its interval spans zero. The all-P3 control produces no difference. Neither is evidence of an effect in a real clinic. See [actual outputs](TEST_EVIDENCE_20261026.md).
 
 ## Advisory model card (v4, 28 October 2026)
 
@@ -51,7 +51,7 @@ This report's P90 is the **mean of replication-specific P90s**, unlike the poole
 - Deployment: private artifact in the operational registry, used only for estimates. Missing/unseen/insufficient data yield explicit unavailability or historical fallback. It never modifies clinical priority. Public queue bounds also approximate residual workload and are not calibrated waiting-time guarantees.
 - Demand: next-hour interpolation of rolling observed-day hourly means; walk-forward hourly MAE and constant-rate baseline; no-record days are unknown rather than invented zero-arrival days. Historical spread is descriptive, not a calibrated interval. Stale history is flagged.
 
-Actual executed outputs, including baseline selection and an adverse P90 comparison, are retained in [verification evidence](TEST_EVIDENCE.md). Observed patient outcomes, deployment-effect estimates and real-world calibration remain future approved research.
+Actual executed outputs, including baseline selection and an adverse P90 comparison, are retained in [verification evidence](TEST_EVIDENCE_20261026.md). Observed patient outcomes, deployment-effect estimates and real-world calibration remain future approved research.
 
 ## Research workbench protocol and analysis
 

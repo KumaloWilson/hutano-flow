@@ -12,11 +12,16 @@ docker compose exec api python -m app.cli showcase
 ```
 
 Open http://localhost:3000. Choose **Hutano Community Clinic** and a role.
-Preparation creates 300 fictional people, 24 completed journeys per weekday
-over the preceding 21 calendar days (normally 360 journeys), and up to 17 current
-cases. Seeded SimPy stages generate coherent historical queue/service timestamps;
-repeat encounters, consultation returns, notes and handovers make records useful.
-Five staffed rooms include two occupied consultations and a future staff break.
+Preparation creates 300 fictional people (about 60% women, a quarter children,
+a fifth older adults), 24 completed journeys per weekday over the preceding 21
+calendar days (normally 360 journeys), and up to 17 people in the clinic now.
+Seeded SimPy stages generate coherent historical queue/service timestamps. Every
+earlier visit has a plain-language reason for attending, triage vitals, a
+consultation note and, where relevant, laboratory/pharmacy handovers. Five staffed
+rooms include two occupied consultations and a future staff break.
+
+Notes describe why someone came and what happened next. They never contain a
+diagnosis, prescription or order ([ADR-037](DECISIONS.md)).
 
 Preparation also submits real advisory training, operational duration training
 and a ten-replication queue comparison to the durable worker. Check **Demo guide →
@@ -57,29 +62,61 @@ The laboratory account uses the existing SERVICE_PROVIDER permissions, which
 cover consultation, laboratory and discharge; it is not a lab-only security role.
 Use separate browser profiles/private windows for different staff sessions.
 
+## Who is in the clinic this morning
+
+Token numbers follow arrival order, as at a real front desk; tokens differ
+per preparation. Arrivals are placed in the two to three hours before preparation,
+so prepare shortly before the demonstration during clinic hours; prepared at night,
+the morning appears at night. **Demo guide** lists the same people with their current state.
+
+| Person | Where now | Why they came | What they show |
+|---|---|---|---|
+| Tawanda Gumbo, 34 | Registration | Twisted ankle at work | Completing a registration |
+| Shamiso Marufu, 3 | Waiting for triage | Fever, feeding poorly | Recording vitals and a human-confirmed category |
+| Lovemore Chinembiri, 67 | Waiting for triage | Regular check-up; dizzy this morning | Earlier visits in his record |
+| Nokuthula Tshuma, 28 | Waiting for triage | Referral letter; abdominal pain | Referral visit type |
+| Tinotenda Mlambo, 6 | Consultation queue · P2 | High fever, breathing fast | Top of the queue by confirmed urgency |
+| Rutendo Chari, 41 | Consultation queue · P3 | Cut on her hand checked again | Earlier visit for the cut in her record |
+| Brighton Nhamo, 52 | Consultation queue · P4 | Cough for three weeks | Long-wait warning and review prompt (over an hour) |
+| Memory Hove, 23 | Consultation queue · P3 | Burning when passing urine | Calling and starting the next patient |
+| Godknows Mutasa, 71 | Consultation queue · P5 | Routine repeat visit | Categories ordered before waiting time |
+| Fadzai Kativhu, 36 | In Consultation room 1 | Headache, body aches | Completing and routing to pharmacy |
+| Takudzwa Madziva, 19 | Paused in Consultation room 2 | Itchy rash | Fetching his clinic card; resume and finish |
+| Charity Makoni, 30 | Laboratory | Tired and dizzy | Blood test, then return to consultation |
+| Sibongile Mpofu, 63 | Pharmacy | Knee pain | Pharmacy handover ("explain in Shona") |
+| Panashe Gwenzi, 9 | Pharmacy | Ear pain | Child collected by his mother |
+| Givemore Chigumba, 45 | Escalated at triage · P1 | Chest pain for an hour | Escalation alert on the overview |
+| Patience Mazarura, 48 | Finished | Back pain | A completed journey with every timestamp |
+| Prosper Mushonga, 64 | Finished | Swollen feet, review | A completed visit without pharmacy |
+
 ## A connected 15–20 minute walkthrough
 
-1. **Clinician → Overview:** show today's arrivals, waiting, completed and alerts.
-   Totals cover the whole authorised facility, independent of the capped worklist.
-   Open **Demo guide** and a patient's record; compare current and earlier encounters.
-2. **Service console:** resume Kudzai Maposa's paused consultation. Complete it with
-   a non-diagnostic note and finish the visit. Show the released room in **Staff &
-   rooms**. Complete the other occupied consultation when another room is needed.
-3. **Reception → Registration:** find an existing patient or enter a clearly
-   fictional name, choose walk-in/follow-up/referral and the planned pharmacy step.
-   Register, print the receipt and copy its private token. A person with an active
-   visit cannot be registered twice. The token is shown once and kept out of URLs.
-4. **Triage:** select that visit, enter optional synthetic observations, choose a
-   neutral P1–P5 category and confirm the human assessment. Changing patients clears
-   the previous draft. AI unavailability does not block manual assessment.
-5. **Live queues:** filter by service, token/name or long-wait warning. Explain the
-   original ranks and their factors; filtering never changes clinical priority.
-   Use an authorised, reasoned override when demonstrating a different queue head.
-6. **Staff & rooms:** review alternatives for the queue head and approve an available
-   staffed room. Start service, append a note or handover, then complete and route
-   to laboratory/pharmacy. For a lab return, complete laboratory to consultation;
-   a new consultation episode preserves the earlier one. Acknowledging a handover
-   and transferring a patient are distinct actions.
+1. **Clinician → Overview:** show today's arrivals, waiting, completed and the
+   escalation alert for Givemore Chigumba. Totals cover the whole authorised
+   facility, independent of the capped worklist. Open **Demo guide**, then
+   **Open record** for Rutendo Chari: her earlier visit for the cut explains today's.
+2. **Service console:** resume Takudzwa Madziva's paused consultation (he is back
+   with his clinic card). Complete it with a note, choosing no next service to finish
+   the visit. Show Consultation room 2 released in **Staff & rooms**. Complete Fadzai
+   Kativhu in room 1 and route her to pharmacy.
+3. **Live queues:** Tinotenda Mlambo (P2) heads consultation. Brighton Nhamo shows
+   the long-wait warning and **Review suggested**: he has been overtaken by more
+   urgent patients. Explain the ranks and their factors. Filtering never changes
+   clinical priority. Use an authorised, reasoned override to show a different head.
+4. **Reception → Registration:** finish Tawanda Gumbo's registration, or register a
+   new fictional person as walk-in/follow-up/referral with the planned pharmacy step.
+   Print the receipt and copy its private token. A person with an active visit cannot
+   be registered twice. The token is shown once and kept out of URLs.
+5. **Triage:** select Shamiso Marufu, record her vitals, read the optional advisory
+   (it may suggest or abstain), then choose and confirm a P1–P5 category yourself.
+   Changing patients clears the previous draft. AI unavailability does not block
+   manual assessment.
+6. **Staff & rooms → Laboratory → Pharmacy:** approve a staffed room for the queue
+   head and start service. Log in as `laboratory`: complete Charity Makoni's blood
+   test back to consultation; a new consultation episode preserves the first.
+   Log in as `pharmacy`: acknowledge Sibongile Mpofu's handover, then call, start and
+   complete her to close the visit. Acknowledging a handover and transferring a
+   patient are distinct actions.
 7. **Patient status:** open `/status` in a separate window and paste the receipt
    token. Show stage/status updates without patient name, priority or other people.
 8. **Research → Analytics:** choose the last 7/21 days or exact dates. Historical

@@ -1,6 +1,6 @@
 # Research-depth verification — 28 October 2026
 
-The enhanced prototype is running locally with a real PostgreSQL database, durable worker and production-built web application. All results below are **synthetic software evidence**, not clinical effectiveness, a recruited clinician study or an academic grade guarantee. The original build contract remains [the specification](../smart_healthcare_queue_ai_agent_build_spec.md); the [26 October evidence](TEST_EVIDENCE.md) records the preceding extension.
+The enhanced prototype is running locally with a real PostgreSQL database, durable worker and production-built web application. All results below are **synthetic software evidence**, not clinical effectiveness, a recruited clinician study or an academic grade guarantee. The original build contract remains [the specification](../smart_healthcare_queue_ai_agent_build_spec.md); the [26 October evidence](TEST_EVIDENCE_20261026.md) records the preceding extension.
 
 ## Executed checks
 
