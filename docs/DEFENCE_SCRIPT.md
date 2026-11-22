@@ -1,7 +1,7 @@
 # Hutano Flow — defence demonstration script
 
 **Smart Healthcare Queue Optimisation and Patient Management System Using AI-Assisted Prioritisation**
-Michelle Sambawamedza · R231851H · BBMIT · Catholic University of Zimbabwe · Supervisor: Mr Tandavara
+Jane Doe · R231851H · BBMIT · Catholic University of Zimbabwe · Supervisor: Mr Tandavara
 
 This is the script for demonstrating the system to the panel and defending it. It tells you
 what to say, what to click, what the panel should notice, and **why** each step matters to the

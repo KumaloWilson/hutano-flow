@@ -3,7 +3,7 @@
 
 **Document version:** 1.0  
 **Prepared:** 24 October 2026  
-**Source project:** *Smart Healthcare Queue Optimisation and Patient Management System Using AI-Assisted Prioritisation* (Michelle Sambawamedza, BBMIT research proposal)  
+**Source project:** *Smart Healthcare Queue Optimisation and Patient Management System Using AI-Assisted Prioritisation* (Jane Doe, BBMIT research proposal)  
 **Deliverable:** Fully working, testable, locally deployable web-based research prototype, including queue-management workflows, clinician-supervised prioritisation, explainable AI research module, synthetic-data simulation, analytics, automated tests and documentation.  
 **Safety status:** **RESEARCH AND DEMONSTRATION ONLY — NOT AUTHORISED FOR LIVE CLINICAL DECISION-MAKING.**
 
@@ -12,7 +12,7 @@
 ## 0. How the implementation team should read this document
 
 ### Source-of-truth hierarchy
-1. **Research intent and boundaries:** Michelle's project proposal. Preserve its objectives, population, methodology and limits.
+1. **Research intent and boundaries:** Jane's project proposal. Preserve its objectives, population, methodology and limits.
 2. **This build specification:** Converts that intent into executable engineering requirements. Anything not explicitly specified in the proposal is an **implementation decision**, not a research finding.
 3. **Clinical safeguards:** Never allow this prototype to replace professional triage, provide diagnosis or recommend treatment. No real-world prioritisation without separate clinical validation, ethical authorisation and facility approval.
 4. **Acceptance tests:** Define whether the prototype is actually complete; attractive UI mockups alone do not satisfy this deliverable.
@@ -689,7 +689,7 @@ The project is **not complete** until every applicable item below is demonstrate
 - **Research ethics/facility approval:** not established in this handoff. Never require actual patient data to demonstrate the prototype.
 - **Clinical model target and acceptance thresholds:** require qualified reviewer and labelled dataset. Use explicit `not validated` state until resolved.
 - **Scope of true offline editing:** proposal says offline-tolerant, not offline medical decision support. Implement safe stale-view and non-clinical retries, with clinical decisions requiring a current authenticated connection.
-- **Research Objective 4:** the conversation subsequently narrowed it to simulated outpatient waiting-time comparison after a supervisor comment about double-barrelled objectives. Keep additional usability/model measures as supporting work unless Michelle's latest approved proposal says otherwise.
+- **Research Objective 4:** the conversation subsequently narrowed it to simulated outpatient waiting-time comparison after a supervisor comment about double-barrelled objectives. Keep additional usability/model measures as supporting work unless Jane's latest approved proposal says otherwise.
 
 ---
 
@@ -701,7 +701,7 @@ The project is **not complete** until every applicable item below is demonstrate
 
 ## 21. Standards and supporting references for implementers
 
-These are **external implementation references**, not claims that Michelle's existing proposal already specifies particular framework versions:
+These are **external implementation references**, not claims that Jane's existing proposal already specifies particular framework versions:
 
 - Zimbabwe Cyber and Data Protection Act [Chapter 12:07]: https://zimlii.org/akn/zw/act/2021/5
 - HL7 FHIR standard (optional resource mappings): https://hl7.org/fhir/ ; R4 Observation resource: https://hl7.org/fhir/R4/observation.html

@@ -1,6 +1,6 @@
 # Hutano Flow
 
-Hutano Flow is a database-backed research prototype for clinician-supervised outpatient queue optimisation and patient-flow management. It is based on Michelle Sambawamedza's project specification and is **not authorised for clinical use**. See [verified results and acceptance mapping](docs/TEST_EVIDENCE.md).
+Hutano Flow is a database-backed research prototype for clinician-supervised outpatient queue optimisation and patient-flow management. It is based on Jane Doe's project specification and is **not authorised for clinical use**. See [verified results and acceptance mapping](docs/TEST_EVIDENCE.md).
 
 The system starts in research mode, accepts synthetic patients only, and keeps P1–P5 urgency authority with a signed-in clinician. The included AI classifier and all supplied data are synthetic software demonstrations—not clinical evidence.
 
