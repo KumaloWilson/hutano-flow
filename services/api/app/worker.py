@@ -67,6 +67,9 @@ def execute_job(db, job):
             # Reproducing an identical version may re-materialise its private file
             # after moving the demo artifact root; it does not activate the model.
             model.artifact_path = outcome["artifact_path"]
+        if job.config_json.get("demo_enable_advisory"):
+            from app.demo_clinic import apply_demo_review
+            apply_demo_review(db, job, model)
         ref = str(model.id)
         topic = "model.training_completed"
     else:

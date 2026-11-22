@@ -56,8 +56,14 @@ cp .env.example .env
 # Replace SECRET_KEY with a random value of at least 32 characters.
 # Set POSTGRES_PASSWORD and APP_DB_PASSWORD, and update both database URLs to match.
 docker compose up -d --build
-docker compose exec api python -m app.cli showcase
 ```
+
+Start-up also prepares the fictional **Hutano Community Clinic** (and refreshes it when the
+rehearsal is over eight hours old), so its accounts work straight away. Research results
+(model training and a queue comparison) finish a few minutes later. The overview shows
+when they are ready. Set `SHOWCASE_REVIEWED_ADVISORY=true` in `.env` to have the triage
+advisory enabled with a clearly labelled scripted review ([ADR-038](docs/DECISIONS.md)).
+Set `PREPARE_SHOWCASE=false` to skip the fictional clinic.
 
 Open:
 

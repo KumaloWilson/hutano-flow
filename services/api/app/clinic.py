@@ -3,18 +3,22 @@ from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 from typing import Any
 from uuid import UUID
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Facility, Visit, ServiceEpisode, ServicePoint, DemoSession, Job, ModelVersion, utcnow
-from app.security import CurrentUser, role_names
+from app.security import CurrentUser, role_names, require_roles
+from app.commands import CommandRoute
+from app.models import User
+from app.services.audit import record_audit
 from app.access import allowed_services, OPERATIONAL_ROLES, can_access_visit
 from app.services.workflow import ACTIVE_VISIT_STATES
 from app.services.queue import rank_queue
 
 router=APIRouter(prefix="/api/v1/clinic")
+command_router=APIRouter(prefix="/api/v1/clinic",route_class=CommandRoute)
 
 
 class ClinicSnapshot(BaseModel):
@@ -55,13 +59,37 @@ def snapshot(user:CurrentUser,db:Session=Depends(get_db,scope="function")):
     session=db.scalar(select(DemoSession).where(DemoSession.facility_id==facility.id).order_by(DemoSession.created_at.desc()))
     demo=None
     if session:
-        demo={"session_id":str(session.id),"version":session.version,"prepared_at":session.anchor_at.isoformat(),"stale":(now-session.anchor_at).total_seconds()>8*3600,"fictional":True,"history_method":session.manifest_json["history_method"],"warning":session.manifest_json["warning"],"cases":[]}
+        from app.demo_clinic import is_stale
+        demo={"session_id":str(session.id),"version":session.version,"prepared_at":session.anchor_at.isoformat(),"stale":is_stale(session,now),
+              "preparation_note":session.manifest_json.get("preparation_note"),"advisory_enabled_by_preparation":session.manifest_json.get("advisory_enabled_by_preparation",False),
+              "can_prepare":"ADMIN" in roles,
+              "advisory_enabled":bool(db.scalar(select(ModelVersion.id).where(ModelVersion.facility_id==facility.id,ModelVersion.active.is_(True),ModelVersion.status=="REVIEWED").limit(1))),"fictional":True,"history_method":session.manifest_json["history_method"],"warning":session.manifest_json["warning"],"cases":[]}
         if roles&{"ADMIN","RECEPTIONIST","CLINICIAN","TRIAGE_NURSE"}:
             for case in session.manifest_json["cases"]:
                 visit=db.get(Visit,UUID(case["visit_id"]))
                 if visit and can_access_visit(user,visit):
                     demo["cases"].append({**case,"patient_label":visit.patient.pseudonym,"public_token":visit.public_token,"status":visit.status,"stage":visit.episodes[-1].service_point.name if visit.episodes else "Registration"})
         if roles&{"ADMIN","RESEARCHER","MANAGER"}:
-            demo["jobs"]=[{"id":str(j.id),"type":j.type,"status":j.status,"result_ref":j.result_ref,"error":j.error_summary} for j in db.scalars(select(Job).where(Job.facility_id==facility.id).order_by(Job.created_at.desc()).limit(8))]
+            ids=[UUID(j) for j in session.manifest_json.get("jobs",[])]
+            demo["jobs"]=[{"id":str(j.id),"type":j.type,"status":j.status,"result_ref":j.result_ref,"error":j.error_summary} for j in db.scalars(select(Job).where(Job.facility_id==facility.id,Job.id.in_(ids)).order_by(Job.created_at))]
             demo["models"]=[{"version":m.version,"status":m.status,"active":m.active} for m in db.scalars(select(ModelVersion).where(ModelVersion.facility_id==facility.id))]
     return {"facility":{"name":facility.name,"timezone":facility.timezone,"research_mode":True},"generated_at":now,"day":day.isoformat(),"counts":counts,"services":stages,"hourly_arrivals":[{"hour":h,"arrivals":sum(v.arrival_at.astimezone(ZoneInfo(facility.timezone)).hour==h for v in todays)} for h in range(24)],"demonstration":demo}
+
+
+class PrepareRehearsal(BaseModel):
+    reason: str = Field(min_length=5, max_length=300)
+    enable_advisory: bool = False
+
+
+@command_router.post("/demo/prepare")
+def prepare_rehearsal(payload: PrepareRehearsal, user: User = Depends(require_roles("ADMIN")), db: Session = Depends(get_db, scope="function")):
+    """Start a fresh rehearsal from the browser; same rules as `app.cli showcase --fresh`."""
+    from app.demo_clinic import FACILITY_ID, prepare_clinic
+    facility = db.get(Facility, user.facility_id)
+    if facility.id != FACILITY_ID or not facility.demo_mode:
+        raise HTTPException(409, "Only the fictional Hutano Community Clinic can be prepared from here")
+    session = prepare_clinic(db, fresh=True, enable_advisory=payload.enable_advisory)
+    record_audit(db, facility_id=facility.id, actor_id=user.id, action="demo.rehearsal_requested", object_type="DemoSession",
+        object_id=session.id, correlation_id=str(session.id), new={"enable_advisory": payload.enable_advisory}, reason=payload.reason)
+    return {"session_id": str(session.id), "prepared_at": session.anchor_at.isoformat(), "cases": len(session.manifest_json["cases"]),
+            "preparation_note": session.manifest_json.get("preparation_note"), "advisory_enabled_by_preparation": payload.enable_advisory}

@@ -1,7 +1,7 @@
 # Verification evidence — 22 November 2026
 
 Current report for commit `9982310` plus the 22 November changes (readable fictional
-clinic, evaluation browser test, host environment fix). Earlier reports:
+clinic, evaluation browser test, host environment fix, presenter conveniences). Earlier reports:
 [26 October](TEST_EVIDENCE_20261026.md), [25 October](TEST_EVIDENCE_20261025.md),
 [28 October research depth](RESEARCH_DEPTH_EVIDENCE.md).
 
@@ -15,13 +15,13 @@ Environment: Linux, Docker Compose, PostgreSQL 17, Python 3.12.8 (API image) and
 
 | Check | Result | Command |
 |---|---|---|
-| Backend unit/API/integration, including real PostgreSQL | **146 passed, 0 skipped** (93 s) | API image, `TEST_POSTGRES_URL` → disposable `postgres:17` container |
-| Backend on host | **139 passed, 7 skipped** (PostgreSQL-only, no database URL) | `make test-local` |
-| Frontend unit tests | **20 passed** (7 files) | `npm test` |
+| Backend unit/API/integration, including real PostgreSQL | **150 passed, 0 skipped** (116 s) | API image, `TEST_POSTGRES_URL` → disposable `postgres:17` container |
+| Backend on host | **143 passed, 7 skipped** (PostgreSQL-only, no database URL) | `make test-local` |
+| Frontend unit tests | **22 passed** (8 files) | `npm test` |
 | TypeScript | PASS, no errors | `npm run typecheck` |
-| Full-stack browser workflows | **11 passed, 0 skipped** (60 s); [summary](evidence/browser-enhanced.json) | `python3 scripts/verify_browser.py` |
-| Clean boot, reset and backup/restore | PASS: two fresh boot cycles; restricted runtime inserted journeys; actual backup/restore commands restored visits and private dataset hashes | `python3 scripts/verify_clean_boot.py` |
-| OpenAPI drift | PASS: generated spec identical to [API_OPENAPI.json](API_OPENAPI.json) (102 schemas, 102 paths); generated TypeScript unchanged | `python -m app.cli openapi` |
+| Full-stack browser workflows | **12 passed, 0 skipped** (66 s); [summary](evidence/browser-enhanced.json) | `python3 scripts/verify_browser.py` |
+| Clean boot, reset and backup/restore | PASS: two fresh boot cycles; fictional clinic prepared at start-up and its admin signs in; restricted runtime inserted journeys; actual backup/restore commands restored visits and private dataset hashes | `python3 scripts/verify_clean_boot.py` |
+| OpenAPI drift | PASS: spec and TypeScript contracts regenerated for the new preparation endpoint (103 schemas) | `python -m app.cli openapi`; `node scripts/generate-contracts.mjs` |
 
 The browser suite runs in a uniquely named disposable Compose project with its own
 PostgreSQL volume, migrations, durable worker, 300 generated research visits and the
@@ -45,6 +45,14 @@ future `httpx2` test client; it is not a test failure.
   seeded text contains no diagnoses or prescriptions. The clinic browser test opens a
   returning patient's record by name. Screenshots: [overview](evidence/clinic-overview.png),
   [patient history](evidence/clinic-patient-history.png).
+- **Presenter conveniences** ([ADR-038](DECISIONS.md)). Start-up prepares the fictional clinic, and the clean boot checks it.
+  An administrator prepares a fresh rehearsal from the Demo guide. Readiness of research jobs and advisory status
+  update on their own. A clinic-hours note appears when preparation happens outside the clinic day. An optional,
+  clearly labelled scripted advisory review is available. A one-step demo-role switcher appears only in the
+  fictional clinic. [presenter.spec.ts](../apps/web/tests/e2e/presenter.spec.ts) covers fresh preparation with the
+  scripted review, waiting for results, switching to triage and getting a real advisory answer. Backend tests cover
+  refresh-only-when-stale, admin-only and fictional-clinic-only preparation, and the review applying only when asked.
+  Screenshots: [demo guide](evidence/demo-guide-ready.png), [triage advisory](evidence/triage-advisory.png).
 - **Host environment.** The previous `.venv` pointed to an interpreter under `/tmp`, which a reboot
   removed, so `make test-local` failed. `make venv` now rebuilds it from the lock file with a
   persistent Python 3.12. `make test-local` reports a broken environment clearly.
@@ -72,7 +80,7 @@ are not re-derived here; they are the recorded outputs linked below.
 | R4 Mean, P90, low-urgency warnings; no blanket benefit claim | PASS | [standard run](evidence/simulation-standard.json); recorded hybrid − FCFS **+4.43 min** (interval crosses zero) and [no-improvement control](evidence/simulation-no-improvement.json) |
 | R5 Label provenance and limitations | PASS | [model evaluation](evidence/model-evaluation.json); only synthetic labels; macro-F1 recorded against synthetic labels, not diagnostic accuracy |
 | R6 Provenance, model/policy version, explanatory factors | PASS | Versioned model/policy/dataset hashes in exports and queue rows |
-| E1 Unit, API/integration and E2E pass locally | PASS | 146 backend + 20 frontend + 11 browser, above |
+| E1 Unit, API/integration and E2E pass locally | PASS | 150 backend + 22 frontend + 12 browser, above |
 | E2 No duplicate allocations from concurrency or repeats | PASS | [PostgreSQL race tests](../services/api/tests/test_postgres.py) (7/7), idempotency keys, stale versions |
 | E3 Facility scoping, token leakage, RBAC, audit integrity tested | PASS | Cross-facility, role and immutable-audit tests; clinic snapshot hides names from researchers |
 | E4 No PHI/secrets committed; `.env.example` placeholders | PASS | Repository scan finds no `.env`, keys or credentials; all people fictional |

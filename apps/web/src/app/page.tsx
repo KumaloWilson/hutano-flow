@@ -1,20 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { DEMO_ACCOUNTS, accountsFor, emailFor, type DemoAccount } from "@/lib/demoAccounts";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { Icon } from "@/components/ui/Icon";
 
-const accounts = [
-  ["Reception", "reception@demo.hutano.test", "DemoReception1!"],
-  ["Clinician", "clinician@demo.hutano.test", "DemoClinician1!"],
-  ["Triage", "triage@demo.hutano.test", "DemoTriage1!"],
-  ["Pharmacy", "pharmacy@demo.hutano.test", "DemoPharmacy1!"],
-  ["Research", "research@demo.hutano.test", "DemoResearch1!"],
-  ["Admin", "admin@demo.hutano.test", "DemoAdmin1!"],
-];
 
 /** Abstract journey rail: tickets moving through four stations. Purely decorative. */
 function FlowArt() {
@@ -42,7 +35,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [workspace, setWorkspace] = useState("showcase");
   const [email, setEmail] = useState("reception@showcase.hutano.test");
-  const [password, setPassword] = useState(accounts[0][2]);
+  const [password, setPassword] = useState(DEMO_ACCOUNTS[0].password);
   const [chosen, setChosen] = useState("Reception");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,10 +58,10 @@ export default function LoginPage() {
     }
   }
 
-  function choose(account: string[]) {
-    setChosen(account[0]);
-    setEmail(account[1].replace("@demo.", `@${workspace}.`));
-    setPassword(account[2]);
+  function choose(account: DemoAccount) {
+    setChosen(account.label);
+    setEmail(emailFor(account, workspace));
+    setPassword(account.password);
   }
 
   return (
@@ -95,7 +88,7 @@ export default function LoginPage() {
             <option value="demo">Original research workspace</option>
           </select></label>
           <div className="account-pills" role="group" aria-label="Demo accounts">
-            {accounts.map((account) => <button type="button" key={account[0]} aria-pressed={chosen === account[0]} onClick={() => choose(account)}>{account[0]}</button>)}
+            {accountsFor(workspace).map((account) => <button type="button" key={account.label} aria-pressed={chosen === account.label} onClick={() => choose(account)}>{account.label}</button>)}
           </div>
           <form onSubmit={submit}>
             <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required /></label>

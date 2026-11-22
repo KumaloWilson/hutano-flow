@@ -1685,8 +1685,9 @@ app.include_router(operational_prediction_router)
 app.include_router(experiments_router)
 from app.research_workbench import router as research_workbench_router
 app.include_router(research_workbench_router)
-from app.clinic import router as clinic_router
+from app.clinic import router as clinic_router, command_router as clinic_command_router
 app.include_router(clinic_router)
+app.include_router(clinic_command_router)
 
 from app.schemas import Reassessment
 

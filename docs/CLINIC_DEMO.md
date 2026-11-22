@@ -8,10 +8,13 @@ they are not observed facility data, actual clinician assessments or fieldwork.
 
 ```bash
 docker compose up -d --build
-docker compose exec api python -m app.cli showcase
 ```
 
-Open http://localhost:3000. Choose **Hutano Community Clinic** and a role.
+Start-up prepares the clinic. Open http://localhost:3000, choose **Hutano Community
+Clinic** and a role. Once signed in, the **Demo role** menu in the top bar switches
+between all eight fictional accounts in one step, so one presenter needs one browser
+window. The overview shows whether the research results are ready, usually a few
+minutes after preparation.
 Preparation creates 300 fictional people (about 60% women, a quarter children,
 a fifth older adults), 24 completed journeys per weekday over the preceding 21
 calendar days (normally 360 journeys), and up to 17 people in the clinic now.
@@ -23,25 +26,32 @@ rooms include two occupied consultations and a future staff break.
 Notes describe why someone came and what happened next. They never contain a
 diagnosis, prescription or order ([ADR-037](DECISIONS.md)).
 
-Preparation also submits real advisory training, operational duration training
-and a ten-replication queue comparison to the durable worker. Check **Demo guide →
-Computed research preparation** or **AI research → jobs** for actual outcomes.
-The advisory model remains experimental and inactive. Its separate training
-dataset is not presented as labels from the operational clinic history.
+Preparation also submits real advisory training, operational duration training and a
+ten-replication queue comparison to the durable worker. **Overview** and **Demo guide**
+show their progress and say when the research results are ready. The advisory model
+stays experimental and disabled unless you choose otherwise (below). Its separate
+training dataset is not presented as labels from the operational clinic history.
 
-Running the same command again returns the existing rehearsal without duplicating
-records. Before a new demonstration day, use:
+### A fresh rehearsal
 
-```bash
-docker compose exec api python -m app.cli showcase --fresh
-```
+Queue ages are live, so prepare shortly before presenting, during clinic hours.
+Preparing outside weekday 07:00–16:00 shows a note, because the morning would appear
+at that time. To start over, as `admin`: **Demo guide → Prepare a fresh rehearsal**,
+or `docker compose exec api python -m app.cli showcase --fresh`. Either way, unfinished
+scripted cases are cancelled with their history kept, missing historical days are
+added, and a new set of people is placed in the clinic. Records entered by hand and
+room reservations are kept; conflicting scripted patients/occupied rooms are skipped.
+The original facility is never touched. Do not do this during a demonstration. A
+restart replaces the rehearsal only when it is over eight hours old.
 
-This explicitly cancels unfinished scripted cases and releases their reservations,
-preserves their history, adds missing historical days, and creates a new current
-rehearsal. It preserves independently registered encounters and room reservations;
-conflicting scripted patients/occupied rooms are skipped. It never resets the
-original facility. Do not run it during an interactive demonstration. Queue ages
-continue advancing; the guide flags preparations older than eight hours.
+### The triage advisory
+
+By default the trained advisory is not enabled, so you can show the governance step
+live (walkthrough step 5). To have it ready instead, tick **Enable the advisory with a
+scripted review** when preparing from the Demo guide, add `--with-reviewed-advisory`
+to the command, or set `SHOWCASE_REVIEWED_ADVISORY=true` in `.env`. The review is
+recorded and displayed as scripted, not a clinician's review
+([ADR-038](DECISIONS.md)).
 
 ## Roles
 
@@ -60,7 +70,7 @@ All addresses below end in `@showcase.hutano.test`. These are public demo passwo
 
 The laboratory account uses the existing SERVICE_PROVIDER permissions, which
 cover consultation, laboratory and discharge; it is not a lab-only security role.
-Use separate browser profiles/private windows for different staff sessions.
+Use the **Demo role** menu to switch roles, or separate browser profiles/private windows to show two staff sessions side by side.
 
 ## Who is in the clinic this morning
 
@@ -108,11 +118,11 @@ the morning appears at night. **Demo guide** lists the same people with their cu
    Print the receipt and copy its private token. A person with an active visit cannot
    be registered twice. The token is shown once and kept out of URLs.
 5. **Triage:** select Shamiso Marufu, record her vitals, then choose and confirm a
-   P1–P5 category yourself. The advisory shows "Model unavailable" until a model is
-   reviewed and enabled. Preparation deliberately never does this for you. To show it,
-   beforehand: as `clinician`, **Help & safety → Record clinician research review**;
-   then as `admin`, **AI research → Activate reviewed advisory**. It then suggests or
-   abstains from the recorded vitals. **Disable advisory** shows triage still works.
+   P1–P5 category yourself. Unless the clinic was prepared with the scripted review,
+   the advisory shows "Model unavailable". To enable it live: as `clinician`, **Help &
+   safety → Record clinician research review**; then as `admin`, **AI research →
+   Activate reviewed advisory**. **Request advisory explanation** then suggests or
+   abstains from the vitals. **Disable advisory** shows triage still works without it.
    Changing patients clears the previous draft. AI unavailability does not block
    manual assessment.
 6. **Staff & rooms → Laboratory → Pharmacy:** approve a staffed room for the queue

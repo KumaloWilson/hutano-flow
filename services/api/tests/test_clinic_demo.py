@@ -144,3 +144,68 @@ def test_cast_is_coherent_and_supports_the_advisory(db_session,monkeypatch,tmp_p
     assert texts and not any('Fictional rehearsal' in t or 'Scripted' in t for t in texts)
     # No diagnoses or prescriptions are seeded (ADR-017, ADR-037).
     assert not any(word in t.lower() for t in texts for word in ['diagnos','mg ','prescribed','tablets'])
+
+
+def test_boot_refreshes_only_a_stale_rehearsal(db_session,monkeypatch,tmp_path):
+    db=db_session;first=build(db,monkeypatch,tmp_path)
+    assert prepare_clinic(db,if_stale=True,now=first.anchor_at+timedelta(hours=7)).id==first.id
+    later=prepare_clinic(db,if_stale=True,now=first.anchor_at+timedelta(hours=9));db.commit()
+    assert later.id!=first.id
+
+
+def test_preparation_notes_hours_outside_the_clinic_day(db_session,monkeypatch,tmp_path):
+    from app.demo_clinic import preparation_note
+    from zoneinfo import ZoneInfo
+    z=ZoneInfo('Africa/Harare')
+    assert preparation_note(datetime(2026,11,23,10,0,tzinfo=z)) is None            # Monday morning
+    assert 'outside typical clinic hours' in preparation_note(datetime(2026,11,23,22,0,tzinfo=z))
+    assert 'outside typical clinic hours' in preparation_note(datetime(2026,11,22,10,0,tzinfo=z))  # Sunday
+    session=build(db_session,monkeypatch,tmp_path)   # 10:00 UTC = 12:00 Friday in Harare
+    assert session.manifest_json['preparation_note'] is None
+
+
+def test_admin_prepares_a_fresh_rehearsal_from_the_browser(client,db_session,monkeypatch,tmp_path):
+    from conftest import command_headers
+    from app.models import AuditEvent
+    first=build(db_session,monkeypatch,tmp_path)
+    body={'reason':'Morning demonstration for the review panel'}
+    client.post('/api/v1/auth/login',json={'email':'clinician@showcase.hutano.test','password':'DemoClinician1!'})
+    assert client.post('/api/v1/clinic/demo/prepare',json=body,headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4()))).status_code==403
+    client.cookies.clear()
+    client.post('/api/v1/auth/login',json={'email':'admin@showcase.hutano.test','password':'DemoAdmin1!'})
+    assert client.get('/api/v1/clinic/snapshot').json()['demonstration']['can_prepare'] is True
+    done=client.post('/api/v1/clinic/demo/prepare',json=body,headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4())))
+    assert done.status_code==200,done.text
+    assert done.json()['session_id']!=str(first.id) and done.json()['cases']>0
+    assert db_session.scalar(select(AuditEvent.reason).where(AuditEvent.action=='demo.rehearsal_requested'))==body['reason']
+    for item in first.manifest_json['cases']:
+        assert db_session.get(Visit,uuid.UUID(item['visit_id'])).status in {'CANCELLED','COMPLETED'}
+    # The original research workspace can never be re-prepared from here.
+    client.cookies.clear()
+    client.post('/api/v1/auth/login',json={'email':'admin@test.local','password':'Testing123!'})
+    assert client.post('/api/v1/clinic/demo/prepare',json=body,headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4()))).status_code==409
+
+
+def test_advisory_is_enabled_only_when_preparation_asks(client,db_session,monkeypatch,tmp_path):
+    from conftest import command_headers
+    from app.models import ModelVersion, AuditEvent
+    from app.worker import execute_job
+    from app.demo_clinic import SCRIPTED_REVIEW_NOTE
+    monkeypatch.setattr(settings,"model_artifact_dir",tmp_path)
+    db=db_session
+    plain=prepare_clinic(db);db.commit()
+    job=db.scalar(select(Job).where(Job.facility_id==FACILITY_ID,Job.type=='MODEL_TRAIN'))
+    execute_job(db,job);db.commit()
+    model=db.scalar(select(ModelVersion).where(ModelVersion.facility_id==FACILITY_ID))
+    assert model.status=='EXPERIMENTAL' and not model.active     # default: never reviewed for you
+    session=prepare_clinic(db,fresh=True,enable_advisory=True);db.commit()
+    job=db.scalar(select(Job).where(Job.id.in_([uuid.UUID(j) for j in session.manifest_json['jobs']]),Job.type=='MODEL_TRAIN'))
+    execute_job(db,job);db.commit();db.refresh(model)
+    assert model.status=='REVIEWED' and model.active and model.review_note==SCRIPTED_REVIEW_NOTE
+    assert db.scalar(select(AuditEvent.actor_id).where(AuditEvent.action=='demo.advisory_enabled_by_preparation')) is None
+    # Triaged scripted patients now get a suggestion or an abstention, not "unavailable".
+    case=next(c for c in session.manifest_json['cases'] if c['initial_stage']=='consultation' and c['initial_status']=='WAITING')
+    client.post('/api/v1/auth/login',json={'email':'clinician@showcase.hutano.test','password':'DemoClinician1!'})
+    advice=client.post(f"/api/v1/visits/{case['visit_id']}/recommendation",json={},headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4())))
+    assert advice.status_code==201,advice.text
+    assert advice.json().get('available') is not False, advice.json()

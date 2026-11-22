@@ -96,6 +96,8 @@ test('invalid login and guessed token fail visibly',async({page})=>{
 
 test('researcher runs paired simulation without seeing patient identifiers',async({page},testInfo)=>{
   await login(page,'research@demo.hutano.test','DemoResearch1!');
+  // The one-step role switcher exists only inside the fictional clinic.
+  await expect(page.getByLabel('Switch demo role')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Patient journeys',exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Simulation lab',exact:true}).click();
   await page.getByLabel('Patients',{exact:true}).fill('30');

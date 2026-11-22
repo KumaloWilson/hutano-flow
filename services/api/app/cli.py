@@ -1,4 +1,6 @@
 import argparse
+import os
+import sys
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
@@ -99,15 +101,20 @@ def main() -> None:
     showcase = sub.add_parser("showcase", help="Prepare a separate, explicitly fictional clinic")
     showcase.add_argument("--seed", type=int, default=2026)
     showcase.add_argument("--fresh", action="store_true", help="Retire only earlier scripted active cases and start another rehearsal")
+    showcase.add_argument("--if-stale", action="store_true", help=f"Start a fresh rehearsal only when the current one is older than 8 hours (used at boot)")
+    showcase.add_argument("--with-reviewed-advisory", action="store_true", default=os.getenv("SHOWCASE_REVIEWED_ADVISORY", "").lower() == "true",
+        help="Record a clearly labelled scripted review and enable the trained advisory (fictional clinic only)")
     args = parser.parse_args()
     if args.command == "synthetic":
         generate_completed_visits(args.count, args.seed)
     elif args.command == "showcase":
         from app.demo_clinic import prepare_clinic
         with SessionLocal() as db:
-            session = prepare_clinic(db, seed=args.seed, fresh=args.fresh)
+            session = prepare_clinic(db, seed=args.seed, fresh=args.fresh, if_stale=args.if_stale, enable_advisory=args.with_reviewed_advisory)
             db.commit()
-            print(json.dumps({"facility":"Hutano Community Clinic", "session_id":str(session.id), "prepared_at":session.anchor_at.isoformat(), "historical_visits_added":session.manifest_json["historical_visits_added"], "scripted_cases":len(session.manifest_json["cases"]), "research_jobs":session.manifest_json["jobs"], "account_domain":"showcase.hutano.test", "fictional":True}))
+            if session.manifest_json.get("preparation_note"):
+                print("NOTE: " + session.manifest_json["preparation_note"], file=sys.stderr)
+            print(json.dumps({"facility":"Hutano Community Clinic", "session_id":str(session.id), "prepared_at":session.anchor_at.isoformat(), "advisory_enabled_by_preparation":session.manifest_json.get("advisory_enabled_by_preparation", False), "historical_visits_added":session.manifest_json["historical_visits_added"], "scripted_cases":len(session.manifest_json["cases"]), "research_jobs":session.manifest_json["jobs"], "account_domain":"showcase.hutano.test", "fictional":True}))
     else:
         export_openapi(args.path)
 

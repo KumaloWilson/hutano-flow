@@ -18,7 +18,7 @@ from app.config import settings
 from app.models import (Facility, User, UserRole, ServicePoint, QueuePolicy, Patient,
     Visit, ServiceEpisode, QueueEntry, QueueStateEvent, TriageAssessment, Observation,
     EncounterNote, Handover, Room, StaffShift, ResourceBlock, ResourceAssignment,
-    Dataset, Job, DemoSession, SimulationScenario, SimulationRun, utcnow)
+    Dataset, Job, DemoSession, SimulationScenario, SimulationRun, ModelVersion, utcnow)
 from app.security import hash_password, status_secret, token_digest
 from app.services.audit import record_audit, enqueue_event
 from app.services.workflow import ACTIVE_VISIT_STATES, transition_episode
@@ -46,6 +46,43 @@ LEGACY_LAST = "Moyo Dube Ndlovu Banda Ncube Chirwa Mupfumi Sibanda Mlambo Chikor
 SERVICE_MINUTES = {"registration": (2, 5), "triage": (4, 9), "consultation": (9, 18), "laboratory": (6, 12), "pharmacy": (3, 7)}
 # Urgency mix for completed history. P1 is left out: an immediate case is escalated, not queued FCFS.
 HISTORY_URGENCY = (("P2", .06), ("P3", .32), ("P4", .42), ("P5", .20))
+
+
+# Weekday hours in which a prepared morning looks natural; outside them a note is shown.
+CLINIC_HOURS = (7, 16)
+STALE_AFTER_HOURS = 8
+SCRIPTED_REVIEW_NOTE = ("Scripted demonstration review, recorded automatically because the operator prepared this "
+    "fictional clinic with the advisory enabled. No clinician reviewed this model. Not clinical validation.")
+
+
+def preparation_note(local):
+    """Plain-language warning when the rehearsal is prepared outside clinic hours."""
+    if local.weekday() < 5 and CLINIC_HOURS[0] <= local.hour < CLINIC_HOURS[1]:
+        return None
+    return (f"Prepared {local:%A at %H:%M} local time, outside typical clinic hours (weekdays "
+            f"{CLINIC_HOURS[0]:02d}:00–{CLINIC_HOURS[1]:02d}:00). Today's arrivals sit in the hours just before "
+            "preparation, so the clinic morning appears at this time. Prepare again during clinic hours for a natural timeline.")
+
+
+def is_stale(session, now):
+    return (now - session.anchor_at).total_seconds() > STALE_AFTER_HOURS * 3600
+
+
+def apply_demo_review(db, job, model):
+    """Review and enable a freshly trained model, only when preparation explicitly asked (ADR-038)."""
+    facility = db.get(Facility, job.facility_id)
+    if not facility or facility.id != FACILITY_ID or not facility.demo_mode or model.status == "RETIRED":
+        return False
+    old = {"status": model.status, "active": model.active}
+    if model.status == "EXPERIMENTAL":
+        model.status, model.reviewed_by, model.review_note = "REVIEWED", uuid.UUID(job.config_json["review_clinician_id"]), SCRIPTED_REVIEW_NOTE
+    for other in db.scalars(select(ModelVersion).where(ModelVersion.facility_id == facility.id, ModelVersion.id != model.id)):
+        other.active = False
+    model.active = True
+    record_audit(db, facility_id=facility.id, actor_id=None, action="demo.advisory_enabled_by_preparation", object_type="ModelVersion",
+        object_id=model.id, correlation_id=str(job.id), old=old, new={"status": model.status, "active": True},
+        reason=SCRIPTED_REVIEW_NOTE)
+    return True
 
 
 def ident(name):
@@ -80,7 +117,7 @@ def historical_paths(seed, day_index):
     return sorted(rows)
 
 
-def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
+def prepare_clinic(db, *, seed=2026, fresh=False, now=None, enable_advisory=False, if_stale=False):
     if not 0 <= seed <= 1_000_000_000: raise ValueError("Seed must be between 0 and 1,000,000,000")
     anchor = (now or utcnow()).astimezone(timezone.utc).replace(microsecond=0)
     # Serialise even the first preparation; this CLI never resets another facility.
@@ -96,7 +133,7 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
     local = anchor.astimezone(ZoneInfo(facility.timezone))
     db.scalar(select(Facility.id).where(Facility.id==facility.id).with_for_update())
     previous = db.scalar(select(DemoSession).where(DemoSession.facility_id == facility.id).order_by(DemoSession.created_at.desc()))
-    if previous and not fresh:
+    if previous and not fresh and not (if_stale and is_stale(previous, anchor)):
         return previous
     users = {}
     for role, name, password, roles in STAFF:
@@ -313,7 +350,9 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
             row_count=len(frame_baseline),synthetic_flag=True))
         db.flush()
     jobs=[]
-    for kind,config in [("MODEL_TRAIN",{"dataset_id":str(dataset.id),"seed":seed}),("OPERATIONAL_TRAIN",{})]:
+    train={"dataset_id":str(dataset.id),"seed":seed}
+    if enable_advisory: train.update(demo_enable_advisory=True,review_clinician_id=str(users["clinician"].id))
+    for kind,config in [("MODEL_TRAIN",train),("OPERATIONAL_TRAIN",{})]:
         job=Job(facility_id=facility.id,type=kind,config_json=config);db.add(job);db.flush();jobs.append(str(job.id))
     from app.schemas import SimulationCreate
     scenario_config=SimulationCreate(name="Fictional clinic · morning queue comparison",seed=seed,patient_count=150,replications=10,consultation_servers=2,arrival_rate_per_hour=12,mean_service_minutes=12)
@@ -325,7 +364,7 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None):
     config["servers"]=scenario_config.consultation_servers
     job=Job(facility_id=facility.id,type="SIMULATION",config_json=config,result_ref=str(run.id))
     db.add(job);db.flush();jobs.append(str(job.id))
-    manifest={"fictional":True,"historical_visits_added":historical,"history_method":"Seeded FCFS SimPy stages; 24 arrivals per weekday over preceding 21 calendar days. Illustrative inputs, not observed facility measurements.","cases":cases,"jobs":jobs,"dataset_id":str(dataset.id),"warning":"All identities, rosters, observations and assessments are scripted fictional fixtures. No actual clinician review, participant consent or model activation is fabricated."}
+    manifest={"fictional":True,"preparation_note":preparation_note(local),"advisory_enabled_by_preparation":enable_advisory,"historical_visits_added":historical,"history_method":"Seeded FCFS SimPy stages; 24 arrivals per weekday over preceding 21 calendar days. Illustrative inputs, not observed facility measurements.","cases":cases,"jobs":jobs,"dataset_id":str(dataset.id),"warning":"All identities, rosters, observations and assessments are scripted fictional fixtures. No actual clinician review, participant consent or model activation is fabricated."}
     session=DemoSession(id=session_id,facility_id=facility.id,version=VERSION,anchor_at=anchor,seed=seed,manifest_json=manifest)
     db.add(session)
     record_audit(db,facility_id=facility.id,actor_id=None,action="demo.clinic_prepared",object_type="DemoSession",object_id=session_id,correlation_id=str(session_id),new={"version":VERSION,"seed":seed,"historical_visits":historical,"cases":len(cases)},reason="Explicit fictional rehearsal preparation; original workspace unchanged")

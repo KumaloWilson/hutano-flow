@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DemoRoleSwitch } from "@/components/DemoRoleSwitch";
 import { useRouter } from "next/navigation";
 import { API_URL, api, ApiError } from "@/lib/api";
 import type { ServicePoint, User, Visit } from "@/lib/types";
@@ -201,12 +202,12 @@ export default function Dashboard() {
       <ServiceWorker />
       <Sidebar sections={sections} current={tab} onNavigate={navigate} facility={clinic?.facility.name} user={user} onSignOut={logout} />
       <main className="workspace" id="main" ref={main} tabIndex={-1} style={{ outline: "none" }}>
-        <Topbar online={online} lastSync={lastSync} user={user} onSignOut={logout} onPassword={() => setPasswordOpen(true)} onFind={hasAny(user, OPERATIONAL) ? find : undefined} />
+        <Topbar online={online} lastSync={lastSync} user={user} onSignOut={logout} onPassword={() => setPasswordOpen(true)} onFind={hasAny(user, OPERATIONAL) ? find : undefined}><DemoRoleSwitch user={user} /></Topbar>
         <PageHeader title={page.label} subtitle={page.sub} actions={tab === "registration" ? <a className="button secondary small" href="/status" target="_blank" rel="noreferrer"><Icon name="qr" />Patient status page</a> : undefined} />
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="cluster" style={{ gap: 10 }}><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} /></span><span>{notice.text}</span></span><button onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="x" size={16} /></button></div>}
         {!online && <div className="callout caution" role="status">Connection lost. Showing the last update; actions are paused until the connection returns; nothing is queued to send later.</div>}
         {tab === "home" && <ClinicOverview snapshot={clinic} user={user} visits={visits} navigate={navigate} tabs={tabs} />}
-        {tab === "demo" && <DemoGuide snapshot={clinic} navigate={navigate} tabs={tabs} />}
+        {tab === "demo" && <DemoGuide snapshot={clinic} navigate={navigate} tabs={tabs} onPrepared={refresh} />}
         <fieldset disabled={!online} className="workspace-actions"><ActionDialogProvider>
           {tab === "patients" && <PatientWorkspace user={user} points={points} refresh={refresh} requestedPatient={requestedPatient} />}
           {tab === "operations" && <OperationsConsole user={user} points={points} refresh={refresh} />}

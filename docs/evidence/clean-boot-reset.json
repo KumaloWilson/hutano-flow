@@ -1,13 +1,14 @@
 {
   "status": "PASS",
-  "verified_at": "2026-11-22T05:03:28.508453+00:00",
+  "verified_at": "2026-11-22T05:18:18.536414+00:00",
   "cycles": 2,
-  "elapsed_seconds": 103.03,
+  "elapsed_seconds": 122.08,
   "fresh_visits_each_cycle": 0,
   "generated_visits_each_cycle": 2,
+  "fictional_clinic_prepared_at_startup": true,
   "main_project_unchanged": true,
   "temporary_project_and_volumes_removed": true,
   "actual_backup_restore_commands": "PASS",
   "restored_private_artifact_hashes_match": true,
-  "isolated_backup_directory": "backups/demo-sAcFGm2O"
+  "isolated_backup_directory": "backups/demo-lF4uOSHA"
 }

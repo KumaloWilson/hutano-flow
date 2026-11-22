@@ -6721,6 +6721,61 @@
         }
       }
     },
+    "/api/v1/clinic/demo/prepare": {
+      "post": {
+        "summary": "Prepare Rehearsal",
+        "description": "Start a fresh rehearsal from the browser; same rules as `app.cli showcase --fresh`.",
+        "operationId": "prepare_rehearsal_api_v1_clinic_demo_prepare_post",
+        "parameters": [
+          {
+            "name": "hutano_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Hutano Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareRehearsal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/visits/{visit_id}/reassess": {
       "post": {
         "summary": "Reassess Visit",
@@ -9344,6 +9399,26 @@
           "forecast"
         ],
         "title": "PredictionResponse"
+      },
+      "PrepareRehearsal": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 5,
+            "title": "Reason"
+          },
+          "enable_advisory": {
+            "type": "boolean",
+            "title": "Enable Advisory",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "PrepareRehearsal"
       },
       "ProposalInput": {
         "properties": {

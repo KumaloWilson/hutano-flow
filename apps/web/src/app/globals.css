@@ -308,6 +308,9 @@ dl { margin: 0; }
 .quick-find svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
 .quick-find kbd { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: .72rem; color: var(--faint); }
 .clock { font-family: var(--font-num); font-size: .9rem; color: var(--muted); }
+.demo-switch { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+.demo-switch select { width: auto; min-height: 32px; padding: 4px 28px 4px 8px; font-size: .84rem; }
+.demo-switch .error { position: absolute; top: 100%; }
 .workspace-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .workspace-head h1 { font-size: 1.55rem; }
 .workspace-head .eyebrow { margin-bottom: 4px; }
@@ -648,6 +651,7 @@ li.head .rank { background: var(--brand); color: var(--brand-ink); }
   .topbar .mobile-brand { display: inline-flex; }
   .quick-find { display: none; }
   .clock { display: none; }
+  .demo-switch > span { display: none; }
   .two-column, .three-column { grid-template-columns: minmax(0, 1fr); }
   .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }

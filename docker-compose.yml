@@ -19,8 +19,12 @@ services:
 
   migrate:
     build: ./services/api
-    command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
+    # Also prepares the fictional clinic so its accounts work on first boot. --if-stale keeps a
+    # rehearsal in use and only starts a fresh one when the current one is over 8 hours old.
+    command: ["sh", "-c", "alembic upgrade head && python -m app.seed && if [ \"$$PREPARE_SHOWCASE\" = true ]; then python -m app.cli showcase --if-stale; fi"]
     environment:
+      PREPARE_SHOWCASE: ${PREPARE_SHOWCASE:-true}
+      SHOWCASE_REVIEWED_ADVISORY: ${SHOWCASE_REVIEWED_ADVISORY:-false}
       DATABASE_URL: ${MIGRATION_DATABASE_URL:-postgresql+psycopg://hutano:change-this-local-password@db:5432/hutano_flow}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       RESEARCH_MODE: "true"
