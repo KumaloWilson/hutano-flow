@@ -38,9 +38,11 @@ Queue ages are live, so prepare shortly before presenting, during clinic hours.
 Preparing outside weekday 07:00–16:00 shows a note, because the morning would appear
 at that time. To start over, as `admin`: **Demo guide → Prepare a fresh rehearsal**,
 or `docker compose exec api python -m app.cli showcase --fresh`. Either way, unfinished
-scripted cases are cancelled with their history kept, missing historical days are
-added, and a new set of people is placed in the clinic. Records entered by hand and
-room reservations are kept; conflicting scripted patients/occupied rooms are skipped.
+scripted cases are cancelled with their history kept, the advisory is switched off,
+missing historical days are added, and a new set of people is placed in the clinic.
+Visits registered by hand during practice are also closed when **Also close visits
+registered by hand** is ticked (the default in the Demo guide; `--close-manual` on the
+command line); otherwise they and their room reservations are kept.
 The original facility is never touched. Do not do this during a demonstration. A
 restart replaces the rehearsal only when it is over eight hours old.
 
@@ -113,8 +115,8 @@ the morning appears at night. **Demo guide** lists the same people with their cu
    the long-wait warning and **Review suggested**: he has been overtaken by more
    urgent patients. Explain the ranks and their factors. Filtering never changes
    clinical priority. Use an authorised, reasoned override to show a different head.
-4. **Reception → Registration:** finish Tawanda Gumbo's registration, or register a
-   new fictional person as walk-in/follow-up/referral with the planned pharmacy step.
+4. **Reception → Registration:** under **Waiting at the front desk**, click **Complete
+   registration** for Tawanda Gumbo, and/or register a new fictional person as walk-in/follow-up/referral with the planned pharmacy step.
    Print the receipt and copy its private token. A person with an active visit cannot
    be registered twice. The token is shown once and kept out of URLs.
 5. **Triage:** select Shamiso Marufu, record her vitals, then choose and confirm a
@@ -125,8 +127,10 @@ the morning appears at night. **Demo guide** lists the same people with their cu
    abstains from the vitals. **Disable advisory** shows triage still works without it.
    Changing patients clears the previous draft. AI unavailability does not block
    manual assessment.
-6. **Staff & rooms → Laboratory → Pharmacy:** approve a staffed room for the queue
-   head and start service. Log in as `laboratory`: complete Charity Makoni's blood
+6. **Calling, Laboratory and Pharmacy:** in services with staffed rooms (consultation,
+   laboratory, pharmacy), **Call** / **Call next** asks which free, staffed room to use and
+   calls in one step (**Assign room & call**). If every room is busy it says why. **Staff &
+   rooms** shows the same choice with more detail. Start service. Log in as `laboratory`: complete Charity Makoni's blood
    test back to consultation; a new consultation episode preserves the first.
    Log in as `pharmacy`: acknowledge Sibongile Mpofu's handover, then call, start and
    complete her to close the visit. Acknowledging a handover and transferring a

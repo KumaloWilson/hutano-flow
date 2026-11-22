@@ -117,7 +117,7 @@ def historical_paths(seed, day_index):
     return sorted(rows)
 
 
-def prepare_clinic(db, *, seed=2026, fresh=False, now=None, enable_advisory=False, if_stale=False):
+def prepare_clinic(db, *, seed=2026, fresh=False, now=None, enable_advisory=False, if_stale=False, close_manual=False):
     if not 0 <= seed <= 1_000_000_000: raise ValueError("Seed must be between 0 and 1,000,000,000")
     anchor = (now or utcnow()).astimezone(timezone.utc).replace(microsecond=0)
     # Serialise even the first preparation; this CLI never resets another facility.
@@ -165,6 +165,14 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None, enable_advisory=Fals
                     transition_episode(db, episode, expected={episode.status}, target="CANCELLED", actor_id=users["admin"].id, expected_version=episode.version)
             visit.status = "CANCELLED"; visit.version += 1
             record_audit(db, facility_id=facility.id, actor_id=users["admin"].id, action="demo.fixture_retired", object_type="Visit", object_id=visit.id, correlation_id=str(session.id), reason="Explicit fresh rehearsal; scripted fixture preserved as cancelled")
+    if close_manual:
+        # Practice registrations from earlier rehearsals; only when explicitly asked (fictional clinic only).
+        for visit in db.scalars(select(Visit).where(Visit.facility_id == facility.id, Visit.status.in_(ACTIVE_VISIT_STATES))):
+            for episode in visit.episodes:
+                if episode.status not in {"COMPLETED","CANCELLED","NO_SHOW","TRANSFERRED","SKIPPED"}:
+                    transition_episode(db, episode, expected={episode.status}, target="CANCELLED", actor_id=users["admin"].id, expected_version=episode.version)
+            visit.status = "CANCELLED"; visit.version += 1
+            record_audit(db, facility_id=facility.id, actor_id=users["admin"].id, action="demo.practice_visit_closed", object_type="Visit", object_id=visit.id, correlation_id="fresh-rehearsal", reason="Fresh rehearsal asked to close visits entered during earlier practice; history preserved as cancelled")
     db.flush()
     session_id = uuid.uuid4()
     patients = []
@@ -350,6 +358,12 @@ def prepare_clinic(db, *, seed=2026, fresh=False, now=None, enable_advisory=Fals
             row_count=len(frame_baseline),synthetic_flag=True))
         db.flush()
     jobs=[]
+    # Every rehearsal starts from the same known state: the advisory is off until someone enables
+    # it (or preparation was asked to). Earlier reviews remain recorded.
+    if not enable_advisory:
+        for model in db.scalars(select(ModelVersion).where(ModelVersion.facility_id==facility.id,ModelVersion.active.is_(True))):
+            model.active=False
+            record_audit(db,facility_id=facility.id,actor_id=None,action="demo.advisory_reset",object_type="ModelVersion",object_id=model.id,correlation_id=str(session_id),old={"active":True},new={"active":False},reason="Fresh rehearsal starts with the advisory disabled")
     train={"dataset_id":str(dataset.id),"seed":seed}
     if enable_advisory: train.update(demo_enable_advisory=True,review_clinician_id=str(users["clinician"].id))
     for kind,config in [("MODEL_TRAIN",train),("OPERATIONAL_TRAIN",{})]:

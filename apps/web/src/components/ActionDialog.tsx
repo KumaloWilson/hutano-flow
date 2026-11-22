@@ -7,6 +7,8 @@ type Answer = Record<string,string>;
 const Context = createContext<(q:Question)=>Promise<Answer|null>>(()=>Promise.resolve(null));
 export const useActionDialog = () => useContext(Context);
 export const choices = (values:string[]) => values.map(value=>({value,label:value.replaceAll("_"," ")}));
+/** Service-point codes as staff read them: "laboratory" → "Laboratory". */
+export const serviceChoices = (values:string[]) => values.map(value=>({value,label:value.charAt(0).toUpperCase()+value.slice(1).replaceAll("_"," ")}));
 export const reasonField: Field = {name:"reason",label:"Reason",type:"textarea",required:true,min:5,max:500};
 
 export function ActionDialogProvider({children}:{children:ReactNode}) {

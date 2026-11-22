@@ -36,20 +36,21 @@ export function DemoReadiness({ demo, detailed = false }: { demo: NonNullable<Cl
 }
 
 function PrepareRehearsal({ onPrepared }: { onPrepared?: () => void }) {
-  const [reason, setReason] = useState("Fresh rehearsal for today's demonstration"), [advisory, setAdvisory] = useState(false);
+  const [reason, setReason] = useState("Fresh rehearsal for today's demonstration"), [advisory, setAdvisory] = useState(false), [closePractice, setClosePractice] = useState(true);
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState("");
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(""); setMessage("");
     try {
-      const r = await api<{ cases: number; preparation_note: string | null }>("/api/v1/clinic/demo/prepare", { method: "POST", body: JSON.stringify({ reason, enable_advisory: advisory }) });
+      const r = await api<{ cases: number; preparation_note: string | null }>("/api/v1/clinic/demo/prepare", { method: "POST", body: JSON.stringify({ reason, enable_advisory: advisory, close_manual_visits: closePractice }) });
       setMessage(`Fresh rehearsal ready with ${r.cases} people in the clinic.${r.preparation_note ? " " + r.preparation_note : ""}`);
       onPrepared?.();
     } catch (err) { setError(errorText(err)); } finally { setBusy(false); }
   }
   return <article className="panel spaced"><h2>Prepare a fresh rehearsal</h2>
-    <p>Retires today's unfinished scripted cases (their history is kept), then places a new set of people in the clinic, timed back from now. Records staff entered by hand are kept. Do this before a demonstration, not during one.</p>
+    <p>Retires the unfinished scripted cases (their history is kept), switches the advisory off, then places a new set of people in the clinic, timed back from now. Do this before a demonstration, not during one.</p>
     <form onSubmit={submit} className="stack">
       <label>Reason (recorded in the audit log)<input value={reason} onChange={(e) => setReason(e.target.value)} minLength={5} maxLength={300} required /></label>
+      <label className="checkbox"><input type="checkbox" checked={closePractice} onChange={(e) => setClosePractice(e.target.checked)} />Also close visits registered by hand during earlier practice (their history is kept)</label>
       <label className="checkbox"><input type="checkbox" checked={advisory} onChange={(e) => setAdvisory(e.target.checked)} />Enable the advisory with a scripted review, labelled as such (skips the live clinician review step)</label>
       <button className="primary" disabled={busy}>{busy ? "Preparing…" : "Prepare fresh rehearsal"}</button>
     </form>

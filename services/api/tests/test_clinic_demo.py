@@ -180,6 +180,16 @@ def test_admin_prepares_a_fresh_rehearsal_from_the_browser(client,db_session,mon
     assert db_session.scalar(select(AuditEvent.reason).where(AuditEvent.action=='demo.rehearsal_requested'))==body['reason']
     for item in first.manifest_json['cases']:
         assert db_session.get(Visit,uuid.UUID(item['visit_id'])).status in {'CANCELLED','COMPLETED'}
+    # Practice registrations stay unless the presenter asks to close them.
+    manual=Visit(facility_id=FACILITY_ID,patient_id=db_session.scalars(select(Patient).where(Patient.facility_id==FACILITY_ID)).all()[-1].id,public_token='PRACTICE',token_secret_hash=b'p'*32,status='AWAITING_TRIAGE',arrival_at=first.anchor_at,token_day=first.anchor_at.date())
+    db_session.add(manual);db_session.commit()
+    kept=client.post('/api/v1/clinic/demo/prepare',json=body,headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4())))
+    assert kept.status_code==200 and db_session.get(Visit,manual.id).status=='AWAITING_TRIAGE'
+    closed=client.post('/api/v1/clinic/demo/prepare',json={**body,'close_manual_visits':True},headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4())))
+    assert closed.status_code==200,closed.text
+    db_session.expire_all()
+    assert db_session.get(Visit,manual.id).status=='CANCELLED'
+    assert db_session.scalar(select(func.count(Visit.id)).where(Visit.facility_id==FACILITY_ID,Visit.status.in_(['REGISTERING','AWAITING_TRIAGE','ACTIVE','ESCALATION_REQUIRED','TRIAGED'])))==closed.json()['cases']-2
     # The original research workspace can never be re-prepared from here.
     client.cookies.clear()
     client.post('/api/v1/auth/login',json={'email':'admin@test.local','password':'Testing123!'})
@@ -209,3 +219,7 @@ def test_advisory_is_enabled_only_when_preparation_asks(client,db_session,monkey
     advice=client.post(f"/api/v1/visits/{case['visit_id']}/recommendation",json={},headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4())))
     assert advice.status_code==201,advice.text
     assert advice.json().get('available') is not False, advice.json()
+    # A later ordinary rehearsal starts with the advisory off again; the review stays recorded.
+    prepare_clinic(db,fresh=True);db.commit();db.refresh(model)
+    assert model.status=='REVIEWED' and not model.active
+    assert db.scalar(select(AuditEvent.reason).where(AuditEvent.action=='demo.advisory_reset'))=='Fresh rehearsal starts with the advisory disabled'

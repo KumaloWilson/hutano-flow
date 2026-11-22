@@ -51,7 +51,30 @@ export function Receipt({ visit, next = "Triage", onNotice }: { visit: Visit | n
   </article>;
 }
 
-export function Registration({ onDone, setNotice }: { onDone: () => Promise<void>; setNotice: (x: Notice) => void }) {
+/** People already in the clinic whose registration has not been completed at the desk. */
+function WaitingAtDesk({ visits, onDone, setNotice }: { visits: Visit[]; onDone: () => Promise<void>; setNotice: (x: Notice) => void }) {
+  const [busy, setBusy] = useState("");
+  const waiting = visits.filter((v) => v.status === "REGISTERING");
+  async function complete(visit: Visit) {
+    setBusy(visit.id);
+    try {
+      await api(`/api/v1/visits/${visit.id}/register`, { method: "POST", body: JSON.stringify({ version: visit.version }) });
+      await onDone();
+      setNotice({ kind: "success", text: `${visit.public_token} registered. ${visit.patient?.pseudonym || "The patient"} is now waiting for triage.` });
+    } catch (e) { setNotice({ kind: "error", text: errorText(e, "Registration could not be completed") }); }
+    finally { setBusy(""); }
+  }
+  return <article className="panel spaced" aria-label="Waiting at the front desk">
+    <h2>Waiting at the front desk</h2>
+    {waiting.length ? <div className="up-next">{waiting.map((v) => <div className="next-row" key={v.id}>
+      <span className="mono">{v.public_token}</span>
+      <div><strong style={{ fontWeight: 550 }}>{v.patient?.pseudonym || "Synthetic patient"}</strong><small className="muted"> · arrived {formatClock(v.arrival_at)}</small></div>
+      <button type="button" className="primary small" disabled={!!busy} onClick={() => complete(v)}>{busy === v.id ? "Registering…" : "Complete registration"}</button>
+    </div>)}</div> : <p className="muted">Nobody is waiting at the desk.</p>}
+  </article>;
+}
+
+export function Registration({ onDone, setNotice, visits = [] }: { onDone: () => Promise<void>; setNotice: (x: Notice) => void; visits?: Visit[] }) {
   const [name, setName] = useState("");
   const [ageBand, setAgeBand] = useState("adult");
   const [sex, setSex] = useState("not_recorded");
@@ -90,7 +113,7 @@ export function Registration({ onDone, setNotice }: { onDone: () => Promise<void
     finally { setBusy(false); }
   }
 
-  return <section className="two-column form-layout">
+  return <><section className="two-column form-layout">
     <article className="panel">
       <div className="panel-head"><div><h2>Register an arrival</h2><p className="muted">Type a name to find a returning patient. No national ID, phone or address is collected.</p></div><span className="badge synthetic">Synthetic only</span></div>
       <form onSubmit={submit} className="form-grid">
@@ -117,5 +140,5 @@ export function Registration({ onDone, setNotice }: { onDone: () => Promise<void
       </form>
     </article>
     <Receipt visit={created} onNotice={setNotice} />
-  </section>;
+  </section><WaitingAtDesk visits={visits} onDone={onDone} setNotice={setNotice} /></>;
 }

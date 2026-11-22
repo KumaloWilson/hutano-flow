@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, errorText, formatClock } from "@/lib/api";
 import type { QueueEntry, ServicePoint, User, Visit } from "@/lib/types";
 import { canOperateService } from "@/lib/permissions";
-import { choices, reasonField, useActionDialog } from "./ActionDialog";
+import { choices, reasonField, serviceChoices, useActionDialog } from "./ActionDialog";
 import { EpisodeNotebook } from "./PatientWorkspace";
 import { Icon } from "./ui/Icon";
 import { Elapsed, Empty, StatusChip, Ticket, Urgency, Wait } from "./ui/primitives";
@@ -14,11 +14,44 @@ const canCall = (user: User, type: string) => (type === "pharmacy" && user.roles
   (["consultation", "laboratory", "discharge"].includes(type) && hasAny(user, ["CLINICIAN", "SERVICE_PROVIDER"])) ||
   (type === "triage" && hasAny(user, ["CLINICIAN", "TRIAGE_NURSE"]));
 
+type RoomChoice = { id: string; name: string; staff_name: string | null; available: boolean; explanation: string };
+type RoomProposal = { id: string; options: RoomChoice[]; recommended_room_id: string | null };
+const NO_ROOMS = /Configure rooms and shifts/;
+
+/** Call a patient. Where the service uses staffed rooms, the same dialog chooses the room:
+ *  the server reserves room and staff and calls atomically; queue order never changes. */
 function useCallAction(onDone: () => Promise<void>, setNotice: (n: Notice) => void, after?: () => Promise<void>) {
   const ask = useActionDialog();
   return async (entry: QueueEntry, confirm = true) => {
-    if (confirm && !await ask({ title: `Call ${entry.public_token} next?`, description: "The number appears on the waiting-room display. For staffed rooms, approve a room in Staff & rooms first." })) return;
+    let proposal: RoomProposal | null = null;
     try {
+      proposal = await api<RoomProposal>("/api/v1/operations/proposals", { method: "POST", body: JSON.stringify({ queue_entry_id: entry.queue_entry_id, version: entry.version }) });
+    } catch (e) {
+      if (!NO_ROOMS.test(errorText(e, ""))) { setNotice({ kind: "error", text: errorText(e, "Call failed") }); return; }
+    }
+    try {
+      if (proposal) {
+        const free = proposal.options.filter((o) => o.available);
+        if (!free.length) {
+          setNotice({ kind: "error", text: `No staffed room is free for ${entry.public_token}. ${proposal.options.map((o) => `${o.name}: ${o.explanation}`).join(" · ")}. Complete or pause a current service, or check Staff & rooms.` });
+          return;
+        }
+        const answer = await ask({
+          title: `Call ${entry.public_token} to a room`,
+          description: "Reserves the room and its on-duty staff member and calls the patient in one step. Queue order is unchanged.",
+          fields: [
+            { name: "room", label: "Room", type: "select", required: true, value: proposal.recommended_room_id || free[0].id, options: free.map((o) => ({ value: o.id, label: `${o.name} · ${o.staff_name ?? "on duty"}` })) },
+            { ...reasonField, value: "Next patient called to an available staffed room" },
+          ],
+          submit: "Assign room & call",
+        });
+        if (!answer) return;
+        const called = await api<{ room: string }>(`/api/v1/operations/proposals/${proposal.id}/approve`, { method: "POST", body: JSON.stringify({ room_id: answer.room, reason: answer.reason }) });
+        await Promise.all([after?.(), onDone()]);
+        setNotice({ kind: "success", text: `${entry.public_token} called to ${called.room}.` });
+        return;
+      }
+      if (confirm && !await ask({ title: `Call ${entry.public_token} next?`, description: "The number appears on the waiting-room display." })) return;
       await api(`/api/v1/queue/${entry.queue_entry_id}/call`, { method: "POST", body: JSON.stringify({ version: entry.version }) });
       await Promise.all([after?.(), onDone()]);
       setNotice({ kind: "success", text: `${entry.public_token} called atomically.` });
@@ -134,7 +167,7 @@ export function ServiceConsole({ visits, points, user, onDone, setNotice }: { vi
   const start = (id: string, version: number) => run(`/api/v1/episodes/${id}/start`, { version }, "Service started.");
   async function complete(id: string, version: number, current: string) {
     const routes = points.find((p) => p.type === current)?.allowed_routes || [];
-    const response = await ask({ title: "Complete service & route", description: "The completed stage is preserved. Returning from laboratory creates a new consultation episode.", fields: [{ name: "next", label: "Next service", type: "select", value: current === "consultation" && routes.includes("pharmacy") ? "pharmacy" : "", options: [{ value: "", label: "Finish visit" }, ...choices(routes)] }, { name: "note", label: "Service completion note", type: "textarea", value: "", max: 500 }] });
+    const response = await ask({ title: "Complete service & route", description: "The completed stage is preserved. Returning from laboratory creates a new consultation episode.", fields: [{ name: "next", label: "Next service", type: "select", value: current === "consultation" && routes.includes("pharmacy") ? "pharmacy" : "", options: [{ value: "", label: "Finish visit" }, ...serviceChoices(routes)] }, { name: "note", label: "Service completion note", type: "textarea", value: "", max: 500 }] });
     if (!response) return;
     await run(`/api/v1/episodes/${id}/complete`, { version, next_service_type: response.next || null, operational_note: response.note || null }, response.next ? `Service completed and routed to ${response.next}.` : "Service completed and visit closed.");
   }

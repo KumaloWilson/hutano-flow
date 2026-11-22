@@ -79,6 +79,7 @@ def snapshot(user:CurrentUser,db:Session=Depends(get_db,scope="function")):
 class PrepareRehearsal(BaseModel):
     reason: str = Field(min_length=5, max_length=300)
     enable_advisory: bool = False
+    close_manual_visits: bool = False
 
 
 @command_router.post("/demo/prepare")
@@ -88,8 +89,8 @@ def prepare_rehearsal(payload: PrepareRehearsal, user: User = Depends(require_ro
     facility = db.get(Facility, user.facility_id)
     if facility.id != FACILITY_ID or not facility.demo_mode:
         raise HTTPException(409, "Only the fictional Hutano Community Clinic can be prepared from here")
-    session = prepare_clinic(db, fresh=True, enable_advisory=payload.enable_advisory)
+    session = prepare_clinic(db, fresh=True, enable_advisory=payload.enable_advisory, close_manual=payload.close_manual_visits)
     record_audit(db, facility_id=facility.id, actor_id=user.id, action="demo.rehearsal_requested", object_type="DemoSession",
-        object_id=session.id, correlation_id=str(session.id), new={"enable_advisory": payload.enable_advisory}, reason=payload.reason)
+        object_id=session.id, correlation_id=str(session.id), new={"enable_advisory": payload.enable_advisory, "close_manual_visits": payload.close_manual_visits}, reason=payload.reason)
     return {"session_id": str(session.id), "prepared_at": session.anchor_at.isoformat(), "cases": len(session.manifest_json["cases"]),
             "preparation_note": session.manifest_json.get("preparation_note"), "advisory_enabled_by_preparation": payload.enable_advisory}

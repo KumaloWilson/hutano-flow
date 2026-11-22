@@ -34,6 +34,16 @@ test('fictional clinic connects guide, patient history, queues and paused servic
   await page.getByRole('dialog').getByRole('button',{name:'Confirm action'}).click();
   await expect(page.getByText('Service completed and visit closed.',{exact:true})).toBeVisible();
   await expect(card).toHaveCount(0);
+  // Calling in a service with staffed rooms: one dialog picks the free room and calls.
+  // Room 2 was released above; room 1 is still occupied by the scripted consultation.
+  const consultation=page.locator('article.panel').filter({has:page.getByRole('heading',{name:'Consultation',exact:true})});
+  await consultation.getByRole('button',{name:'Call next'}).click();
+  const dialog=page.getByRole('dialog');
+  await expect(dialog).toContainText('Call');
+  await expect(dialog.getByRole('combobox',{name:'Room'})).toContainText('Consultation room 2');
+  await expect(dialog.getByRole('combobox',{name:'Room'}).locator('option')).toHaveCount(1);
+  await dialog.getByRole('button',{name:'Assign room & call'}).click();
+  await expect(page.getByText(/called to Consultation room 2\./)).toBeVisible();
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Overview',exact:true}).click();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();

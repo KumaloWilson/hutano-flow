@@ -124,7 +124,7 @@ def has_rooms(db, point_id):
 def guard_reservation(db, episode, starting=False):
     if not has_rooms(db,episode.service_point_id): return
     assignment=db.scalar(select(ResourceAssignment).where(ResourceAssignment.episode_id==episode.id,ResourceAssignment.released_at.is_(None)))
-    if not assignment: raise HTTPException(409,'Request and approve a staffed-room assignment in Operations before calling')
+    if not assignment: raise HTTPException(409,'This service uses staffed rooms: choose a free room when calling (Call opens the room choice) or assign one in Staff & rooms')
     if starting and not assignment.started_at:
         # An approved reservation cannot start through a subsequent break/outage.
         state=next(r for r in room_snapshot(db,episode.facility_id,episode.service_point_id) if r['id']==str(assignment.room_id))

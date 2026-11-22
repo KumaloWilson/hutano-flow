@@ -1,21 +1,26 @@
 # Hutano Flow — defence demonstration script
 
 **Smart Healthcare Queue Optimisation and Patient Management System Using AI-Assisted Prioritisation**
-Jane Doe · R231851H · BBMIT · Catholic University of Zimbabwe · Supervisor: Mr Tandavara
+Michelle Sambawamedza · R231851H · BBMIT · Catholic University of Zimbabwe · Supervisor: Mr Tandavara
 
-This is the script for demonstrating the system to the panel and defending it. It tells you
-what to say, what to click, what the panel should notice, and **why** each step matters to the
-proposal. Questions you are likely to be asked, with model answers, are in Part 5.
+This script takes you through demonstrating and defending the system, one click at a time. You
+don't need technical knowledge to follow it. Every click is written out, with what it does
+and what you should see afterwards. The same sequence is run automatically by a browser test
+(`apps/web/tests/e2e/defence-walkthrough.spec.ts`), so every step is known to work.
 
-How to read it:
+**How each step is laid out**
 
-- **Say:** words to speak, in your own voice. Learn the ideas, not the sentences.
-- **Do:** what to click. Labels in **bold** are the exact on-screen names.
-- **Point out:** what the panel should see.
-- **Why:** the objective, research question or literature gap this step answers.
+| Label | Meaning |
+|---|---|
+| 👤 **Be:** | Which staff member you are for this step, and how to switch |
+| 🖱 **Click:** | Numbered actions. **Bold words** are exactly what is written on the screen |
+| ➜ | What happens after that click, in plain words |
+| 🗣 **Say:** | What to tell the panel, in your own words |
+| ✅ **Check:** | What must be on screen before you move on |
+| 🎯 **Why:** | Which objective or research gap this step proves |
 
-Timing: about 30 minutes of demonstration, then questions. Times are given per part. If you are
-given only 15 minutes, do the steps marked ★ and skip the rest.
+Time: about 30 minutes of demonstration, then questions. If you have only 15 minutes, do the
+steps marked ★ and skip the rest.
 
 ---
 
@@ -43,55 +48,188 @@ Three honesty rules. Breaking any of them is the fastest way to lose a distincti
 
 ---
 
-## Part 1 — Before the defence
+## Part 1 — Finding your way around the screen
 
-### The day before
+Spend ten minutes on this before your first rehearsal. Afterwards every instruction in the
+script will make sense.
 
-1. Start the system: `make demo` (Linux/macOS) or `scripts\demo_up.cmd` (Windows).
-2. Rehearse the whole script once, with a timer.
-3. Write down the numbers *your* screen shows in the blank boxes in Part 4. Some depend on the
-   preparation date.
-4. Copy the backup material to the laptop desktop: `docs/evidence/*.png` (screenshots of every
-   screen) and `docs/TEST_EVIDENCE.md`.
+![The Overview screen, with the parts labelled below](evidence/defence-overview.png)
 
-### On the day, 30–60 minutes before
+### The five areas of every page
 
-1. Prepare the clinic **during clinic hours** (weekdays 07:00–16:00), so the morning looks like a
-   morning. Sign in as **Admin** → **Demo guide** → **Prepare a fresh rehearsal**.
-   - Leave **"Enable the advisory with a scripted review"** **unticked**. You will show the
-     clinician review step live; it is one of your strongest points.
-2. Wait until **Overview** shows **"Research results ready"** (a few minutes).
-3. Pre-run the long comparison so you don't wait on stage: **Simulation lab** → **Manual
-   parameters**: Scenario name `Morning comparison with research policies`, **Patients** `150`,
-   **Seed** `2026`, **Consultation servers** `2`, **Arrivals per hour** `12`,
-   **Mean consultation minutes** `12`, **Paired replications** `10`, tick **Include
-   research-only arms**. Run it.
-4. Also pre-run the calibrated comparison: **Simulation lab** → **Calibrated from baseline**,
-   Scenario name `Calibrated baseline check`, **Simulated clinic days** `10`, run.
-5. Record the advisory review (Step 7 explains why): use the **Demo role** menu to switch to
-   **Clinician** → **Help & safety** → **Record clinician research review**, with reason
-   "Reviewed for synthetic demonstration only". Do **not** activate it yet.
-6. Open three browser windows:
-   - **Window A (presenter):** signed in, on **Overview**.
-   - **Window B ("the patient's phone"):** `http://localhost:3000/status`, narrowed to phone width.
-   - **Window C (optional, second staff screen):** signed in as **Clinician**, on **Live queues**,
-     to show live updates.
-7. Turn off notifications. Zoom the browser to 110–125% so the panel can read it.
+1. **The black strip at the very top.** It always reads *"Research prototype · Not for
+   clinical use · Synthetic data · Clinicians remain the decision-makers."* You never click it.
+   It's there so nobody can mistake the demo for a real clinical system.
+2. **The left menu.** This is how you move between screens. It's grouped under small grey
+   headings: **Clinic**, **Operations**, **Research** and **Workspace**. Click a name, such as
+   **Live queues**, to open that screen. *The menu changes with the role you're playing:* a
+   receptionist doesn't see research screens, and a researcher doesn't see patient screens.
+   If a screen named in this script is missing, you're in the wrong role (see point 3).
+   A small number next to a menu item (for example **Triage 3**) counts people waiting there.
+3. **The top bar.** From left to right:
+   - **Demo role** — a drop-down menu. *This is how you become a different staff member.*
+     Click it and choose, for example, **Reception**. The page reloads and you are now that
+     person. The welcome line on **Overview** shows who you are, for example *"Welcome, Rudo
+     Moyo"*.
+   - **Find ticket, e.g. A-014** — a search box. Type a ticket number to jump to that patient.
+   - **Live 09:41** with a green dot — the screen is connected and updating by itself. If it
+     turns grey, the connection has dropped.
+   - The clock, and a circle with initials (for example **RM**). That circle is the account
+     menu; you won't need it today.
+4. **The page title**, for example **Live queues**, with one line explaining the screen.
+5. **The work area** below the title: cards, lists and buttons.
 
-### If something fails live
+### Three things that will pop up
 
-| Problem | Recovery line and action |
+- **A message bar** under the page title. Green with a tick means it worked (*"A-177 called
+  to Consultation room 2."*). Red means it didn't, and the message says why in plain words.
+  Click **×** to close it.
+- **A dialog box**, a small window in the middle of the screen that greys out the rest. It
+  asks you to confirm something, and often asks for a **Reason**. *Every important action
+  needs a short reason; this is how the system keeps its audit trail.* Type a few words, then
+  press the main button (for example **Confirm action** or **Assign room & call**). **Cancel**
+  closes it and nothing happens.
+- **A "Why this position" line** under a patient in a queue. Click it to open the
+  explanation; click it again to close it.
+
+### The people in the demo
+
+**Staff (you switch between them with Demo role):**
+
+| Demo role | Fictional person | What they do |
+|---|---|---|
+| Reception | Rudo Moyo | Registers arrivals and prints tickets |
+| Triage | Nurse Chipo Ndlovu | Takes vital signs and confirms how urgent each patient is |
+| Clinician | Dr Nyasha Mupfumi | Sees patients in Consultation room 1; reviews and overrides the queue |
+| Second clinician | Dr Farai Banda | Works in Consultation room 2 |
+| Laboratory | Ruvimbo Chirwa | Does blood tests |
+| Pharmacy | Tendai Sibanda | Gives out medicines |
+| Research | Kudzai Ncube | Sees analysis and results, never patient names |
+| Admin | Tariro Dube | Prepares the demo, switches the AI on or off, changes room availability |
+
+**Patients you will use** (all fictional; full list on **Demo guide**): Tawanda Gumbo (just
+arrived), Shamiso Marufu (sick 3-year-old, waiting for triage), Brighton Nhamo (has waited
+over an hour), Takudzwa Madziva (consultation paused), Fadzai Kativhu (with the doctor now),
+Charity Makoni (at the laboratory), Sibongile Mpofu (at pharmacy).
+
+### Words you will use, in plain language
+
+| Word on screen | What it means |
 |---|---|
-| A page is slow or blank | "The system is waiting for the database. This is the live view." Press **Refresh**, or move to the next step. |
-| A research job is still running | "This is a real background job, not a pre-recorded result." Show the saved run, or the screenshot in `docs/evidence/`. |
-| Sign-in is refused | Wait 10 seconds (rate limiting is a deliberate security control) and retry. Say so: it is a feature. |
-| Anything else | Open the matching screenshot in `docs/evidence/` and keep talking. Never debug in front of the panel. |
+| **Ticket number** (A-014) | The short number a patient is called by, like at a bank |
+| **Private token** | A long secret code on the receipt. It lets the patient check their place on their own phone. Nobody else can use it |
+| **P1 … P5** | How urgent a patient is. P1 = see immediately, P5 = can wait longest. *Only a clinician sets it* |
+| **Queue / Live queues** | The waiting lines, one per service point, in the order patients will be called |
+| **Service point** | A place patients go: Registration, Triage, Consultation, Laboratory, Pharmacy |
+| **Call** | Tell the patient it's their turn (their number appears on the waiting-room screen) |
+| **Start service / Complete & route** | The patient is now being seen / finished here and sent to the next place, or home |
+| **Staffed room** | A room with a staff member on duty. Calling reserves one for the patient |
+| **Review suggested** | The system thinks a clinician should look at this patient again (waited long, or many were seen before them) |
+| **Override** | A clinician moves a patient to a different place in the queue, with a reason |
+| **Advisory** | The AI's *suggestion* about urgency. It can only suggest, never decide |
+| **No suggestion (abstains)** | The AI declines to suggest because it isn't sure. That's a safety feature |
+| **Simulation** | The computer runs hundreds of imaginary clinic mornings to compare queue rules fairly |
+| **FCFS** | First come, first served: today's usual way |
+| **Mean / P90 / 95th percentile** | Average / the wait that 90% (or 95%) of patients stay under, i.e. the long waits |
+| **Audit log** | The permanent record of who did what, when and why |
 
 ---
 
-## Part 2 — Opening (3 minutes) ★
+## Part 2 — Before the defence
 
-**Do:** Show the login page. Don't sign in yet.
+### The day before: rehearse once
+
+1. **Start the system.** On the laptop, open the project folder.
+   - Windows: double-click **`scripts\demo_up.cmd`**.
+   - Mac/Linux: open a terminal in the folder and type `make demo`.
+   ➜ A black window shows progress. Wait until it says **"Hutano Flow is running"** (a few
+   minutes the first time). Docker Desktop must be running first.
+2. Open **Google Chrome** and go to **http://localhost:3000**.
+3. Do Part 2's "On the day" list below, then the whole walkthrough (Part 4), with a timer.
+4. Fill in the ◻ boxes in Part 5 with the numbers *your* screen shows.
+5. Copy the folder `docs/evidence` to the desktop. It holds a screenshot of every screen, your
+   backup if anything fails on the day.
+
+Practising leaves extra visits behind, for example the patient you register in Step 3. That
+doesn't matter: the preparation on the day clears them (step 3 below).
+
+### On the day: 30–60 minutes before
+
+Prepare **during clinic hours** (weekdays 07:00–16:00), because the demo places today's
+patients in the hours just before you prepare.
+
+1. **Start the system** as above, and open **http://localhost:3000** in Chrome.
+2. **Sign in as the administrator.**
+   - 🖱 Under **Workspace**, leave **Hutano Community Clinic (fictional)**.
+   - 🖱 Click the **Admin** button in the row of role buttons. ➜ Email and password fill in
+     by themselves.
+   - 🖱 Click **Sign in to workspace**. ➜ You see **Overview**, *"Welcome, Tariro Dube"*.
+3. **Prepare a fresh clinic.**
+   - 🖱 Left menu → **Workspace** → **Demo guide**. Scroll to the bottom: **Prepare a fresh
+     rehearsal**.
+   - Leave **"Also close visits registered by hand during earlier practice"** ✔ ticked.
+   - Leave **"Enable the advisory with a scripted review"** ☐ **un**ticked. You'll switch the AI
+     on live; it's one of your strongest moments.
+   - 🖱 Click **Prepare fresh rehearsal**. ➜ After a few seconds: *"Fresh rehearsal ready with
+     17 people in the clinic."*
+   - If the message also says *"outside typical clinic hours"*, the times will look odd. Prepare
+     again during clinic hours.
+   - **What it really does:** cancels yesterday's unfinished patients (their records are kept),
+     switches the AI off, and creates 17 fictional people at different points of a busy
+     morning. It also starts the computer training the AI and running a clinic comparison in
+     the background.
+4. **Wait for the research results.** At the top of **Demo guide** (and on **Overview**) a box
+   shows *"Preparing research results: 1 of 3 ready"*. It updates itself. ✅ Wait until it says
+   **"Research results ready"**, usually 1–3 minutes.
+5. **Pre-run the long comparison**, so the panel doesn't wait.
+   - 🖱 Left menu → **Research** → **Simulation lab**. **Manual parameters** is already
+     selected.
+   - 🖱 **Scenario name:** clear it and type `Morning comparison with research policies`.
+   - 🖱 **Patients:** change to `150`. Leave everything else as it is (Seed 2026, Consultation
+     servers 2, Arrivals per hour 12, Mean consultation minutes 12, Paired replications 10).
+   - 🖱 Tick **Include research-only arms (bounded ageing, duration-aware)**.
+   - 🖱 Click **Compare FCFS, urgency-first & hybrid**. ➜ The button says *"Running paired
+     replications…"*, then results appear. ✅ You can see the heading **"The patient at the
+     bottom of the queue"**.
+6. **Pre-run the calibrated check.**
+   - 🖱 At the top of the same form, click **Calibrated from baseline**.
+   - 🖱 **Scenario name:** `Calibrated baseline check`. **Simulated clinic days:** `10`.
+   - 🖱 Click **Fit from baseline and compare**. ✅ *"Simulated FCFS reproduces the measured
+     baseline"* appears.
+7. **Record the clinician's review of the AI** (needed before the AI can be switched on).
+   - 🖱 Top bar → **Demo role** → **Clinician**. ➜ *"Welcome, Dr Nyasha Mupfumi"*.
+   - 🖱 Left menu → **Workspace** → **Help & safety**. Scroll to **Clinician research review**.
+   - Look at the line starting **Model synthetic-logreg-…**:
+     - If it ends in **EXPERIMENTAL**: click that line to open it, click **Record clinician
+       research review**, type the reason `Reviewed for synthetic demonstration only`, then
+       **Confirm action**.
+     - If it ends in **REVIEWED**: it was reviewed in an earlier rehearsal. Nothing to do.
+8. **Set up your windows.**
+   - Top bar → **Demo role** → **Admin**, then left menu → **Overview**. This is **Window A**,
+     your main screen.
+   - Open a **new Chrome window** (Ctrl+N), go to **http://localhost:3000/status**, and make the
+     window narrow like a phone. This is **Window B, "the patient's phone"**.
+9. Zoom Window A so the panel can read it: **Ctrl and +** (two presses ≈ 125%). Turn off
+   notifications. Close other programs.
+
+### If something goes wrong live
+
+Never try to fix things in front of the panel. Say the line, then move on.
+
+| What you see | Say and do |
+|---|---|
+| A page is slow or blank | "That's the live database catching up." Click the menu item again, or go to the next step |
+| A red message when calling: *"No staffed room is free"* | "Both rooms are busy, so the system won't double-book a doctor." Finish a patient who is being seen, then call again |
+| A red message: *"…changed; refresh"* | "Someone else acted first, and the system stopped a double action." Click the menu item again to refresh, then repeat |
+| A research box still says "Preparing…" | "These are real calculations, not a recording." Show the result from the day before, or the screenshot in `docs/evidence` |
+| Sign-in refused | Wait 10 seconds and try again. "That's the brute-force protection working." |
+| Anything else | Open the matching screenshot in `docs/evidence` and keep talking |
+
+---
+
+## Part 3 — Opening (3 minutes) ★
+
+🖱 **Show:** **Window A** on **Overview**. No clicks during the opening.
 
 **Say:**
 
@@ -112,7 +250,7 @@ Three honesty rules. Breaking any of them is the fastest way to lose a distincti
 > Design Science Research Methodology: identify the problem, define objectives, build the
 > artefact, demonstrate it, evaluate it, communicate it. Today is the demonstration and evaluation."
 
-**Do:** Point to the four objectives on a slide or card, or just say them:
+🗣 **Say** (point to the objectives on a slide or card, if you have one):
 
 > "Four objectives:
 > **O1** — measure the current process and its bottlenecks;
@@ -135,428 +273,449 @@ Three honesty rules. Breaking any of them is the fastest way to lose a distincti
 
 ---
 
-## Part 3 — The walkthrough
+## Part 4 — The walkthrough
 
-The demonstration follows one morning at the fictional **Hutano Community Clinic**: front desk →
-triage → queue → consultation → laboratory → pharmacy → home. Then you step back and evaluate it.
+One fictional morning at **Hutano Community Clinic**: front desk → triage → queue →
+consultation → laboratory → pharmacy → home. Then you step back and show the evidence.
 
-### Step 1 — Sign in and orientate (1 minute) ★
+### Step 1 — Show the screen and its safeguards (1 min) ★
 
-**Do:** Choose **Hutano Community Clinic (fictional)**, click the **Admin** pill, sign in.
+👤 **Be:** Admin (you're already signed in). **Window A**, **Overview**.
 
-**Point out:**
-- The black banner on every page: *"Research prototype · Not for clinical use · Synthetic data ·
-  Clinicians remain the decision-makers."*
-- The role buttons: eight staff roles, each seeing only what its job needs. This is role-based
-  access control, enforced on the server, not just hidden in the interface.
-- The **Demo role** menu at the top: "So I can play every staff member without signing out."
+🖱 **Click:** nothing yet. Point at each area as you speak.
 
-**Why:** Proposal §1.10 requires role-based access control and audit logging. You show it in the
-first ten seconds.
+🗣 **Say:**
+> "Across the top, on every page: *research prototype, not for clinical use, synthetic data,
+> clinicians remain the decision-makers*. On the left, the screens this role is allowed to
+> see. Each staff role sees only what its job needs, and the server enforces that, not just the
+> screen. And this **Demo role** menu lets me play every member of staff today without signing
+> out."
 
-### Step 2 — The clinic at a glance (2 minutes) ★ — O3 real-time visibility
+🎯 **Why:** The proposal (§1.10) requires role-based access and audit logging. The panel sees
+both in the first minute.
 
-**Do:** **Overview**.
+### Step 2 — The whole clinic at a glance (2 min) ★
 
-**Say:**
+👤 **Be:** Admin. **Overview**.
 
-> "This is the morning at a glance: 17 people in the clinic, how many are waiting at each stage,
-> the oldest wait at each, and what needs attention."
+![Overview](evidence/defence-overview.png)
 
-**Point out:**
-- **Flow through the clinic:** Registration → Triage → Consultation → Laboratory → Pharmacy,
-  with the waiting count and oldest wait at each.
-- **Needs attention:** *"1 long wait at Consultation — Oldest has waited 72 minutes"* and *"1
-  escalation alert"*.
-- **Journeys in progress:** each person with a ticket number and current stage.
+🖱 **Click:** nothing. Point at:
+1. **Flow through the clinic**: circles for Registration → Triage → Consultation → Laboratory →
+   Pharmacy. Each shows how many are waiting and the **oldest** wait.
+2. **Needs attention**: *"1 long wait at Consultation — Oldest has waited 72 minutes"* and
+   *"1 escalation alert"*.
+3. **Journeys in progress**: every patient, their ticket, and where they are.
 
-**Say:**
+🗣 **Say:**
+> "Nobody in a busy clinic can see this today: who's waiting where, and for how long. These
+> numbers come straight from the database and change by themselves as staff work. There's no
+> refresh button."
 
-> "This answers the first complaint in the literature: nobody can see the flow. The counts come
-> straight from the database and update live. There is no refresh button to press."
+✅ **Check:** *"15 active visits"* under **Journeys in progress**.
 
-**Why:** O3 / RQ3: patient-flow tracking and real-time queue visibility.
+🎯 **Why:** Objective 3 — real-time queue visibility.
 
-### Step 3 — Registration: a walk-in arrives (2 minutes) ★ — O3, walk-in gap
+### Step 3 — A walk-in arrives at the front desk (3 min) ★
 
-**Do:** **Demo role** → **Reception**. Open **Registration** → **Register an arrival**. Enter a
-new fictional person, for example **Pseudonym** `Rejoice Mukanya`, **Age band** Adult,
-**Recorded sex** Female, **Visit type** Walk-in. Keep **Plan pharmacy after consultation**
-ticked. Click **Create visit and complete registration**, then **Print receipt** and **Copy
-private token**.
+👤 **Be:** top bar → **Demo role** → **Reception**. ➜ *"Welcome, Rudo Moyo"*.
 
-Then show the desk queue: **Live queues** → Registration. **Tawanda Gumbo** (twisted ankle) is
-waiting there. **Call** → **Start service** → **Complete & route** → Triage. "Each of those
-clicks is a timestamp. That's how the system measures the registration delay Link et al.
-found to be the biggest."
+![Registration with receipt and the front-desk list](evidence/defence-registration.png)
 
-**Say:**
+🖱 **Click:**
+1. Left menu → **Clinic** → **Registration**.
+2. In **Pseudonym or internal ID (for search)** type `Rejoice Mukanya`.
+   ➜ If a list of **Possible matches** appears (she was registered while you practised), click
+   her name. That's the system avoiding a duplicate record.
+3. **Age band:** Adult. **Recorded sex:** Female. **Visit type:** Walk-in. Leave **Plan pharmacy
+   after consultation** ticked.
+4. Click **Create visit and complete registration**.
+   ➜ A **receipt** appears on the right: a big ticket number (e.g. **A-035**), a **QR code**, and
+   a long **Opaque status token**.
+5. Click **Copy private token**. ➜ *"Private token copied."* (If a red message says copying
+   isn't allowed, click inside the token box, press **Ctrl+A** then **Ctrl+C**.)
+6. Scroll down to **Waiting at the front desk**: **Tawanda Gumbo** (twisted ankle) arrived
+   earlier. Click **Complete registration** next to him.
+   ➜ *"A-0xx registered. Tawanda Gumbo is now waiting for triage."*
 
-> "Most queue-optimisation studies assume appointments. Public clinics in Zimbabwe are mostly
-> walk-in; that is the first gap in my literature review. So the system starts where a walk-in
-> starts: at the desk, with nothing booked.
->
-> The receipt has a short ticket number for calling, and a **private token** for the patient's
-> phone. The token is shown once and never put in a web address, so it can't leak through
-> browser history. It is also long enough that it can't be guessed."
+🗣 **Say:**
+> "Most queue studies assume appointments. Public clinics here are mostly walk-in, which is the
+> first gap in my literature review. So the system starts where a walk-in starts: at the desk,
+> with nothing booked. The patient gets a short number to be called by, and a QR code with a
+> private token so they can follow their place on their own phone. The token is shown once and
+> is too long to guess."
 
-**Point out:** The system refuses to register someone twice while they already have an open
-visit.
-
-**Why:** Proposal gap 1 (walk-in settings); O3.
-
-### Step 4 — The patient's view (2 minutes) ★ — transparency
-
-**Do:** Switch to **Window B** (`/status`). Paste Rejoice's token. Show the language switch (English,
-**Shona**, **Ndebele**).
-
-**Say:**
-
-> "Bidari Jafarnejad and Alaei Faradonbeh found that when patients can see the queue, the wait
-> they *perceive* falls below the actual wait. Without it, perception runs ahead of reality.
-> So the patient gets this: their stage, roughly how many people are ahead, and an estimated
-> range, in their language.
->
-> Notice what it does **not** show: no name, no priority category, nobody else's details. If
-> someone guesses a token, it fails without revealing anything."
-
-**Do (optional):** Type a made-up token and show it fail.
-
-**Why:** Proposal §1.0 and §1.5 (transparent queue information); data protection.
-
-### Step 5 — Triage and the AI advisory (5 minutes) ★ — O2, the centre of the AI story
-
-**Do:** **Demo role** → **Clinician** (the advisory review needs a clinician; you recorded it
-before the defence). Then **Demo role** → **Admin** → **AI research** → on the model card, click
-**Activate reviewed advisory**.
-
-**Say:**
-
-> "Before the model can say anything, two people must act. A clinician records a research review,
-> which I did before we started. Then an administrator switches it on. A model nobody has
-> reviewed cannot reach the triage screen. That's governance designed into the software, not
-> written in a policy document."
-
-**Do:** **Demo role** → **Triage**. Open **Triage**, choose **Shamiso Marufu** (3 years old,
-fever, poor feeding). Enter vitals: temperature `38.4`, pulse `132`, respiratory rate `36`,
-oxygen saturation `96`; leave blood pressure blank. Click **Request advisory explanation**.
-
-**Two possible outcomes. Both are good; have the line ready for each.**
-
-*If it gives a suggestion:*
-
-> "It suggests a category, gives a calibrated confidence, and shows **which inputs pushed it
-> there**. That follows Miller's explanation theory: *contrastive*, why this category rather than
-> the next one, and *selective*, the few factors that mattered most. It also lists every input
-> it used and where each came from. The blank blood pressure shows as **'not recorded'**; it is
-> never assumed normal."
-
-*If it declines ("No suggestion — clinician assessment only"):*
-
-> "This is the behaviour I'm most proud of. A respiratory rate of 36 is normal for a feverish
-> toddler, but it is outside what this model was trained on. So the model **declines to
-> answer** instead of guessing. On held-out data it abstains on about **55%** of cases. When it
-> does answer, its error rate drops from **44% to 34%**. A model that knows when it doesn't know
-> is safer than one that always answers."
-
-**Do:** Whatever it said, choose the category yourself (for example **P2**), write a short
-rationale ("Fever and fast breathing; seen ahead of routine patients"), and click **Confirm
-assessment**.
-
-**Say:**
-
-> "The decision is mine. Accepting a suggestion only pre-fills the box. I still have to confirm,
-> and my decision, the model's suggestion and whether I accepted it are all recorded."
-
-**Why:** O2 / RQ2 (explainable, routinely collected data); explainable-AI theory (Miller 2019);
-proposal §1.5 (*"The AI component ranks and explains; it does not decide."*); gap 2
-(explainability built, not just discussed).
-
-### Step 6 — The live queue and the patient at the bottom (4 minutes) ★ — O3 and gap 4
-
-**Do:** **Live queues** → Consultation.
-
-**Point out the order:** Tinotenda Mlambo (**P2**) first; then two **P3**s, the longer wait
-first; then **Brighton Nhamo (P4)**; then **Godknows Mutasa (P5)**.
-
-**Say:**
-
-> "The order is the clinician's urgency first, then time waited within each category. The
-> system never changes a category. Each row says *why* it is where it is."
-
-**Do:** Point at Brighton Nhamo: the long-wait warning and **Review suggested**.
-
-**Say:**
-
-> "Brighton is the patient my fourth research gap is about. He has waited over an hour and seen
-> **seven** later arrivals called before him. A queue that only reports the average would never
-> notice him. This one flags him and asks a clinician to look again. It doesn't move him
-> automatically, because a computer changing someone's priority on a timer is a clinical
-> decision. It **prompts a human**."
-
-**Do:** **Review** on Brighton → record a short review. Then **Override** on a patient, give a
-reason (for example "Clinician moved forward after reassessment"), and confirm.
-
-**Say:**
-
-> "Overriding is one action with a required reason, and every override is logged, which my
-> proposal promised."
-
-**Do (if Window C is open):** Show that Window C updated on its own.
-
-**Why:** O3 (dynamic prioritisation); gap 4 (the patient at the bottom of the queue); proposal
-§1.5 (*"Every override is one action and every override is logged."*).
-
-### Step 7 — Consultation, laboratory and pharmacy (4 minutes) — O3 patient-flow tracking
-
-**Do:**
-1. **Demo role** → **Clinician** → **Service console**. Find **Takudzwa Madziva**, whose
-   consultation is *paused*: "he went home to fetch his clinic card". Click **Resume service**,
-   then **Complete & route**, choose no next service, add a note, confirm. The visit closes.
-2. Find **Fadzai Kativhu**, in Consultation room 1. **Complete & route** → **Pharmacy**.
-3. **Demo role** → **Laboratory** → **Live queues** → Laboratory. For **Charity Makoni** (blood
-   test): **Call** → **Start service** → **Complete & route** → **Consultation**.
-4. **Demo role** → **Pharmacy**. Open **Sibongile Mpofu**'s handover ("explain the medicines in
-   Shona; she prefers it"), acknowledge it, then **Call**, **Start service**, **Complete &
-   route**. The visit closes.
-
-**Say:**
-
-> "Every move is timestamped: queued, called, started, ended. Each stage is its own record, so
-> Charity's return to the doctor is a **new** consultation and the first one is never
-> overwritten. These timestamps are exactly what a time-and-motion study measures by hand. Here
-> they are a by-product of doing the work."
-
-**Do:** **Patient journeys** → open Sibongile's visit and show the timeline with every
-timestamp. Switch to **Window B**: Rejoice's page has moved on by itself from registration to "waiting for triage". Nobody at the desk had to answer a question.
-
-**Why:** O3 (patient-flow tracking); proposal §1.7 measures (waiting and service time per point)
-collected automatically; this is the data O1 and O4 need.
-
-### Step 8 — When things go wrong (2 minutes) — gap 3, constrained settings
-
-**Do:** **Demo role** → **Admin** → **Facility admin** → Consultation → **Change availability**
-→ capacity `0`, reason "Room flooded", confirm. Show **Overview**: the consultation outage is
-flagged, and the waiting list is unchanged.
-
-**Say:**
-
-> "Static queues can't react when a room closes. Here, capacity zero pauses new calls, but
-> **nobody is removed from the queue** and nobody loses their place."
-
-**Do:** Restore the capacity to `2`.
-
-**Say (no clicks needed, or show briefly):**
-
-> "Many published systems assume reliable networks and RFID. My third gap was designs for
-> intermittent connectivity. If the connection drops, staff screens say so and **pause actions**
-> instead of showing stale data as if it were live. The **Downtime kit** prints a paper sheet for
-> the outage, and the visits are back-entered afterwards with their real times. The whole system
-> runs on one ordinary laptop with no internet."
-
-**Why:** Gap 3 (connectivity and hardware); proposal problem statement (*"cannot respond … when
-a service point goes down"*).
-
-### Step 9 — O1: measuring the current process (3 minutes) ★
-
-**Do:** **Demo role** → **Research**. Open **AI research** → **Anonymous baseline timing
-import**, and expand the stored baseline (*"Fictional clinic · synthetic time-and-motion
-baseline"*).
-
-**Say:**
-
-> "Objective 1 is measuring the existing first-come-first-served process. The real study will
-> collect at least 300 journeys over three weeks. Before going into a clinic, I needed the
-> analysis to exist and be tested. So the system imports time-and-motion data in an anonymous
-> format and reports every measure in proposal §1.7."
-
-**Point out (read your own values from the screen; seed-2026 values are in Part 4):**
-- Waiting and service time **per service point**, mean and 90th percentile.
-- **Bottleneck:** registration, the same shape as Link et al., where the biggest delay comes
-  before registration.
-- **Morning arrival share:** about 89%, comparable to Link et al.'s 94%.
-- **Share of visit time spent waiting.**
-- **Little's Law check**, wait × arrival rate against measured queue length. "It's a sense-check
-  on the data, as Chapter 2 says. Where the queue is too short to test, it says 'not
-  assessable' instead of pretending."
-
-**Then:** **Analytics** → **Last 7 days**: the same measures from the clinic's own recorded
-timestamps, with **Export CSV**.
-
-**Why:** O1 / RQ1; queueing theory (Little 1961); proposal §1.7 measures.
-
-### Step 10 — O4: does it reduce waiting time? The honest answer (6 minutes) ★ — the climax
-
-**Do:** **Simulation lab** → **Saved comparisons** → choose **"Calibrated baseline check"**.
-
-**Say:**
-
-> "My proposal says the simulator must first **reproduce the measured baseline** before any
-> result is trusted. Here it does: every stage's average and 90th-percentile wait is within
-> tolerance."
-
-**Point out:** *"Simulated FCFS reproduces the measured baseline"* and the table of observed
-against simulated values.
-
-> "And in this light clinic, about 38 patients a day, changing the order of the consultation
-> queue makes **no difference at all**. The queue at consultation is too short for ordering to
-> matter. The delay is at registration. **Reordering cannot fix a registration bottleneck.**
-> That is a design finding, not a failure."
-
-**Do:** Now open **"Fictional clinic · morning queue comparison"**: a busy morning, 150
-patients, two doctors, ten paired days.
-
-**Say:**
-
-> "Under pressure: the same simulated patients go through each policy, with identical arrivals,
-> so the comparison is fair. These are paired, common-random-number replications."
-
-**Point out the numbers (they will match Part 4):**
-- Mean journey wait: FCFS **89.4** min; urgency-first and hybrid **88.8** min.
-  Difference **−0.6 min**, 95% CI **−2.1 to +0.8**, p = 0.35. **No real change.**
-- P1 (most urgent) mean consultation wait: **47 min → 4 min**.
-- P5 (least urgent), 95th-percentile wait: **137 min → 461 min**.
-
-**Say (slowly, this is the key moment):**
-
+🎯 **Why:** Objective 3 and literature gap 1 (walk-in clinics).
+
+### Step 4 — The patient's phone (2 min) ★
+
+👤 **Be:** nobody. Switch to **Window B** (the narrow window at `/status`).
+
+![The patient's status page](evidence/defence-status.png)
+
+🖱 **Click:**
+1. Click in **Private status token** and paste (**Ctrl+V**).
+2. Click **Check status**. ➜ Rejoice's **current stage** (Triage), roughly how many people
+   are ahead, and an estimated waiting range.
+3. Click **Shona**, then **Ndebele**, then **English**. ➜ The page changes language.
+4. *(Optional)* Change one character of the token and click **Check status** again. ➜ It is
+   refused, and reveals nothing.
+
+🗣 **Say:**
+> "Research by Bidari Jafarnejad found that when patients can see the queue, the wait *feels*
+> shorter than it is. So the patient gets their stage, how many are ahead and an estimate, in
+> their language. And look at what it does **not** show: no name, no urgency, no one else's
+> details."
+
+🎯 **Why:** The proposal's significance (§1.5): transparent information for patients; privacy.
+
+### Step 5 — Triage, with the AI as an adviser (5 min) ★
+
+**Part A — switching the AI on (governance).**
+
+👤 **Be:** **Window A** → **Demo role** → **Admin**.
+
+🖱 **Click:**
+1. Left menu → **Research** → **AI research**. Find the **Model registry** card.
+2. Click **Activate reviewed advisory**. ➜ A dialog asks for a **Reason**: type `Enabled for
+   the synthetic demonstration` → **Confirm action**. ➜ The card now says **"Enabled for
+   synthetic advisory"**.
+   *(If the button already says **Disable advisory**, the AI is already on. Skip this.)*
+
+🗣 **Say:**
+> "Before the AI can say anything, two people must act. A clinician records a review, which I
+> did before we started, and then an administrator switches it on. Nobody can switch on a model
+> nobody has reviewed. The governance is built into the software."
+
+**Part B — the triage nurse assesses Shamiso.**
+
+👤 **Be:** **Demo role** → **Triage**. ➜ *"Welcome, Nurse Chipo Ndlovu"*.
+
+![Triage with the advisory](evidence/defence-triage.png)
+
+🖱 **Click:**
+1. Left menu → **Clinic** → **Triage**.
+2. On the right, under **Waiting for triage**, find **Shamiso Marufu** and click **Assess**.
+   ➜ Her button turns green (**Assessing**) and the form on the left is now hers.
+3. Scroll down to **Recorded observations** and type: **Temperature** `38.4`, **Pulse** `132`,
+   **Respiratory rate** `36`, **Oxygen saturation** `96`. Leave blood pressure empty
+   (children often don't have it measured).
+4. On the right, under **Research advisory**, click **Request advisory explanation**.
+   ➜ One of two answers appears. **Both are good.**
+
+*If it says **"Suggests P…"**:*
+> "It suggests a category, says how confident it is, and shows *which measurements pushed it
+> there*. That's Miller's explanation theory: contrastive, why this category rather than the
+> next, and selective, only the few factors that mattered. The empty blood pressure is listed
+> as 'not recorded'. It is never assumed to be normal."
+
+*If it says **"No suggestion — clinician assessment only"** (likely for Shamiso):*
+> "This is the behaviour I'm proudest of. A breathing rate of 36 is normal for a feverish
+> toddler, but it's outside what this model was trained on. So it **declines to answer** instead
+> of guessing. When it does answer, it's wrong less often: 34% instead of 44%."
+
+5. Back on the left: **Clinician-confirmed urgency** → choose **P2**. In **Assessment
+   rationale** type `Fever and fast breathing; seen ahead of routine patients`.
+6. Click **Confirm assessment**. ➜ A dialog says *"Confirm P2 for A-0xx — This records your
+   clinician assessment, not an autonomous AI decision."* Click **Confirm clinician
+   assessment**.
+   ➜ Shamiso leaves the triage list and joins the consultation queue as P2.
+
+🗣 **Say:**
+> "The decision is the nurse's. Even accepting a suggestion only fills in the box; she still has
+> to confirm. Her decision, the AI's suggestion, and whether she followed it are all recorded."
+
+🎯 **Why:** Objective 2 — an *explainable* model using routinely collected data; literature gap 2
+(explanations built, not promised); the proposal's rule *"The AI component ranks and explains;
+it does not decide."*
+
+### Step 6 — The queue, and the patient at the bottom (4 min) ★
+
+👤 **Be:** **Demo role** → **Clinician**. ➜ *"Welcome, Dr Nyasha Mupfumi"*.
+
+![Live queues](evidence/defence-queues.png)
+
+🖱 **Click:**
+1. Left menu → **Clinic** → **Live queues**. Look at the **Consultation** card. Patients are
+   numbered in the order they'll be called: the **P2** children at the top (Tinotenda, then
+   Shamiso, who you just triaged), then **P3**, **P4**, **P5**.
+2. Find **Brighton Nhamo (P4)**. His waiting time is in red: *"1h 12m Long wait — stays
+   flagged"*.
+3. Under him, click **Why this position**. ➜ The plain-language reasons for his place open.
+4. Click **Review** on a patient marked **Review suggested** (for example Brighton). ➜ A dialog
+   explains how long they've waited and how many later arrivals were seen first. The category
+   is pre-filled. Click **Record review**.
+   **What it really does:** a clinician has looked again and confirmed (or changed) the urgency.
+   The warning clears, and the review is logged.
+5. On **Godknows Mutasa (P5)**, click **Override**. ➜ Dialog *"Clinician queue override"*:
+   **New rank** `1`, **Reason** `Only needs a repeat prescription; seen quickly between patients`
+   → **Confirm action**. ➜ He moves to the top with an **Override** badge.
+
+🗣 **Say:**
+> "The order is the clinician's urgency first, then waiting time within each urgency. The
+> software never changes anyone's category.
+> Brighton is the patient my fourth research gap is about. He's waited over an hour while
+> seven later arrivals went before him. A system that only reports the *average* would never
+> notice him. This one flags him and **asks a clinician to look again**. It doesn't move him by
+> itself, because changing someone's priority is a clinical decision.
+> And when a clinician does want a different order: one action, a reason, and it's logged."
+
+🎯 **Why:** Objective 3 (dynamic prioritisation); literature gap 4 (the patient at the bottom of
+the queue); proposal §1.5 (*"Every override is one action and every override is logged."*).
+
+### Step 7 — Consultation, laboratory, pharmacy (5 min)
+
+**Part A — the doctor.** 👤 **Be:** Clinician (still). Left menu → **Clinic** → **Service console**.
+On the left are the patients with this doctor; on the right, a **Call next** panel per service.
+
+🖱 **Click:**
+1. **Takudzwa Madziva** shows **Paused** ("he went home to fetch his clinic card"). Click
+   **Resume service** → Reason `Back with his clinic card` → **Confirm action**.
+2. On his card click **Complete & route**. In the dialog: **Next service** → **Finish visit**;
+   **Service completion note** `Reviewed; advised and discharged home.` → **Confirm action**.
+   ➜ *"Service completed and visit closed."* He's gone home.
+3. **Fadzai Kativhu** (with the doctor now): **Complete & route** → **Next service** is already
+   **Pharmacy** → note `Seen; to pharmacy to collect medicines.` → **Confirm action**.
+4. In the **Consultation** panel on the right, click **Call next**. ➜ Dialog *"Call A-0xx to a
+   room"*. **Room** lists only rooms that are free *and* have a doctor on duty. Click **Assign
+   room & call**. ➜ *"A-0xx called to Consultation room 1"* (or room 2).
+
+🗣 **Say:**
+> "Calling isn't just shouting a number. The system knows which doctor is in which room, who's
+> on a break and which rooms are busy. It reserves the room and the doctor in one step, so two
+> staff can't call into the same room."
+
+**Part B — the laboratory.** 👤 **Be:** **Demo role** → **Laboratory**.
+
+🖱 **Click:**
+1. Left menu → **Live queues**. In the **Laboratory** card there's **one ticket, with no name**.
+   🗣 *"The laboratory sees a ticket, not a name. It only needs to know who's next, so that's
+   all it gets."*
+2. Click **Call** → **Assign room & call** (Laboratory room).
+3. Left menu → **Service console**. On the patient's card: **Start service** → **Complete &
+   route** → **Next service** → **Consultation** → note `Blood test done; back to the doctor
+   with the result.` → **Confirm action**.
+   🗣 *"She goes back to the doctor as a **new** consultation. The first one is never
+   overwritten, so the full history is kept."*
+
+**Part C — the pharmacy.** 👤 **Be:** **Demo role** → **Pharmacy**. Left menu → **Service
+console**.
+
+🖱 **Click:**
+1. Under **Incoming service handovers**, read Sibongile's note: *"Please explain how to take
+   the medicines in Shona; she prefers it."* Click **Acknowledge handover**.
+2. In the **Pharmacy** panel, click **Call next** → **Assign room & call** (Pharmacy counter).
+3. On the card on the left: **Start service** → **Complete & route** → **Next service**:
+   **Finish visit** → note `Medicines collected; explained in Shona.` → **Confirm action**.
+   ➜ *"…visit closed."*
+
+**Part D — the journey record.**
+
+![A completed journey timeline](evidence/defence-journey.png)
+
+🖱 **Click:** Left menu → **Patient journeys** → under **Journey timeline**, open the **Visit**
+list and choose **Takudzwa Madziva** (finished in Part A). ➜ Every stage with **Queued, Called, Started, Ended** times.
+
+🗣 **Say:**
+> "Every click you saw was a timestamp. Researchers measure these by hand with a stopwatch in a
+> time-and-motion study. Here they're recorded automatically, just by doing the work. That
+> data feeds Objectives 1 and 4."
+
+*(Optional)* Switch to **Window B**: Rejoice's page has moved on by itself.
+
+🎯 **Why:** Objective 3 — patient-flow tracking from arrival to exit.
+
+### Step 8 — When a room closes (2 min)
+
+👤 **Be:** **Demo role** → **Admin**.
+
+🖱 **Click:**
+1. Left menu → **Workspace** → **Facility admin**. In the list of service points, find
+   **Consultation** and click its **Change availability**.
+2. Dialog *"Availability: Consultation"*: **Capacity** `0`, **Reason** `Room flooded` →
+   **Confirm action**. ➜ *"Consultation availability updated and audited."*
+3. Left menu → **Overview**. ➜ **Needs attention** now says Consultation is unavailable.
+   Nobody has been removed from the queue.
+4. Go back: **Facility admin** → Consultation → **Change availability** → **Capacity** `2`,
+   **Reason** `Room reopened` → **Confirm action**.
+
+🗣 **Say:**
+> "A normal queue can't react when a room closes. Here, new calls pause, but **nobody loses
+> their place**. And the third gap in my literature review was systems that need a good network
+> or special hardware. This runs on one laptop with no internet. If the connection drops,
+> screens say so and stop accepting actions rather than showing old information, and the
+> **Downtime kit** prints a paper sheet for the outage."
+
+🎯 **Why:** Literature gap 3 (unreliable connectivity, limited hardware).
+
+### Step 9 — Objective 1: measuring today's process (3 min) ★
+
+👤 **Be:** **Demo role** → **Research**. ➜ *"Welcome, Kudzai Ncube"*. The menu now has
+research screens and no patient screens.
+
+🖱 **Click:**
+1. Left menu → **Research** → **AI research**. Scroll to **Anonymous baseline timing import**.
+2. Click the line **Stored baseline: Fictional clinic · synthetic time-and-motion baseline**.
+   ➜ It opens a report.
+3. Point at: waiting and service time for each stage, the **bottleneck** (registration), the
+   **morning arrival share**, the **share of time spent waiting**, and the **Little's Law** check.
+4. Left menu → **Analytics** → click **Last 7 days**. ➜ The same measures from the clinic's own
+   records. Point at **Export CSV**.
+
+🗣 **Say:**
+> "Objective 1 is measuring how the clinic works today. In the field study that means 300
+> journeys over three weeks. Before going into a clinic, I needed the analysis ready and tested.
+> So the system takes stopwatch data in an anonymous format and reports every measure my
+> proposal lists. Notice the bottleneck is *registration*, the same shape Link and colleagues
+> found in Harare. Little's Law is a sense-check on the data: if the queue lengths don't match
+> arrival rate times waiting time, something was recorded wrongly."
+
+🎯 **Why:** Objective 1 / research question 1; queueing theory (Little, 1961).
+
+### Step 10 — Does it reduce waiting? The honest answer (6 min) ★ — the climax
+
+👤 **Be:** Research (still). Left menu → **Research** → **Simulation lab**.
+
+![Simulation results](evidence/defence-simulation.png)
+
+🖱 **Click:**
+1. **Saved comparisons** drop-down → choose **Calibrated baseline check**.
+   ➜ *"Simulated FCFS reproduces the measured baseline"*, with a table of measured against
+   simulated times.
+
+🗣 **Say:**
+> "Before trusting any simulation, it must first reproduce the real measurements. Here it does,
+> for every stage. And in this quiet clinic, about 38 patients a day, changing the order of
+> the consultation queue makes **no difference**, because the delay is at registration.
+> Reordering can't fix a registration bottleneck. That's a design finding, not a failure."
+
+2. **Saved comparisons** → choose **Fictional clinic · morning queue comparison**.
+
+🗣 **Say:**
+> "Now a busy morning: 150 patients, two doctors, ten simulated days. Every rule gets the
+> *identical* patients, so the comparison is fair."
+
+Point at (they match Part 5):
+- Average wait: first-come-first-served **89.4** min; urgency rules **88.8** min. Difference
+  **−0.6 min**, with an interval from −2.1 to +0.8. **Effectively no change.**
+- The most urgent (P1): **47 min → 4 min**.
+- The least urgent (P5), worst 5%: **137 min → 461 min**.
+
+🗣 **Say (slowly, this is the key moment):**
 > "This is the most important result in my project. Prioritising **did not reduce the average
-> wait**. Queueing theory predicts this: Kleinrock's conservation law says that with the same
-> doctors and the same work, reordering moves waiting between people. It doesn't remove it.
->
-> What prioritising did was move the most urgent patients from **47 minutes to 4**, and push
-> the slowest least-urgent patients from **2¼ hours to almost 8**. If I had reported only the
-> average, you would see 'no effect'. If I had reported only P1, you would see 'a miracle'.
-> **Both would be misleading.** This is why my fourth gap matters."
+> wait**. Queueing theory predicts that: with the same doctors and the same work, changing the
+> order *moves* waiting between people, it doesn't remove it.
+> What it did was get the most urgent patients seen in **4 minutes instead of 47**, while the
+> unluckiest routine patients went from about **2¼ hours to almost 8**. If I'd shown you only the
+> average, you'd see 'no effect'. If I'd shown only P1, you'd see 'a miracle'. **Both would be
+> misleading.** That is exactly why my fourth research gap matters."
 
-**Do:** Open your pre-run **"Morning comparison with research policies"** and scroll to **"The
-patient at the bottom of the queue"**.
+3. **Saved comparisons** → choose **Morning comparison with research policies**. Scroll to
+   **The patient at the bottom of the queue**.
 
-**Say:**
+🗣 **Say:**
+> "So I tested two alternatives, **only in the simulator**, because changing the live order
+> automatically is a decision for clinical governance, not for me.
+> **Bounded ageing** moves a patient up one category for each period they wait, up to a limit.
+> Urgent patients still wait about **5 minutes**, but the worst routine waits **halve**, from 461
+> to **236 minutes**.
+> **Duration-aware** ordering, quickest consultations first, gives the best average, but does
+> nothing for the patient at the bottom.
+> So my evidence-based recommendation is bounded ageing, subject to clinical governance. Until
+> then, the live system stays clinician-confirmed."
 
-> "So I tested two alternatives, **only in the simulator**, because changing the live order on a
-> timer is a clinical-governance decision, not mine.
-> **Bounded ageing** promotes a patient one category for each period waited, up to a limit.
-> P1 patients still wait about **5 minutes**. The worst P5 wait **halves**, from 461 to **236
-> minutes**. The overall 90th percentile returns to first-come-first-served levels. The mean
-> even improves slightly: **−1.2 min**, 95% CI −2.1 to −0.3.
-> **Duration-aware** ordering, shortest predicted consultation first within a category, gives
-> the best mean (**−2.2 min**), but it does nothing for the patient at the bottom.
->
-> My recommendation from this evidence is that if a facility ever adopted dynamic ordering,
-> bounded ageing is the defensible trade-off, *subject to clinical governance*. The live system
-> stays clinician-confirmed until then."
+*If asked "So what **does** reduce waiting?"*: left menu → **Experiments**. In the recorded
+50-patient, 3-room experiment, sending each patient to *the next free room* cut the average
+by about **18 minutes**. "Waiting falls when you change **capacity and flow**, not just order."
 
-**Why:** O4 / RQ4 (waiting time compared with the existing process); queueing theory (priority
-trade-off, Chapter 2.1.1); proposal §1.5 (*"examine under-triage … rather than assuming that an
-improvement in average waiting time is sufficient"*); gap 4.
+🎯 **Why:** Objective 4 / research question 4; queueing theory (Chapter 2.1.1); proposal §1.5
+(*"rather than assuming that an improvement in average waiting time is sufficient"*); gap 4.
 
-**Optional, if asked "so what *does* reduce waiting?":** Open **Experiments**. The recorded
-50-arrival / 3-room experiment shows that **pooling rooms**, sending the next patient to the next
-free room, cut mean completed-journey wait by about **18 minutes** (95% CI −26.4 to −9.0) against
-fixed room assignment. "Waiting falls when you change **capacity and flow**, not only order. That
-is consistent with the Tanzanian study, where scheduling and process changes cut median waits by
-45%."
+### Step 11 — How good is the AI? (4 min) ★
 
-### Step 11 — O4: how good is the model? (4 minutes) ★
+👤 **Be:** Research. Left menu → **Research** → **Evaluation**. Click the **O2** button near
+the top. ➜ The page jumps to Objective 2.
 
-**Do:** **Evaluation** → **O2**, or **AI research** → the model card.
+![The Evaluation view](evidence/defence-evaluation.png)
 
-**Say:**
+🗣 **Say and point:**
+> "These labels are **synthetic**, and the screen says so. These numbers show the method works.
+> They don't show clinical accuracy."
+- **Macro-F1 0.56**, against **0.07** for always guessing the most common category and **0.43**
+  for a random forest. *"Macro-F1 counts every category equally, so a model can't look good by
+  ignoring the rare urgent ones."*
+- **Under-triage: 42 of 200 test cases** were placed less urgent than their label. *"That's
+  the dangerous mistake. My proposal promised to report it, so here it is, and it's why the
+  AI can never decide."*
+- **Suggestion coverage ≈ 45%**: *"It answers about half the time; when it does, it's wrong
+  34% of the time instead of 44%."*
+- **Calibration error**: *"When it says 70% sure, it should be right about 70% of the time."*
+> "The model was trained on earlier visits and tested on later ones, as it would be used in
+> real life. The test data was never used to tune it."
 
-> "Objective 2's evaluation. The labels here are **synthetic**, and the screen says so. These
-> numbers show the method works. They do not show clinical accuracy."
+🎯 **Why:** Objectives 2 and 4 (model performance); proposal §1.5 (under-triage reported
+explicitly).
 
-**Point out (seed 2026; matches Part 4):**
-- **Macro-F1 0.56**, against **0.07** for always predicting the most common category and **0.43**
-  for a random forest. "I report macro-F1 because a model that ignores rare urgent patients can
-  still score high accuracy. Macro-F1 weights every category equally."
-- **P1 precision 0.84, recall 0.65.** "When it says P1 it's usually right, but it misses a third
-  of P1 cases. That's exactly why it can't be allowed to decide."
-- **Under-triage: 42 of 200 held-out cases (21%)** are placed less urgent than their label. "My
-  proposal promised to report under-triage explicitly, so here it is. Under-triage is the
-  dangerous error."
-- **Coverage ≈ 45% at the chosen threshold**, with the error rate falling from 44% to 34% on the
-  cases it does answer.
-- **Calibration:** confidence is temperature-scaled, so "70% confident" should mean right about
-  70% of the time. The reliability bins are shown.
+### Step 12 — Usability and acceptance (2 min)
 
-**Say:**
+👤 **Be:** Research. Still on **Evaluation**. Click **O4**, then scroll to **Usability
+session**.
 
-> "The data was split by time, not at random: the model trains on earlier visits and is tested
-> on later ones, as it would be used. Model choice, calibration, the abstention threshold and the
-> final test each used separate data, so the test numbers were never used to tune anything."
+🗣 **Say:**
+> "Usability is measured with the **System Usability Scale**, and acceptance with the
+> **Technology Acceptance Model**: is it useful, is it easy to use. That's Chapter 2.1.4.
+> Honestly: **no real participants have been recruited yet**. That needs ethics approval. What
+> I can show is that the questionnaires, consent references and scoring are built and tested.
+> On the day the sessions happen, the results appear here."
 
-**Why:** O2 and O4 (model performance); proposal §1.5 (under-triage); §1.8 (missing data
-handled, not imputed silently).
+Point at **Outside the software** under each objective: interviews, approvals, fieldwork.
 
-### Step 12 — O4: usability and acceptance (2 minutes)
+🎯 **Why:** Objective 4 (usability, clinician acceptance).
 
-**Do:** **Evaluation** → **O4**, and the **Usability session** panel below it.
+### Step 13 — Who did what: the audit trail, and AI off (2 min)
 
-**Say:**
+👤 **Be:** **Demo role** → **Admin**.
 
-> "Usability is measured with the **System Usability Scale**, with standard scoring, and
-> acceptance with the **Technology Acceptance Model**: perceived usefulness and perceived ease of
-> use, as in Chapter 2.1.4. Cronbach's alpha is reported for each scale.
->
-> I'll be direct: **no real participants have been recruited yet**. That needs ethics approval.
-> What I can show is that the instruments, consent references and analysis are built and tested.
-> The day the sessions happen, the results appear here, next to the waiting-time evidence."
+🖱 **Click:**
+1. Left menu → **Workspace** → **Audit log**. ➜ Every action today, with who, when, and the
+   reason. Point at your override and the AI activation.
+2. Left menu → **AI research** → **Disable advisory** → Reason `Showing the clinic works without
+   the AI` → **Confirm action**.
+3. **Demo role** → **Triage** → **Triage** → **Assess** any waiting patient → **Request advisory
+   explanation**. ➜ *"Model unavailable — clinician assessment required."* The nurse simply
+   carries on.
 
-**Do (optional):** Show the form: the ten SUS items and eight TAM items.
+🗣 **Say:**
+> "Every action is on record and can't be edited. And if the AI is switched off or breaks, the
+> clinic keeps working. The AI is an extra, not a dependency."
 
-**Point out:** For each objective, the Evaluation view lists what the proposal requires, which
-requirements are met, the evidence held, and **"Outside the software"**: interviews, approvals,
-fieldwork.
+🎯 **Why:** Proposal §1.10 (audit logging); the clinic must work without AI.
 
-**Why:** O4 (usability, clinician acceptance); TAM (Davis 1989); SUS (Brooke 1996).
+### Step 14 — Close (2 min) ★
 
-### Step 13 — Accountability: the audit trail (1 minute)
+No clicks. Look at the panel.
 
-**Do:** **Audit log**. Filter or scroll to your override, the advisory activation and the
-outage.
-
-**Say:**
-
-> "Every command you saw today is here: who, when, what changed, and the reason given. The audit
-> records can't be edited, even by the database's own application account."
-
-Then, to close the AI story:
-
-**Do:** **AI research** → **Disable advisory**. **Demo role** → **Triage** → show that triage
-still works: *"Model unavailable — clinician assessment required."*
-
-> "If the AI is switched off, or fails, the clinic carries on. The AI is an addition to the
-> system, not a dependency."
-
-**Why:** Proposal §1.10 (audit logging); spec invariant: the queue works without AI.
-
-### Step 14 — Close (2 minutes) ★
-
-**Say:**
-
+🗣 **Say:**
 > "To summarise against my objectives:
->
-> **O1:** the system measures waiting and service time per stage, bottlenecks, arrival patterns
-> and queue length, checks them against Little's Law, and calibrates a simulator that reproduces
-> the baseline.
-> **O2:** an explainable, calibrated model built on routinely collected data that reports its
-> inputs, its reasons, its under-triage and its uncertainty, and declines when unsure.
-> **O3:** a working system with real-time visibility for staff and patients, dynamic
-> clinician-confirmed prioritisation, full journey tracking, and safe behaviour in outages.
-> **O4:** an evaluation that compares policies on identical patients and shows that ordering
-> moves waiting rather than removing it. It measures the cost to the patient at the bottom, and
-> identifies bounded ageing as a fairer trade-off.
->
-> What it does **not** show: real-world effectiveness. That needs the approved fieldwork at a
-> facility, recruited clinicians and clinician-reviewed labels. The system is ready for that
-> study. It is not ready for patient care, and it says so on every screen.
->
+> **Objective 1:** the system measures waiting and service time per stage, bottlenecks, arrival
+> patterns and queue length, checks them with Little's Law, and calibrates a simulation that
+> reproduces them.
+> **Objective 2:** an explainable, calibrated model built on routine data that shows its
+> reasons, reports its under-triage, and declines when unsure.
+> **Objective 3:** a working system with live visibility for staff and patients,
+> clinician-confirmed prioritisation, full journey tracking, and safe behaviour when things go
+> wrong.
+> **Objective 4:** a fair comparison on identical patients, showing that ordering *moves* waiting
+> rather than removing it. It measures the cost to the patient at the bottom, and identifies
+> bounded ageing as a fairer trade-off.
+> What it does **not** show yet is real-world effect. That needs the approved field study at a
+> clinic, with real staff and clinician-reviewed labels. The system is ready for that study. It
+> is not ready for patient care, and it says so on every screen.
 > Thank you. I'm happy to take questions."
 
 ---
 
-## Part 4 — Numbers card (keep this in your hand)
+## Part 5 — Numbers card (keep this in your hand)
 
 All figures are synthetic, generated with seed 2026. Values marked ◻ depend on the preparation
 date: copy them from your own screen during rehearsal.
@@ -615,13 +774,13 @@ Capacity-aware was only 0.14 min better than next-available, and its P90 was sli
 | Inputs | Age band, visit type, arrival mode, arrival hour, 6 vital signs |
 
 **Engineering (`docs/TEST_EVIDENCE.md`, 22 Nov 2026)**
-150 backend tests including real PostgreSQL concurrency · 22 frontend unit tests · 12
-full-browser end-to-end tests · clean boot and backup/restore verified · 38 recorded design
+150 backend tests including real PostgreSQL concurrency · 22 frontend unit tests · 13
+full-browser end-to-end tests (one of them performs this whole script) · clean boot and backup/restore verified · 38 recorded design
 decisions (`docs/DECISIONS.md`).
 
 ---
 
-## Part 5 — Questions and model answers
+## Part 6 — Questions and model answers
 
 Answer in three moves: **direct answer → evidence → limit**. Never bluff. "I don't know, but
 here is how I would find out" is a strong answer.
@@ -830,7 +989,7 @@ here is how I would find out" is a strong answer.
 
 **Q29. How did you test it?**
 > "150 backend tests, including concurrency on a real PostgreSQL database; 22 frontend unit tests;
-> 12 end-to-end browser tests that drive the real system, including the full patient journey,
+> 13 end-to-end browser tests that drive the real system, one of which performs this entire demonstration, including the full patient journey,
 > the private token page, offline behaviour and the evaluation view. There is also a fresh-machine
 > boot test, which starts from nothing and restores a backup. The evidence report links each
 > acceptance criterion to its test."
@@ -891,7 +1050,7 @@ If a panel member pushes on a real limitation, **agree first**, then show it is 
 
 ---
 
-## Part 6 — How each objective is evidenced (for your examiners' checklist)
+## Part 7 — How each objective is evidenced (for your examiners' checklist)
 
 | Objective / RQ | Shown live in | Evidence and where to find it |
 |---|---|---|

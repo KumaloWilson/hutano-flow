@@ -213,7 +213,7 @@ export default function Dashboard() {
           {tab === "operations" && <OperationsConsole user={user} points={points} refresh={refresh} />}
           {tab === "experiments" && <ExperimentsConsole />}
           {tab === "workbench" && <ResearchWorkbench roles={user.roles} />}
-          {tab === "registration" && <Registration onDone={refresh} setNotice={setNotice} />}
+          {tab === "registration" && <Registration onDone={refresh} setNotice={setNotice} visits={visits} />}
           {tab === "triage" && <Triage visits={visits} onDone={refresh} setNotice={setNotice} />}
           {tab === "queues" && <Queues points={points} visits={visits} user={user} onDone={refresh} setNotice={setNotice} navigate={navigate} />}
           {tab === "journeys" && <JourneyConsole visits={visits} user={user} refresh={refresh} focusVisitId={focusVisit} />}

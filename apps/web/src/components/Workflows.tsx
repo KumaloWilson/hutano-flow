@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { API_URL, api, formatTime, waitForJob } from "@/lib/api";
 import { User, Visit } from "@/lib/types";
 import { canOperateService } from "@/lib/permissions";
-import { useActionDialog, choices, reasonField } from "./ActionDialog";
+import { useActionDialog, choices, reasonField, serviceChoices } from "./ActionDialog";
 
 const clinical = (user: User) => user.roles.some((r) => ["CLINICIAN", "TRIAGE_NURSE"].includes(r));
 const message = (error: unknown) => error instanceof Error ? error.message : "Request failed";
@@ -15,7 +15,7 @@ export function JourneyConsole({ visits, user, refresh, focusVisitId }: { visits
   const [error, setError] = useState("");
   const visit = visits.find((v) => v.id === selected) || visits[0];
   async function command(episode: any, action: string) {
-    const response=await ask({title:action.replaceAll("_"," "),description:"This is an explicit staff action. Existing history remains preserved.",fields:[reasonField,...(action==="TRANSFER"?[{name:"next",label:"Next service",type:"select" as const,options:choices(["consultation","pharmacy","laboratory","discharge"])}]:[])]});if(!response)return;const reason=response.reason;
+    const response=await ask({title:action.replaceAll("_"," "),description:"This is an explicit staff action. Existing history remains preserved.",fields:[reasonField,...(action==="TRANSFER"?[{name:"next",label:"Next service",type:"select" as const,options:serviceChoices(["consultation","pharmacy","laboratory","discharge"])}]:[])]});if(!response)return;const reason=response.reason;
     try {
       if (action === "TRANSFER") {
         const next = response.next;
@@ -71,7 +71,12 @@ export function AdvisoryPanel({visitId, observations, onDecision}: {visitId?: st
     event.preventDefault(); if (!visitId) return;
     setBusy(true); setError(""); onDecision(null);
     const typed = Object.fromEntries(Object.entries(observations || {}).filter(([,v]) => v !== "").map(([k,v]) => [k, Number(v)]));
-    try { setResult(await api(`/api/v1/visits/${visitId}/recommendation`,{method:"POST",body:JSON.stringify({observations:typed})})); }
+    try {
+      const answer:any = await api(`/api/v1/visits/${visitId}/recommendation`,{method:"POST",body:JSON.stringify({observations:typed})});
+      setResult(answer);
+      // An abstention has nothing to accept; it is still linked to the assessment, as before, without a button.
+      if (answer?.available && !answer.suggestion && answer.id) onDecision({id:answer.id, decision:"REJECT"});
+    }
     catch(e) { setError(message(e)); } finally { setBusy(false); }
   }
   const plain = result?.plain_language;
@@ -93,8 +98,8 @@ export function AdvisoryPanel({visitId, observations, onDecision}: {visitId?: st
         <ul>{result.factors?.map((f:any)=><li key={f.feature} className="mono" style={{fontSize:".8rem"}}>{f.feature}: {f.logit_contribution.toFixed(3)}</li>)}</ul>
         {result.contrastive && <p className="mono" style={{fontSize:".8rem"}}>{result.contrastive.predicted_class} vs {result.contrastive.alternative_class}: log-probability ratio {result.contrastive.calibrated_log_probability_ratio.toFixed(3)}</p>}
         <p className="muted" style={{fontSize:".8rem"}}>Model {result.model_version}</p></details>}
-      <div className="row-actions" style={{marginTop:10}}>{result.suggestion && <button className="secondary" onClick={()=>onDecision({id:result.id, suggestion:result.suggestion, decision:"ACCEPT"})}>Accept suggestion for confirmation</button>}<button className="secondary" onClick={()=>onDecision({id:result.id, decision:"REJECT"})}>Reject suggestion</button></div>
-      <small>Accepting only pre-fills the category. You must still press Confirm assessment.</small></> : <p style={{margin:0}}>{result.message}</p>}</div>}
+      {result.suggestion && <div className="row-actions" style={{marginTop:10}}><button className="secondary" onClick={()=>onDecision({id:result.id, suggestion:result.suggestion, decision:"ACCEPT"})}>Accept suggestion for confirmation</button><button className="secondary" onClick={()=>onDecision({id:result.id, decision:"REJECT"})}>Reject suggestion</button></div>}
+      {result.suggestion && <small>Accepting only pre-fills the category. You must still press Confirm assessment.</small>}</> : <p style={{margin:0}}>{result.message}</p>}</div>}
   </article>;
 }
 
