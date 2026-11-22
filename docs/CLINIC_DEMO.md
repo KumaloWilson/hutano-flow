@@ -107,8 +107,12 @@ the morning appears at night. **Demo guide** lists the same people with their cu
    new fictional person as walk-in/follow-up/referral with the planned pharmacy step.
    Print the receipt and copy its private token. A person with an active visit cannot
    be registered twice. The token is shown once and kept out of URLs.
-5. **Triage:** select Shamiso Marufu, record her vitals, read the optional advisory
-   (it may suggest or abstain), then choose and confirm a P1–P5 category yourself.
+5. **Triage:** select Shamiso Marufu, record her vitals, then choose and confirm a
+   P1–P5 category yourself. The advisory shows "Model unavailable" until a model is
+   reviewed and enabled. Preparation deliberately never does this for you. To show it,
+   beforehand: as `clinician`, **Help & safety → Record clinician research review**;
+   then as `admin`, **AI research → Activate reviewed advisory**. It then suggests or
+   abstains from the recorded vitals. **Disable advisory** shows triage still works.
    Changing patients clears the previous draft. AI unavailability does not block
    manual assessment.
 6. **Staff & rooms → Laboratory → Pharmacy:** approve a staffed room for the queue
