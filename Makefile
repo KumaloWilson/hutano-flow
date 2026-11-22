@@ -1,4 +1,8 @@
-.PHONY: up down reset test test-api test-web test-local venv seed synthetic showcase openapi contracts
+.PHONY: demo up down reset test test-api test-web test-local venv seed synthetic showcase openapi contracts
+
+# One command for the whole demonstration stack (creates .env on a fresh clone).
+demo:
+	./scripts/demo_up.sh
 
 up:
 	docker compose up --build

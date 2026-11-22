@@ -51,12 +51,32 @@ Everything is synthetic until the approvals in proposal §1.8 are in place.
 
 Requirements: Docker Engine with Compose v2/BuildKit, at least 4 GB free memory, and localhost ports 3000, 8000 and 55432 available. Initial package downloads may be substantial.
 
+Start the whole demo stack with one command:
+
+**Linux / macOS:**
+
 ```bash
-cp .env.example .env
-# Replace SECRET_KEY with a random value of at least 32 characters.
-# Set POSTGRES_PASSWORD and APP_DB_PASSWORD, and update both database URLs to match.
-docker compose up -d --build
+make demo
 ```
+
+(Without `make`: `./scripts/demo_up.sh`.)
+
+**Windows** (Docker Desktop running), in Command Prompt or PowerShell from the
+repository folder, or by double-clicking the file in Explorer:
+
+```bat
+scripts\demo_up.cmd
+```
+
+On a fresh clone it creates `.env` from
+`.env.example` with random local secrets. An existing `.env` is never changed. It then
+builds and starts the database, API, worker and web app and waits until they are healthy.
+Open http://localhost:3000 and choose **Hutano Community Clinic** and a role. Stop with
+`docker compose down`.
+
+To configure by hand instead: `cp .env.example .env`, replace `SECRET_KEY` with at least
+32 random characters, set `POSTGRES_PASSWORD` and `APP_DB_PASSWORD` (and both database
+URLs to match), then `docker compose up -d --build`.
 
 Start-up also prepares the fictional **Hutano Community Clinic** (and refreshes it when the
 rehearsal is over eight hours old), so its accounts work straight away. Research results
