@@ -99,7 +99,7 @@ export function AdvisoryPanel({visitId, observations, onDecision}: {visitId?: st
         {result.contrastive && <p className="mono" style={{fontSize:".8rem"}}>{result.contrastive.predicted_class} vs {result.contrastive.alternative_class}: log-probability ratio {result.contrastive.calibrated_log_probability_ratio.toFixed(3)}</p>}
         <p className="muted" style={{fontSize:".8rem"}}>Model {result.model_version}</p></details>}
       {result.suggestion && <div className="row-actions" style={{marginTop:10}}><button className="secondary" onClick={()=>onDecision({id:result.id, suggestion:result.suggestion, decision:"ACCEPT"})}>Accept suggestion for confirmation</button><button className="secondary" onClick={()=>onDecision({id:result.id, decision:"REJECT"})}>Reject suggestion</button></div>}
-      {result.suggestion && <small>Accepting only pre-fills the category. You must still press Confirm assessment.</small>}</> : <p style={{margin:0}}>{result.message}</p>}</div>}
+      {result.suggestion && <small>Accepting only pre-fills the category. You must still press Confirm assessment.</small>}</> : <><p style={{margin:0}}><strong>{result.message}</strong></p>{result.how_to_enable && <p className="muted" style={{margin:"6px 0 0",fontSize:".88rem"}}>{result.how_to_enable} Triage works normally without it.</p>}</>}</div>}
   </article>;
 }
 

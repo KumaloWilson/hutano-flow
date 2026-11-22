@@ -45,6 +45,7 @@
   --shadow-card: 0 1px 0 rgba(21, 23, 26, .03);
   --rail: 268px;
   --top: 64px;
+  --banner: 30px;
   color-scheme: light;
 }
 
@@ -104,8 +105,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
 .prose li { margin: .35em 0; color: var(--ink-2); }
 
 /* research banner: persistent, compact, never alarming */
-.research-banner { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 30px; padding: 5px 16px;
-  background: var(--ink); color: var(--bg); font-size: .76rem; letter-spacing: .01em; position: relative; z-index: 30; }
+.research-banner { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: center; gap: 10px; height: var(--banner); overflow: hidden; white-space: nowrap; padding: 0 16px;
+  background: var(--ink); color: var(--bg); font-size: .76rem; letter-spacing: .01em; }
 .research-banner strong { font-weight: 600; }
 .research-banner strong::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 2px; background: var(--amber-line); margin-right: 8px; vertical-align: 1px; }
 .research-banner span { opacity: .78; }
@@ -278,8 +279,9 @@ dl { margin: 0; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 /* --------------------------------------------------------------- app shell */
-.app-shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: calc(100vh - 30px); }
-.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 6px; padding: 16px 12px; border-right: 1px solid var(--line); background: var(--surface); overflow-y: auto; }
+.app-shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: calc(100vh - var(--banner)); }
+/* Sticky beneath the research banner, so the shell is exactly one screen tall. */
+.sidebar { position: sticky; top: var(--banner); height: calc(100vh - var(--banner)); display: flex; flex-direction: column; gap: 6px; padding: 16px 12px; border-right: 1px solid var(--line); background: var(--surface); overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 14px; }
 .brand-mark, .brand > span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--brand); color: var(--brand-ink); flex: none; }
 .brand strong { display: block; font-size: .98rem; letter-spacing: -.01em; }
@@ -293,14 +295,17 @@ dl { margin: 0; }
 .sidebar nav button.active, .sidebar nav button[aria-current="page"] { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
 .sidebar nav button.active svg, .sidebar nav button[aria-current="page"] svg { color: var(--brand); }
 .nav-badge { margin-left: auto; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font-family: var(--font-num); font-size: .72rem; font-weight: 600; display: inline-grid; place-items: center; }
-.sidebar-foot { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px 8px 4px; border-top: 1px solid var(--line); }
+/* Who is signed in stays visible even when a long menu scrolls. */
+.sidebar-foot { margin-top: auto; position: sticky; bottom: -16px; display: flex; align-items: center; gap: 10px; padding: 12px 8px 16px; border-top: 1px solid var(--line); background: var(--surface); }
 .sidebar-foot > div:nth-child(2) { min-width: 0; flex: 1; }
 .sidebar-foot strong { display: block; font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-foot small { display: block; font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .avatar { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-sunken); color: var(--ink); font-weight: 600; font-size: .8rem; flex: none; border: 1px solid var(--line); }
 
 .workspace { min-width: 0; padding: 0 28px 64px; }
-.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; min-height: var(--top); margin: 0 -28px 22px; padding: 10px 28px;
+/* In-page jumps (e.g. Evaluation → O2) land below the sticky banner and top bar. */
+.workspace [id] { scroll-margin-top: calc(var(--banner) + var(--top) + 12px); }
+.topbar { position: sticky; top: var(--banner); z-index: 20; display: flex; align-items: center; gap: 14px; min-height: var(--top); margin: 0 -28px 22px; padding: 10px 28px;
   background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(1.2) blur(10px); border-bottom: 1px solid var(--line); }
 .topbar .mobile-brand { display: none; }
 .quick-find { position: relative; flex: 0 1 300px; margin-left: auto; }
@@ -352,7 +357,7 @@ dl { margin: 0; }
 .action-dialog form > label + label { margin-top: 0; }
 
 /* --------------------------------------------------------------- login */
-.login-shell { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(380px, .9fr); min-height: calc(100vh - 30px); }
+.login-shell { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(380px, .9fr); min-height: calc(100vh - var(--banner)); }
 .login-intro { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 44px 56px; background: var(--ink); color: #eceae4; overflow: hidden; }
 .login-intro .brand-row { display: flex; align-items: center; gap: 12px; font-weight: 600; }
 .login-intro .brand-mark { background: #3dbd93; color: #06231a; }
@@ -549,7 +554,7 @@ li.head .rank { background: var(--brand); color: var(--brand-ink); }
 .privacy-note { font-size: .8rem; color: var(--muted); }
 
 /* --------------------------------------------------------------- patient status page */
-.status-shell { min-height: calc(100vh - 30px); display: grid; justify-items: center; align-content: start; gap: 18px; padding: 24px 16px 48px; }
+.status-shell { min-height: calc(100vh - var(--banner)); display: grid; justify-items: center; align-content: start; gap: 18px; padding: 24px 16px 48px; }
 .status-top { width: min(480px, 100%); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .flip { transform: scaleX(-1); }
 .back-link { color: var(--muted); text-decoration: none; font-size: .88rem; display: inline-flex; align-items: center; gap: 6px; }

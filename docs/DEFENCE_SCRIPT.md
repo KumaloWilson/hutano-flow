@@ -222,6 +222,7 @@ Never try to fix things in front of the panel. Say the line, then move on.
 | A red message when calling: *"No staffed room is free"* | "Both rooms are busy, so the system won't double-book a doctor." Finish a patient who is being seen, then call again |
 | A red message: *"…changed; refresh"* | "Someone else acted first, and the system stopped a double action." Click the menu item again to refresh, then repeat |
 | A research box still says "Preparing…" | "These are real calculations, not a recording." Show the result from the day before, or the screenshot in `docs/evidence` |
+| *"Model unavailable"* when asking the AI | Read the grey line under it: it says which step is missing. Usually: as **Admin** → **AI research** → **Activate reviewed advisory** (Step 5A). If it says *"not been reviewed"*, do Part 2 step 7 first. Say: "No one has approved the model yet, so it stays silent. That's the safeguard." |
 | Sign-in refused | Wait 10 seconds and try again. "That's the brute-force protection working." |
 | Anything else | Open the matching screenshot in `docs/evidence` and keep talking |
 
@@ -682,7 +683,8 @@ Point at **Outside the software** under each objective: interviews, approvals, f
 2. Left menu → **AI research** → **Disable advisory** → Reason `Showing the clinic works without
    the AI` → **Confirm action**.
 3. **Demo role** → **Triage** → **Triage** → **Assess** any waiting patient → **Request advisory
-   explanation**. ➜ *"Model unavailable — clinician assessment required."* The nurse simply
+   explanation**. ➜ *"Model unavailable — clinician assessment required"*, with a line saying
+   why (*"reviewed but is switched off"*) and who can switch it back on. The nurse simply
    carries on.
 
 🗣 **Say:**

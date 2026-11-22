@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './login';
+import { login, fullShot } from './login';
 
 // A presenter's path: prepare a fresh rehearsal from the browser, wait for research
 // results, switch roles without signing out, and see the advisory at triage.
@@ -17,7 +17,7 @@ test('admin prepares a fresh rehearsal, roles switch in one step and the advisor
   const readiness=page.getByRole('status',{name:'Demonstration readiness'});
   await expect(readiness).toContainText('Research results ready',{timeout:150000});
   await expect(readiness).toContainText('Advisory enabled by a scripted preparation review');
-  await page.screenshot({path:testInfo.outputPath('demo-guide-ready.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('demo-guide-ready.png'));
 
   // One-step role change, only offered inside the fictional clinic.
   await page.getByLabel('Switch demo role').selectOption('triage');
@@ -35,7 +35,7 @@ test('admin prepares a fresh rehearsal, roles switch in one step and the advisor
   // Either a suggestion or an explicit abstention: the model answered, it was not "unavailable".
   await expect(page.locator('.advisory-result')).toContainText(/Suggests|No suggestion — clinician assessment only/,{timeout:30000});
   await expect(page.locator('.advisory-result')).not.toContainText('Model unavailable');
-  await page.screenshot({path:testInfo.outputPath('triage-advisory.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('triage-advisory.png'));
 
   // Back to the administrator for the rest of the demonstration.
   await page.getByLabel('Switch demo role').selectOption('admin');

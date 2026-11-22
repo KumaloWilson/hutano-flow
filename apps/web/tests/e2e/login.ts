@@ -15,3 +15,10 @@ export async function login(page: Page, email: string, password: string, expecte
   }, { timeout: 65000, intervals: [5000] }).toBe(expectedStatus);
   if (expectedStatus === 200) await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
 }
+
+// Full-page evidence screenshots: from the top, with the sticky banner, top bar and sidebar laid out
+// in normal flow, so the capture matches what a person sees instead of freezing them mid-page.
+export async function fullShot(page: Page, path: string) {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path, fullPage: true, style: ".research-banner,.topbar{position:static!important}.sidebar{position:static!important;height:auto!important}" });
+}

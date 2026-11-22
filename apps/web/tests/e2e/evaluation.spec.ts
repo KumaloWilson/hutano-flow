@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './login';
+import { login, fullShot } from './login';
 
 // Objective 4 evidence end to end: a baseline-calibrated simulation, one consented
 // usability session with SUS and TAM, and the Evaluation view that gathers both.
@@ -19,7 +19,7 @@ test('calibrated simulation and usability feedback reach the objective evaluatio
   await expect(page.getByText(/^(Simulated FCFS reproduces the measured baseline|Simulation does not reproduce the measured baseline)$/)).toBeVisible({timeout:110000});
   await expect(page.getByRole('heading',{name:'Paired comparison with first come, first served'})).toBeVisible();
   await expect(page.getByRole('cell',{name:/consultation · /}).first()).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('calibrated-simulation.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('calibrated-simulation.png'));
 
   await page.getByRole('button',{name:'Evaluation',exact:true}).click();
   const objectives=page.locator('article.objective');
@@ -53,5 +53,5 @@ test('calibrated simulation and usability feedback reach the objective evaluatio
   await expect(acceptance.filter({hasText:'Mean SUS'})).toContainText('75');
   await expect(acceptance.filter({hasText:'Perceived usefulness'})).toContainText('6');
   await expect(acceptance.filter({hasText:'Perceived ease of use'})).toContainText('5');
-  await page.screenshot({path:testInfo.outputPath('evaluation-objectives.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('evaluation-objectives.png'));
 });

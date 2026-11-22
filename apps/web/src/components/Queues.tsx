@@ -46,7 +46,20 @@ function useCallAction(onDone: () => Promise<void>, setNotice: (n: Notice) => vo
           submit: "Assign room & call",
         });
         if (!answer) return;
-        const called = await api<{ room: string }>(`/api/v1/operations/proposals/${proposal.id}/approve`, { method: "POST", body: JSON.stringify({ room_id: answer.room, reason: answer.reason }) });
+        const approve = (id: string) => api<{ room: string }>(`/api/v1/operations/proposals/${id}/approve`, { method: "POST", body: JSON.stringify({ room_id: answer.room, reason: answer.reason }) });
+        let called: { room: string };
+        try { called = await approve(proposal.id); }
+        catch (e) {
+          // Rooms changed while the dialog was open (e.g. a consultation just finished). The choice
+          // is still the user's: re-check and use the same room only if it is still free and staffed.
+          if (!/resources changed/.test(errorText(e, ""))) throw e;
+          const fresh = await api<RoomProposal>("/api/v1/operations/proposals", { method: "POST", body: JSON.stringify({ queue_entry_id: entry.queue_entry_id, version: entry.version }) });
+          if (!fresh.options.some((o) => o.available && o.id === answer.room)) {
+            setNotice({ kind: "error", text: "Rooms changed while you were choosing, and that room is no longer free. Press Call again to see the current rooms." });
+            return;
+          }
+          called = await approve(fresh.id);
+        }
         await Promise.all([after?.(), onDone()]);
         setNotice({ kind: "success", text: `${entry.public_token} called to ${called.room}.` });
         return;

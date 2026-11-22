@@ -1548,6 +1548,16 @@ def model_lifecycle(model_id: uuid.UUID, payload: ModelReview, user: CurrentUser
             "warning": "Reviewed for synthetic demonstration only; never clinical validation"}
 
 
+def advisory_unavailable_reason(db: Session, facility_id) -> dict:
+    """Why the advisory is off, and who can change it, in plain words (it never blocks triage)."""
+    statuses = set(db.scalars(select(ModelVersion.status).where(ModelVersion.facility_id == facility_id)))
+    if not statuses - {"RETIRED"}:
+        return {"reason": "NO_MODEL", "how_to_enable": "No advisory model has been trained for this facility. A researcher or administrator can train one in AI research."}
+    if "REVIEWED" in statuses:
+        return {"reason": "NOT_ENABLED", "how_to_enable": "The advisory has been reviewed but is switched off. An administrator can switch it on: AI research → Activate reviewed advisory."}
+    return {"reason": "NOT_REVIEWED", "how_to_enable": "The advisory model has not been reviewed yet. A clinician records a research review (Help & safety → Record clinician research review); an administrator then switches it on (AI research → Activate reviewed advisory)."}
+
+
 @app.post("/api/v1/visits/{visit_id}/recommendation", status_code=201)
 def infer_recommendation(visit_id: uuid.UUID, payload: InferenceRequest,
     user: User = Depends(require_roles("CLINICIAN", "TRIAGE_NURSE")), db: Session = Depends(get_db, scope="function"),
@@ -1564,7 +1574,7 @@ def infer_recommendation(visit_id: uuid.UUID, payload: InferenceRequest,
         raise HTTPException(422, "; ".join(problems))
     model = db.scalar(select(ModelVersion).where(ModelVersion.facility_id == user.facility_id, ModelVersion.active.is_(True), ModelVersion.status == "REVIEWED"))
     if not model:
-        return {"available": False, "message": "Model unavailable — clinician assessment required"}
+        return {"available": False, "message": "Model unavailable — clinician assessment required", **advisory_unavailable_reason(db, user.facility_id)}
     values, sources = visit_inputs(db, visit, payload.observations)
     if payload.features:
         values.update(payload.features)
@@ -1572,7 +1582,8 @@ def infer_recommendation(visit_id: uuid.UUID, payload: InferenceRequest,
     try:
         explanation = advisory_for_display(explain_prediction(model.artifact_path, values))
     except (FileNotFoundError, OSError):
-        return {"available": False, "message": "Model unavailable — clinician assessment required"}
+        return {"available": False, "message": "Model unavailable — clinician assessment required", "reason": "ARTIFACT_MISSING",
+                "how_to_enable": "The model file is missing on this server. A researcher or administrator can retrain it in AI research."}
     explanation["inputs"] = [{"feature": key, "value": values.get(key), "source": sources.get(key, "not recorded")}
                              for key in (FEATURES if "recorded_measurement" not in values else LEGACY_FEATURES)]
     recommendation = PriorityRecommendation(facility_id=user.facility_id, visit_id=visit.id,

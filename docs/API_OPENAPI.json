@@ -9412,6 +9412,11 @@
             "type": "boolean",
             "title": "Enable Advisory",
             "default": false
+          },
+          "close_manual_visits": {
+            "type": "boolean",
+            "title": "Close Manual Visits",
+            "default": false
           }
         },
         "type": "object",

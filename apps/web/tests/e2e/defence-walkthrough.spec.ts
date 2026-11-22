@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { login } from './login';
+import { login, fullShot } from './login';
 
 // Performs docs/DEFENCE_SCRIPT.md click by click, as the presenter would, on a freshly
 // prepared fictional clinic. If this test fails, the matching script step would fail on stage.
@@ -17,7 +17,7 @@ const panel = (page: Page, heading: string) => page.locator('article').filter({ 
 
 test('the defence script works end to end', async ({ page, context }, testInfo) => {
   test.setTimeout(600_000);
-  const shot = (name: string) => page.screenshot({ path: testInfo.outputPath(`defence-${name}.png`), fullPage: true });
+  const shot = (name: string) => fullShot(page, testInfo.outputPath(`defence-${name}.png`));
 
   await test.step('Part 1: prepare a fresh rehearsal, pre-run comparisons, record the review', async () => {
     await login(page, 'admin@showcase.hutano.test', 'DemoAdmin1!');
@@ -56,6 +56,13 @@ test('the defence script works end to end', async ({ page, context }, testInfo) 
     await become(page, 'admin', /Welcome, Tariro Dube/);
     await expect(page.getByText(/1 long wait at Consultation/)).toBeVisible();
     await expect(page.getByText(/1 escalation alert/)).toBeVisible();
+    // Layout: the whole sidebar, including who is signed in, fits on screen without scrolling,
+    // and the research banner stays visible after scrolling.
+    await expect(page.locator('.sidebar-foot')).toBeInViewport();
+    await page.mouse.wheel(0, 600);
+    await expect(page.locator('.research-banner')).toBeInViewport();
+    await expect(page.locator('.sidebar-foot')).toBeInViewport();
+    await page.evaluate(() => window.scrollTo(0, 0));
     await shot('overview');
   });
 
@@ -84,7 +91,7 @@ test('the defence script works end to end', async ({ page, context }, testInfo) 
     await phone.getByRole('button', { name: /check|show|status/i }).first().click();
     await expect(phone.locator('main')).toContainText(/triage/i);
     await expect(phone.locator('main')).not.toContainText('Rejoice');
-    await phone.screenshot({ path: testInfo.outputPath('defence-status.png'), fullPage: true });
+    await fullShot(phone, testInfo.outputPath('defence-status.png'));
     await phone.close();
   });
 
@@ -122,6 +129,10 @@ test('the defence script works end to end', async ({ page, context }, testInfo) 
     await godknows.getByRole('button', { name: 'Override', exact: true }).click();
     await dialog(page).getByLabel('Reason', { exact: true }).fill('Clinician moved forward after reassessment');
     await confirm(page);
+    // The script promises he moves to the top with an Override badge.
+    const consultationQueue = panel(page, 'Consultation').locator('.queue-list > li');
+    await expect(consultationQueue.first()).toContainText('Godknows Mutasa');
+    await expect(consultationQueue.first()).toContainText('Override');
     await shot('queues');
   });
 
@@ -236,5 +247,8 @@ test('the defence script works end to end', async ({ page, context }, testInfo) 
     await go(page, 'Triage');
     await page.getByRole('button', { name: 'Request advisory explanation' }).click();
     await expect(page.locator('.advisory-result')).toContainText('Model unavailable');
+    // It says why, and who can switch it back on.
+    await expect(page.locator('.advisory-result')).toContainText('reviewed but is switched off');
+    await expect(page.locator('.advisory-result')).toContainText('AI research → Activate reviewed advisory');
   });
 });

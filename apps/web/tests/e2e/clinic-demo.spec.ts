@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { login } from './login';
+import { login, fullShot } from './login';
 
 test('fictional clinic connects guide, patient history, queues and paused service', async ({page},testInfo)=>{
   await login(page,'clinician@showcase.hutano.test','DemoClinician1!');
   await expect(page.getByRole('heading',{name:'A clear view of today’s clinic.'})).toBeVisible();
   await expect(page.locator('.brand')).toContainText('Hutano Community Clinic');
-  await page.screenshot({path:testInfo.outputPath('clinic-overview.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('clinic-overview.png'));
   await page.getByRole('button',{name:'Demo guide',exact:true}).click();
   await expect(page.getByText('All records fictional',{exact:true})).toBeVisible();
   // Scenarios read as plain-language attendances, not test labels.
@@ -14,7 +14,7 @@ test('fictional clinic connects guide, patient history, queues and paused servic
   await expect(page.getByRole('heading',{name:'Longitudinal patient workspace'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Rutendo Chari',exact:true})).toBeVisible();
   expect(await page.getByLabel('Encounter history').locator('option').count()).toBeGreaterThan(1);
-  await page.screenshot({path:testInfo.outputPath('clinic-patient-history.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('clinic-patient-history.png'));
   await page.getByRole('button',{name:'Live queues',exact:true}).click();
   await page.getByLabel('Filter queue').fill('no-such-fictional-name');
   await expect(page.locator('.queue-list li')).toHaveCount(0);
@@ -47,7 +47,7 @@ test('fictional clinic connects guide, patient history, queues and paused servic
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Overview',exact:true}).click();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
-  await page.screenshot({path:testInfo.outputPath('clinic-mobile.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('clinic-mobile.png'));
 });
 
 test('researcher sees dated evidence and real saved comparisons without patient identities',async({page},testInfo)=>{
@@ -60,7 +60,7 @@ test('researcher sees dated evidence and real saved comparisons without patient 
   await expect(page.getByRole('heading',{name:'Daily arrival cohorts'})).toBeVisible();
   await expect(page.getByRole('link',{name:'Export CSV'})).toHaveAttribute('href',/from_date=/);
   await expect(page.locator('main')).not.toContainText('Rutendo Chari');
-  await page.screenshot({path:testInfo.outputPath('clinic-analytics.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('clinic-analytics.png'));
   await page.getByRole('button',{name:'Simulation lab',exact:true}).click();
   const saved=page.getByLabel('Saved comparisons');
   await expect(saved.locator('option')).toHaveCount(2,{timeout:90000});
@@ -69,5 +69,5 @@ test('researcher sees dated evidence and real saved comparisons without patient 
   await expect(page.getByText('SYNTHETIC SIMULATION — NOT CLINICAL EVIDENCE',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Consultation outage',exact:true}).click();
   await expect(page.getByLabel('Scenario name')).toHaveValue('Consultation outage');
-  await page.screenshot({path:testInfo.outputPath('clinic-simulation.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('clinic-simulation.png'));
 });

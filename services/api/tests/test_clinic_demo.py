@@ -208,6 +208,12 @@ def test_advisory_is_enabled_only_when_preparation_asks(client,db_session,monkey
     execute_job(db,job);db.commit()
     model=db.scalar(select(ModelVersion).where(ModelVersion.facility_id==FACILITY_ID))
     assert model.status=='EXPERIMENTAL' and not model.active     # default: never reviewed for you
+    def advise(session):
+        case=next(c for c in session.manifest_json['cases'] if c['initial_stage']=='consultation' and c['initial_status']=='WAITING')
+        return client.post(f"/api/v1/visits/{case['visit_id']}/recommendation",json={},headers=command_headers(client.cookies['hutano_csrf'],str(uuid.uuid4()))).json()
+    client.post('/api/v1/auth/login',json={'email':'clinician@showcase.hutano.test','password':'DemoClinician1!'})
+    off=advise(plain)
+    assert off['available'] is False and off['reason']=='NOT_REVIEWED' and 'Record clinician research review' in off['how_to_enable']
     session=prepare_clinic(db,fresh=True,enable_advisory=True);db.commit()
     job=db.scalar(select(Job).where(Job.id.in_([uuid.UUID(j) for j in session.manifest_json['jobs']]),Job.type=='MODEL_TRAIN'))
     execute_job(db,job);db.commit();db.refresh(model)
@@ -220,6 +226,8 @@ def test_advisory_is_enabled_only_when_preparation_asks(client,db_session,monkey
     assert advice.status_code==201,advice.text
     assert advice.json().get('available') is not False, advice.json()
     # A later ordinary rehearsal starts with the advisory off again; the review stays recorded.
-    prepare_clinic(db,fresh=True);db.commit();db.refresh(model)
+    later=prepare_clinic(db,fresh=True);db.commit();db.refresh(model)
     assert model.status=='REVIEWED' and not model.active
+    switched_off=advise(later)
+    assert switched_off['reason']=='NOT_ENABLED' and 'Activate reviewed advisory' in switched_off['how_to_enable']
     assert db.scalar(select(AuditEvent.reason).where(AuditEvent.action=='demo.advisory_reset'))=='Fresh rehearsal starts with the advisory disabled'

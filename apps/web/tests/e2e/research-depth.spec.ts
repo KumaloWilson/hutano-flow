@@ -2,7 +2,7 @@ import { expect, Page, test } from "@playwright/test";
 
 const API = process.env.E2E_API_URL || "http://localhost:8000";
 const ROOT = "/api/v1/research/workbench";
-import { login } from "./login";
+import { login, fullShot } from "./login";
 async function command(page: Page, path: string, body: unknown) {
   const csrf = (await page.context().cookies()).find(c => c.name === "hutano_csrf")!.value;
   const response = await page.request.post(API + path, { data: body, headers: { "X-CSRF-Token": csrf, "Idempotency-Key": crypto.randomUUID() } });
@@ -61,7 +61,7 @@ test("frozen research protocol, held-out waiting/planning worker and reproducibl
     expect(row.paid_staff_minutes).toBe(1080);
     expect(row.all_constraints_valid).toBe(true);
   }
-  await page.screenshot({ path: info.outputPath("research-operations-study.png"), fullPage: true });
+  await fullShot(page, info.outputPath("research-operations-study.png"));
 });
 
 test("independent blinded labels, consensus and shadow reveal only after saved assessment", async ({ browser }, info) => {
@@ -80,7 +80,7 @@ test("independent blinded labels, consensus and shadow reveal only after saved a
     await research.getByText("Calibration, selective prediction & model diagnostics", { exact: true }).click();
     await research.getByLabel("Inspect research model").selectOption(complete.result_ref);
     await expect(research.getByRole("heading", { name: "Risk–coverage trade-off", exact: true })).toBeVisible();
-    await research.screenshot({ path: info.outputPath("research-calibration.png"), fullPage: true });
+    await fullShot(research, info.outputPath("research-calibration.png"));
     await openProtocol(clinician, protocol.id);
     const cases = (await read(clinician, `${ROOT}/protocols/${protocol.id}`)).cases;
     await clinician.getByLabel("Blinded case", { exact: true }).selectOption(cases[0].id);
@@ -115,7 +115,7 @@ test("independent blinded labels, consensus and shadow reveal only after saved a
     await clinician.getByRole("button", { name: "Save independent trial decision", exact: true }).click();
     await expect(assigned.getByRole("heading", { name: "Experimental advisory" })).toBeVisible();
     await expect(assigned.getByText("Decision saved: P3.", { exact: false })).toBeVisible();
-    await clinician.screenshot({ path: info.outputPath("research-shadow-workflow.png"), fullPage: true });
+    await fullShot(clinician, info.outputPath("research-shadow-workflow.png"));
     expect((await clinician.request.get(API + `${ROOT}/protocols/${protocol.id}/monitor`)).status()).toBe(403);
     const report = await read(research, `${ROOT}/protocols/${protocol.id}/export`);
     expect(report.summary.paired_cases).toBe(1);

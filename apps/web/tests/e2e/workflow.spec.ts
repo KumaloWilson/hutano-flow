@@ -1,6 +1,6 @@
 import {test, expect, Page} from '@playwright/test';
 
-import { login } from "./login";
+import { login, fullShot } from "./login";
 
 test('complete database-backed journey, two tabs, private status and offline controls',async ({browser},testInfo)=>{
   const reception = await browser.newContext();
@@ -37,7 +37,7 @@ test('complete database-backed journey, two tabs, private status and offline con
   await c.getByRole('dialog').getByLabel('Reason',{exact:true}).fill('Synthetic clinician override demonstration');
   await c.getByRole('dialog').getByRole('button',{name:'Confirm action'}).click();
   await expect(c.getByText('Override pinned and audited.')).toBeVisible();
-  await c.screenshot({path:testInfo.outputPath('queue.png'),fullPage:true});
+  await fullShot(c, testInfo.outputPath('queue.png'));
   await s.goto('/status');
   await s.getByLabel('Private status token').fill(secret);
   await s.getByRole('button',{name:'Check status',exact:true}).click();
@@ -74,7 +74,7 @@ test('complete database-backed journey, two tabs, private status and offline con
   await c.getByRole('combobox',{name:'Visit',exact:true}).selectOption(option!);
   await expect(c.locator('.timeline li')).toHaveCount(4);
   await expect(c.locator('.timeline')).toContainText('COMPLETED');
-  await c.screenshot({path:testInfo.outputPath('completed-journey.png'),fullPage:true});
+  await fullShot(c, testInfo.outputPath('completed-journey.png'));
   await clinical.setOffline(true);
   await expect(c.getByText('Offline — read-only',{exact:false})).toBeVisible();
   await expect(c.locator('fieldset.workspace-actions')).toHaveAttribute('disabled','');
@@ -104,7 +104,7 @@ test('researcher runs paired simulation without seeing patient identifiers',asyn
   await page.getByRole('button',{name:'Compare FCFS, urgency-first & hybrid'}).click();
   await expect(page.getByText('SYNTHETIC SIMULATION — NOT CLINICAL EVIDENCE',{exact:true})).toBeVisible({timeout:90000});
   await expect(page.locator('.policy-results > div')).toHaveCount(3);
-  await page.screenshot({path:testInfo.outputPath('simulation.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('simulation.png'));
 });
 
 test('research training job produces an inactive model with inspectable evaluation',async({page},testInfo)=>{
@@ -118,5 +118,5 @@ test('research training job produces an inactive model with inspectable evaluati
   await page.getByRole('button',{name:'Metrics & confusion matrix'}).first().click();
   await expect(page.getByText('Rows: reference; columns: model prediction')).toBeVisible();
   await expect(page.getByText('EXPERIMENTAL — NOT VALIDATED FOR PATIENT CARE',{exact:true})).toBeVisible();
-  await page.screenshot({path:testInfo.outputPath('model-evaluation.png'),fullPage:true});
+  await fullShot(page, testInfo.outputPath('model-evaluation.png'));
 });
