@@ -29,13 +29,40 @@ function chime() {
   } catch { /* audio unavailable */ }
 }
 
+const SOUND_STORE = "hutano_display_sound", VOICE_STORE = "hutano_display_voice";
+const readPref = (name: string) => { try { return localStorage.getItem(name) === "on"; } catch { return false; } };
+const writePref = (name: string, on: boolean) => { try { localStorage.setItem(name, on ? "on" : "off"); } catch { /* kiosk without storage */ } };
+// Chrome can drop an utterance that is garbage-collected mid-speech; keep a reference until it ends.
+const speaking: SpeechSynthesisUtterance[] = [];
+
+/** Speaks a phrase with an English voice where one exists. Returns false if speech is impossible. */
+function speak(text: string): boolean {
+  if (!("speechSynthesis" in window)) return false;
+  const synth = window.speechSynthesis;
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voice = synth.getVoices().find((v) => v.lang?.toLowerCase().startsWith("en"));
+  if (voice) utterance.voice = voice;
+  utterance.rate = 0.85;
+  speaking.push(utterance);
+  utterance.onend = utterance.onerror = () => { speaking.splice(speaking.indexOf(utterance), 1); };
+  synth.resume(); // Chrome sometimes leaves the speech queue paused
+  synth.speak(utterance);
+  return true;
+}
+
 /** Spells tokens out ("A, zero one four") so they are intelligible in a noisy room. */
 function announce(token: string, place: string) {
-  if (!("speechSynthesis" in window)) return;
-  const spoken = token.replace("-", ", ").split("").map((c) => (/\d/.test(c) ? ` ${c}` : c)).join("");
-  const utterance = new SpeechSynthesisUtterance(`Ticket ${spoken}. Please go to ${place}.`);
-  utterance.rate = 0.85;
-  window.speechSynthesis.speak(utterance);
+  const [letters, digits = ""] = token.split("-");
+  const spoken = digits ? `${letters}, ${digits.split("").join(" ")}` : token;
+  speak(`Ticket ${spoken}. Please go to ${place}.`);
+}
+
+/** Why voice cannot work in this browser, in words a clinic administrator can act on. */
+async function voiceProblem(): Promise<string> {
+  if (!("speechSynthesis" in window)) return "This browser cannot speak. Use Chrome or Edge for spoken announcements; the chime still works.";
+  const synth = window.speechSynthesis;
+  if (!synth.getVoices().length) await new Promise((done) => { synth.addEventListener("voiceschanged", done, { once: true }); setTimeout(done, 1500); });
+  return synth.getVoices().length ? "" : "No speech voices are installed for this browser, so it cannot speak. On Windows, macOS and Android they are built in; on Linux install speech-dispatcher with espeak-ng, then restart the browser. The chime still works.";
 }
 
 export default function DisplayPage() {
@@ -47,6 +74,18 @@ export default function DisplayPage() {
   const [langIndex, setLangIndex] = useState(0);
   const [sound, setSound] = useState(false);
   const [voice, setVoice] = useState(false);
+  // Browsers only play sound after someone has clicked on the page; a reloaded kiosk needs one tap.
+  const [armed, setArmed] = useState(false);
+  const [voiceNote, setVoiceNote] = useState("");
+  useEffect(() => { setSound(readPref(SOUND_STORE)); setVoice(readPref(VOICE_STORE)); }, []);
+  function toggleSound() { const on = !sound; setSound(on); writePref(SOUND_STORE, on); setArmed(true); if (on) chime(); }
+  async function toggleVoice() {
+    const on = !voice; setVoice(on); writePref(VOICE_STORE, on); setArmed(true); setVoiceNote("");
+    if (!on) { window.speechSynthesis?.cancel(); return; }
+    speak("Voice announcements are on.");
+    setVoiceNote(await voiceProblem());
+  }
+  function arm() { setArmed(true); if (sound) chime(); if (voice) speak("Announcements are on."); }
   const seen = useRef<Map<string, string>>(new Map());
   const first = useRef(true);
   const t = COPY[ROTATION[langIndex]];
@@ -68,8 +107,8 @@ export default function DisplayPage() {
       const fresh = next.now_calling.filter((item) => seen.current.get(item.token) !== item.announced_at);
       next.now_calling.forEach((item) => seen.current.set(item.token, item.announced_at));
       if (!first.current && fresh.length) {
-        if (sound) chime();
-        if (voice) fresh.forEach((item) => announce(item.token, item.room ? `${item.service}, ${item.room}` : item.service));
+        if (sound && armed) chime();
+        if (voice && armed) fresh.forEach((item) => announce(item.token, item.room ? `${item.service}, ${item.room}` : item.service));
       }
       first.current = false;
       setBoard(next); setStale(false); setError("");
@@ -77,7 +116,7 @@ export default function DisplayPage() {
       if (e instanceof ApiError && e.status === 404) { setError("This display key is not valid or was revoked. Ask an administrator for a new display link."); setKey(null); try { localStorage.removeItem(KEY_STORE); } catch { /* ignore */ } }
       else setStale(true);
     }
-  }, [sound, voice]);
+  }, [sound, voice, armed]);
 
   useEffect(() => {
     if (!key) return;
@@ -116,11 +155,14 @@ export default function DisplayPage() {
       <header className="display-head">
         <div><h1>{board?.facility ?? "Hutano Flow"}</h1><span style={{ color: "#8f949b" }}>{board?.label}</span></div>
         <div className="cluster">
-          <button className="ghost small" style={{ color: "#8f949b" }} onClick={() => { setSound((v) => !v); if (!sound) chime(); }} aria-pressed={sound}><Icon name="megaphone" />{sound ? "Chime on" : "Chime off"}</button>
-          <button className="ghost small" style={{ color: "#8f949b" }} onClick={() => setVoice((v) => !v)} aria-pressed={voice}>{voice ? "Voice on" : "Voice off"}</button>
+          <button className="ghost small" style={{ color: "#8f949b" }} onClick={toggleSound} aria-pressed={sound}><Icon name="megaphone" />{sound ? "Chime on" : "Chime off"}</button>
+          <button className="ghost small" style={{ color: "#8f949b" }} onClick={toggleVoice} aria-pressed={voice}>{voice ? "Voice on" : "Voice off"}</button>
+          {voice && <button className="ghost small" style={{ color: "#8f949b" }} onClick={() => { setArmed(true); announce("A-014", "Consultation, Consultation room 1"); }}>Test voice</button>}
           <span className="clock">{board?.local_time ?? "--:--"}</span>
         </div>
       </header>
+      {(sound || voice) && !armed && <button className="primary large" style={{ margin: "0 auto 16px", display: "flex" }} onClick={arm}><Icon name="megaphone" />Tap to turn on announcements</button>}
+      {voiceNote && <p role="alert" className="callout caution" style={{ margin: "0 0 16px" }}>{voiceNote}</p>}
       <section className="display-main">
         <div className="calling">
           <p className="display-label">{t.nowCalling}</p>

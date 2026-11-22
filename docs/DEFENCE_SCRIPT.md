@@ -209,7 +209,15 @@ patients in the hours just before you prepare.
      your main screen.
    - Open a **new Chrome window** (Ctrl+N), go to **http://localhost:3000/status**, and make the
      window narrow like a phone. This is **Window B, "the patient's phone"**.
-9. Zoom Window A so the panel can read it: **Ctrl and +** (two presses ≈ 125%). Turn off
+9. *(Optional, but impressive)* **The waiting-room TV with a voice.** As **Admin** → **Facility
+   admin** → **Waiting-room displays** → **Screen name** `Main waiting area TV` → **Create display
+   link**. Copy the link shown and open it in another window or on a second screen. Click **Voice
+   off** so it reads **Voice on**. ➜ It says *"Voice announcements are on."* Click **Test voice** to
+   hear a sample call, and turn the laptop volume up. From now on, every **Call** is spoken:
+   *"Ticket A, 0 1 4. Please go to Consultation, Consultation room 1."*
+   If you reload that window, click the big **Tap to turn on announcements** button once:
+   browsers only play sound after a click.
+10. Zoom Window A so the panel can read it: **Ctrl and +** (two presses ≈ 125%). Turn off
    notifications. Close other programs.
 
 ### If something goes wrong live
@@ -223,6 +231,7 @@ Never try to fix things in front of the panel. Say the line, then move on.
 | A red message: *"…changed; refresh"* | "Someone else acted first, and the system stopped a double action." Click the menu item again to refresh, then repeat |
 | A research box still says "Preparing…" | "These are real calculations, not a recording." Show the result from the day before, or the screenshot in `docs/evidence` |
 | *"Model unavailable"* when asking the AI | Read the grey line under it: it says which step is missing. Usually: as **Admin** → **AI research** → **Activate reviewed advisory** (Step 5A). If it says *"not been reviewed"*, do Part 2 step 7 first. Say: "No one has approved the model yet, so it stays silent. That's the safeguard." |
+| The TV display is silent | Check it says **Voice on**, then click **Test voice**. If a big **Tap to turn on announcements** button is showing, click it. If a yellow note says no voices are installed, use Chrome on Windows or Android for the TV; the chime still works |
 | Sign-in refused | Wait 10 seconds and try again. "That's the brute-force protection working." |
 | Anything else | Open the matching screenshot in `docs/evidence` and keep talking |
 
@@ -776,7 +785,7 @@ Capacity-aware was only 0.14 min better than next-available, and its P90 was sli
 | Inputs | Age band, visit type, arrival mode, arrival hour, 6 vital signs |
 
 **Engineering (`docs/TEST_EVIDENCE.md`, 22 Nov 2026)**
-150 backend tests including real PostgreSQL concurrency · 22 frontend unit tests · 13
+150 backend tests including real PostgreSQL concurrency · 22 frontend unit tests · 14
 full-browser end-to-end tests (one of them performs this whole script) · clean boot and backup/restore verified · 38 recorded design
 decisions (`docs/DECISIONS.md`).
 
@@ -991,7 +1000,7 @@ here is how I would find out" is a strong answer.
 
 **Q29. How did you test it?**
 > "150 backend tests, including concurrency on a real PostgreSQL database; 22 frontend unit tests;
-> 13 end-to-end browser tests that drive the real system, one of which performs this entire demonstration, including the full patient journey,
+> 14 end-to-end browser tests that drive the real system, one of which performs this entire demonstration, including the full patient journey,
 > the private token page, offline behaviour and the evaluation view. There is also a fresh-machine
 > boot test, which starts from nothing and restores a backup. The evidence report links each
 > acceptance criterion to its test."

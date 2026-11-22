@@ -19,7 +19,7 @@ Environment: Linux, Docker Compose, PostgreSQL 17, Python 3.12.8 (API image) and
 | Backend on host | **143 passed, 7 skipped** (PostgreSQL-only, no database URL) | `make test-local` |
 | Frontend unit tests | **22 passed** (8 files) | `npm test` |
 | TypeScript | PASS, no errors | `npm run typecheck` |
-| Full-stack browser workflows | **13 passed, 0 skipped** (96 s), including one that performs the whole defence script; [summary](evidence/browser-enhanced.json) | `python3 scripts/verify_browser.py` |
+| Full-stack browser workflows | **14 passed, 0 skipped** (96 s), including one that performs the whole defence script and one that checks the waiting-room display speaks each call; [summary](evidence/browser-enhanced.json) | `python3 scripts/verify_browser.py` |
 | Clean boot, reset and backup/restore | PASS: two fresh boot cycles; fictional clinic prepared at start-up and its admin signs in; restricted runtime inserted journeys; actual backup/restore commands restored visits and private dataset hashes | `python3 scripts/verify_clean_boot.py` |
 | OpenAPI drift | PASS: spec and TypeScript contracts regenerated for the new preparation endpoint (103 schemas) | `python -m app.cli openapi`; `node scripts/generate-contracts.mjs` |
 
@@ -80,7 +80,7 @@ are not re-derived here; they are the recorded outputs linked below.
 | R4 Mean, P90, low-urgency warnings; no blanket benefit claim | PASS | [standard run](evidence/simulation-standard.json); recorded hybrid − FCFS **+4.43 min** (interval crosses zero) and [no-improvement control](evidence/simulation-no-improvement.json) |
 | R5 Label provenance and limitations | PASS | [model evaluation](evidence/model-evaluation.json); only synthetic labels; macro-F1 recorded against synthetic labels, not diagnostic accuracy |
 | R6 Provenance, model/policy version, explanatory factors | PASS | Versioned model/policy/dataset hashes in exports and queue rows |
-| E1 Unit, API/integration and E2E pass locally | PASS | 150 backend + 22 frontend + 13 browser, above |
+| E1 Unit, API/integration and E2E pass locally | PASS | 150 backend + 22 frontend + 14 browser, above |
 | E2 No duplicate allocations from concurrency or repeats | PASS | [PostgreSQL race tests](../services/api/tests/test_postgres.py) (7/7), idempotency keys, stale versions |
 | E3 Facility scoping, token leakage, RBAC, audit integrity tested | PASS | Cross-facility, role and immutable-audit tests; clinic snapshot hides names from researchers |
 | E4 No PHI/secrets committed; `.env.example` placeholders | PASS | Repository scan finds no `.env`, keys or credentials; all people fictional |
